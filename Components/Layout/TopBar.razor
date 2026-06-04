@@ -1,0 +1,51 @@
+@inject NavigationManager Navigation
+
+<div class="admin-topbar @(IsCollapsed ? "collapsed" : "") flex items-center justify-between px-6 bg-[var(--bg-secondary)] border-b border-[var(--border-primary)]" style="height: var(--topbar-height);">
+    <div class="flex items-center gap-4">
+        <button @onclick="() => OnToggleSidebar.InvokeAsync()" class="p-1 background-none border-none text-[var(--text-secondary)] cursor-pointer flex items-center justify-center hover:opacity-80">
+            <LucideIcon Name="menu" Class="w-5 h-5" />
+        </button>
+        <span class="font-ui text-xs" style="color: var(--text-muted);">@GetCurrentPageTitle()</span>
+    </div>
+
+    <div class="flex items-center gap-3">
+        <ThemeToggle />
+        <button class="relative p-2.5 rounded-xl transition-all hover:opacity-80 cursor-pointer flex items-center justify-center"
+                style="background-color: var(--bg-card); border: 1px solid var(--border-primary); color: var(--text-secondary);">
+            <LucideIcon Name="bell" Class="w-[18px] h-[18px]" />
+            <span class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">3</span>
+        </button>
+        <button @onclick="Logout" class="px-4 py-2.5 rounded-xl font-ui text-xs font-medium flex items-center gap-1.5 transition-opacity hover:opacity-80 cursor-pointer"
+                style="background-color: var(--bg-card); border: 1px solid var(--border-primary); color: var(--danger);">
+            <LucideIcon Name="log-out" Class="w-3.5 h-3.5" />
+            <span>Đăng xuất</span>
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public bool IsCollapsed { get; set; }
+    [Parameter] public EventCallback OnToggleSidebar { get; set; }
+
+    private string GetCurrentPageTitle()
+    {
+        var uri = Navigation.Uri;
+        if (uri.Contains("/admin/dashboard")) return "Dashboard";
+        if (uri.Contains("/admin/corpses")) return "Quản lý Thi thể";
+        if (uri.Contains("/admin/storages")) return "Sơ đồ Ngăn tủ";
+        if (uri.Contains("/admin/shifts")) return "Ca trực";
+        if (uri.Contains("/admin/temperature")) return "Giám sát Nhiệt độ";
+        if (uri.Contains("/admin/reports")) return "Báo cáo";
+        if (uri.Contains("/admin/users")) return "Nhân viên";
+        if (uri.Contains("/admin/logs")) return "Nhật ký";
+        return "";
+    }
+
+    private async Task Logout()
+    {
+        await JS.InvokeVoidAsync("localStorage.removeItem", "morguemanager-token");
+        Navigation.NavigateTo("/login");
+    }
+
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+}

@@ -1,0 +1,35 @@
+<div style="margin-bottom: 24px;">
+    <div class="zone-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="color: var(--ice); font-size: 18px;">❄️</span>
+            <h2 class="font-ui" style="font-size: 14px; font-weight: 600; margin: 0; color: var(--text-primary);">@Name</h2>
+        </div>
+        <div style="display: flex; gap: 16px; font-size: 12px; color: var(--text-muted);">
+            <span>Mục tiêu: @TargetTemp.ToString("F1")°C</span>
+            <span style="font-weight: 600; color: @_statusColor;">@_statusIcon @CurrentTemp.ToString("F1")°C</span>
+        </div>
+    </div>
+    <div class="storage-grid">
+        @foreach (var slot in Slots)
+        {
+            <StorageSlot Slot="@slot" ShowTemp="ShowTemp" OnClick="OnSlotClick" />
+        }
+    </div>
+</div>
+@code {
+    [Parameter] public string Name { get; set; } = "";
+    [Parameter] public double TargetTemp { get; set; }
+    [Parameter] public double CurrentTemp { get; set; }
+    [Parameter] public List<Models.StorageSlot> Slots { get; set; } = new();
+    [Parameter] public bool ShowTemp { get; set; } = true;
+    [Parameter] public EventCallback<Models.StorageSlot> OnSlotClick { get; set; }
+
+    private string _statusColor = "#10B981";
+    private string _statusIcon = "✅";
+    protected override void OnInitialized()
+    {
+        var diff = Math.Abs(CurrentTemp - TargetTemp);
+        _statusColor = diff <= 1 ? "#10B981" : diff <= 2.5 ? "#F59E0B" : "#EF4444";
+        _statusIcon = diff <= 1 ? "✅" : "⚠️";
+    }
+}

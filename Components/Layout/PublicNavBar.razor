@@ -1,0 +1,177 @@
+@inject NavigationManager Navigation
+@inject AuthService AuthService
+@implements IDisposable
+
+<nav class="fixed top-0 left-0 right-0 z-[1000] transition-all duration-500 public-navbar">
+    <div class="max-w-[1400px] mx-auto px-6 lg:px-10 h-full flex items-center justify-between">
+        <a href="/" class="flex items-center gap-3 group" style="text-decoration: none;">
+            <span class="w-2 h-2 rounded-full pulse-dot" style="background-color: var(--ice)"></span>
+            <span class="font-display text-2xl tracking-wide" style="color: var(--text-primary);">
+                <span class="font-light">Morgue</span>
+                <span class="mx-2" style="color: var(--text-secondary);">|</span>
+                <span class="font-ui font-semibold text-lg">Manager</span>
+            </span>
+        </a>
+
+        <div class="hidden md:flex items-center gap-10">
+            @foreach (var link in _navLinks)
+            {
+                var isActive = Navigation.Uri.EndsWith(link.Path) || (link.Path != "/" && Navigation.Uri.Contains(link.Path));
+                <a href="@link.Path"
+                   class="relative font-ui text-xs uppercase tracking-[0.15em] transition-colors duration-300 group"
+                   style="color: @(isActive ? "var(--ice)" : "var(--text-secondary)"); text-decoration: none;">
+                    @link.Label
+                    @if (isActive)
+                    {
+                        <span class="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[4px]" style="color: var(--ice)">◆</span>
+                    }
+                    <span class="absolute -bottom-1 left-0 w-0 h-px transition-all duration-300 group-hover:w-full" style="background-color: var(--ice)"></span>
+                </a>
+            }
+        </div>
+
+        <div class="hidden md:flex items-center gap-4">
+            <ThemeToggle />
+            @if (_isLoggedIn)
+            {
+                <a href="/admin/dashboard" class="btn-warm font-ui text-xs font-semibold uppercase tracking-[0.05em] px-5 py-2.5 rounded-lg" data-cta="true" style="text-decoration: none;">
+                    Dashboard
+                </a>
+            }
+            else
+            {
+                <a href="/login" class="font-ui text-xs uppercase tracking-[0.1em] px-5 py-2.5 rounded-lg transition-all duration-300 hover:opacity-80"
+                   style="border: 1px solid rgba(148,179,210,0.15); color: var(--text-primary); text-decoration: none;">
+                    Đăng nhập
+                </a>
+                <a href="/login" class="btn-warm font-ui text-xs font-semibold uppercase tracking-[0.05em] px-5 py-2.5 rounded-lg" data-cta="true" style="text-decoration: none;">
+                    Portal Quản trị
+                </a>
+            }
+        </div>
+
+        <button class="md:hidden p-2" @onclick="ToggleMobile" style="color: var(--text-primary); background: none; border: none; cursor: pointer;">
+            @if (_mobileOpen)
+            {
+                <LucideIcon Name="x" Class="w-6 h-6" />
+            }
+            else
+            {
+                <LucideIcon Name="menu" Class="w-6 h-6" />
+            }
+        </button>
+    </div>
+</nav>
+
+@if (_mobileOpen)
+{
+    <div class="fixed inset-0 z-[999] flex flex-col items-center justify-center gap-8 md:hidden" style="background-color: var(--bg-primary)">
+        @foreach (var link in _navLinks)
+        {
+            var isActive = Navigation.Uri.EndsWith(link.Path) || (link.Path != "/" && Navigation.Uri.Contains(link.Path));
+            <a href="@link.Path"
+               class="font-display text-3xl transition-all duration-500 animate-fade-in-up"
+               style="color: @(isActive ? "var(--ice)" : "var(--text-primary)"); text-decoration: none;">
+                @link.Label
+            </a>
+        }
+        <div class="flex items-center gap-4 mt-8">
+            <div class="p-1 border border-[var(--border-primary)] rounded-lg">
+                <ThemeToggle />
+            </div>
+            @if (_isLoggedIn)
+            {
+                <a href="/admin/dashboard" class="btn-warm font-ui text-sm font-semibold px-6 py-3 rounded-lg" style="text-decoration: none;">Dashboard</a>
+            }
+            else
+            {
+                <a href="/login" class="btn-warm font-ui text-sm font-semibold px-6 py-3 rounded-lg" style="text-decoration: none;">Portal Quản trị</a>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private bool _mobileOpen;
+    private bool _isLoggedIn;
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+
+    private List<(string Path, string Label)> _navLinks = new()
+    {
+        ("/", "Trang chủ"),
+        ("/about", "Giới thiệu"),
+        ("/services", "Dịch vụ"),
+        ("/contact", "Liên hệ"),
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isLoggedIn = await AuthService.IsLoggedInAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                // Đăng ký cuộn chuột để đổi màu nền navbar
+                await JS.InvokeVoidAsync("eval", @"
+                    window.addEventListener('scroll', function() {
+                        var scrolled = window.scrollY > 50;
+                        var nav = document.querySelector('.public-navbar');
+                        if (nav) {
+                            if (scrolled) nav.classList.add('scrolled');
+                            else nav.classList.remove('scrolled');
+                        }
+                    }, { passive: true });
+                ");
+            }
+            catch
+            {
+                // Ignored
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        _mobileOpen = false;
+        StateHasChanged();
+    }
+
+    private void ToggleMobile()
+    {
+        _mobileOpen = !_mobileOpen;
+        // Chặn cuộn trang khi mở menu mobile
+        try
+        {
+            _ = JS.InvokeVoidAsync("eval", _mobileOpen 
+                ? "document.body.style.overflow = 'hidden';" 
+                : "document.body.style.overflow = '';");
+        }
+        catch
+        {
+            // Ignored
+        }
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+        // Trả lại trạng thái cuộn bình thường
+        try
+        {
+            _ = JS.InvokeVoidAsync("eval", "document.body.style.overflow = '';");
+        }
+        catch
+        {
+            // Ignored
+        }
+    }
+}
