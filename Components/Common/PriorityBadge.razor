@@ -1,0 +1,15 @@
+@if (Priority == "NORMAL")
+{
+    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: var(--text-muted);"></span>
+}
+else if (Priority == "WARNING")
+{
+    <span class="badge-pill" style="background-color: var(--badge-warning-bg); color: white;">⏱ WARNING</span>
+}
+else
+{
+    <span class="badge-pill animate-pulse" style="background-color: var(--badge-critical-bg); color: white;">⚠ CRITICAL</span>
+}
+@code {
+    [Parameter] public string Priority { get; set; } = "NORMAL";
+}

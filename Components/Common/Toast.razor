@@ -1,0 +1,20 @@
+@if (_visible)
+{
+    <div class="toast-fixed" style="background-color: @(Type == "success" ? "var(--success)" : "var(--danger)");">
+        <span>@(Type == "success" ? "✅" : "⚠️")</span>
+        <span>@Message</span>
+    </div>
+}
+@code {
+    [Parameter] public string Message { get; set; } = "";
+    [Parameter] public string Type { get; set; } = "success";
+    [Parameter] public int DurationMs { get; set; } = 3000;
+    private bool _visible = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(DurationMs);
+        _visible = false;
+        StateHasChanged();
+    }
+}
