@@ -1,0 +1,41 @@
+<div class="fixed inset-0 pointer-events-none z-[2] overflow-hidden">
+    @foreach (var p in _particles)
+    {
+        <span class="frost-particle"
+              style="left: @p.Left; font-size: @(p.Size)px; animation-delay: @(p.Delay)s; animation-duration: @(p.Duration)s; opacity: @p.Opacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);">
+            @p.Shape
+        </span>
+    }
+</div>
+
+@code {
+    private List<Particle> _particles = new();
+
+    protected override void OnInitialized()
+    {
+        var random = new Random();
+        var shapes = new[] { "✦", "✧", "◆", "◇", "•" };
+        for (int i = 0; i < 18; i++)
+        {
+            _particles.Add(new Particle
+            {
+                Left = $"{random.Next(0, 100)}%",
+                Size = 2 + random.Next(0, 5),
+                Delay = random.NextDouble() * 15,
+                Duration = 15 + random.NextDouble() * 20,
+                Opacity = 0.03 + random.NextDouble() * 0.05,
+                Shape = shapes[random.Next(shapes.Length)]
+            });
+        }
+    }
+
+    private class Particle
+    {
+        public string Left { get; set; } = "";
+        public double Size { get; set; }
+        public double Delay { get; set; }
+        public double Duration { get; set; }
+        public double Opacity { get; set; }
+        public string Shape { get; set; } = "";
+    }
+}
