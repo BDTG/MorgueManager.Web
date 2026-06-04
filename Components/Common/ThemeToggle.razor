@@ -1,0 +1,48 @@
+@inject IJSRuntime JS
+
+<button @onclick="ToggleTheme" class="p-2 rounded-lg transition-all duration-300 hover:scale-110" style="color: var(--text-secondary); background: none; border: none; cursor: pointer;" aria-label="Toggle theme">
+    @if (_isDark)
+    {
+        <LucideIcon Name="sun" Class="w-[18px] h-[18px]" />
+    }
+    else
+    {
+        <LucideIcon Name="moon" Class="w-[18px] h-[18px]" />
+    }
+</button>
+
+@code {
+    private bool _isDark = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                var theme = await JS.InvokeAsync<string>("localStorage.getItem", "morguemanager-theme");
+                _isDark = theme != "light";
+                StateHasChanged();
+            }
+            catch
+            {
+                // Ignored
+            }
+        }
+    }
+
+    private async Task ToggleTheme()
+    {
+        _isDark = !_isDark;
+        var theme = _isDark ? "dark" : "light";
+        try
+        {
+            await JS.InvokeVoidAsync("localStorage.setItem", "morguemanager-theme", theme);
+            await JS.InvokeVoidAsync("document.documentElement.setAttribute", "data-theme", theme);
+        }
+        catch
+        {
+            // Ignored
+        }
+    }
+}
