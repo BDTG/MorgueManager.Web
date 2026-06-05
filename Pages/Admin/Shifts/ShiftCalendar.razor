@@ -1,0 +1,139 @@
+@page "/admin/shifts"
+@layout Components.Layout.AdminLayout
+@inject NavigationManager Navigation
+
+<div>
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px;">
+        <div>
+            <div class="font-ui" style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Dashboard / Ca trực</div>
+            <h1 class="font-ui" style="font-size: 22px; font-weight: 700; margin: 0; color: var(--text-primary);">📅 Quản lý Ca trực</h1>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <button @onclick="() => _showAssignModal = true" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; background: linear-gradient(135deg, #3B82F6, #2563EB); color: white;">➕ Phân ca mới</button>
+            <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--success); color: var(--success); background: transparent;">📥 Xuất lịch</button>
+        </div>
+    </div>
+
+    <!-- View toggle -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div style="display: flex; gap: 8px;">
+            @foreach (var v in new[] { ("Tuần", "week"), ("Tháng", "month"), ("Danh sách", "list") })
+            {
+                <button @onclick="() => _view = v.Item2" class="font-ui" style="padding: 6px 16px; border-radius: 6px; font-size: 12px; cursor: pointer; border: 1px solid @(_view == v.Item2 ? "var(--ice)" : "var(--border-primary)"); color: @(_view == v.Item2 ? "var(--ice)" : "var(--text-secondary)"); background: transparent;">@v.Item1</button>
+            }
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <button class="font-ui" style="padding: 6px 12px; border: 1px solid var(--border-primary); border-radius: 6px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 12px;">← Trước</button>
+            <span class="font-ui" style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Tháng @DateTime.Now.Month, @DateTime.Now.Year</span>
+            <button class="font-ui" style="padding: 6px 12px; border: 1px solid var(--border-primary); border-radius: 6px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 12px;">Tiếp →</button>
+            <button class="font-ui" style="padding: 4px 12px; border: 1px solid var(--ice); border-radius: 6px; background: transparent; color: var(--ice); cursor: pointer; font-size: 11px;">📌 Hôm nay</button>
+        </div>
+    </div>
+
+    @if (_view == "month")
+    {
+        <div style="border-radius: 12px; border: 1px solid var(--border-primary); overflow: hidden; background-color: var(--bg-card);">
+            <div class="calendar-grid" style="padding: 8px;">
+                @foreach (var day in _dayHeaders)
+                {
+                    <div class="calendar-day-header">@day</div>
+                }
+                @for (int i = 0; i < _firstDayOffset; i++)
+                {
+                    <div class="calendar-cell" style="opacity: 0.3;"></div>
+                }
+                @for (int day = 1; day <= _daysInMonth; day++)
+                {
+                    var isToday = day == DateTime.Now.Day;
+                    <div class="calendar-cell @(isToday ? "today" : "")">
+                        <div class="calendar-date @(isToday ? "today" : "")">@day</div>
+                        <div class="shift-bar" style="background-color: rgba(250,204,21,0.2); color: #F59E0B;">🌅 Nguyễn A</div>
+                        <div class="shift-bar" style="background-color: rgba(251,146,60,0.2); color: #F97316;">🌆 Lê C</div>
+                        @if (day % 3 == 0)
+                        {
+                            <div class="shift-bar" style="background-color: rgba(239,68,68,0.15); color: var(--danger); border: 1px dashed var(--danger);">⚠️ Thiếu nhân viên</div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    @if (_view == "list")
+    {
+        <div style="border-radius: 12px; border: 1px solid var(--border-primary); overflow: hidden; background-color: var(--bg-card);">
+            <table class="data-table">
+                <thead><tr><th>Ngày</th><th>Ca</th><th>Nhân viên</th><th>SĐT</th><th>Trạng thái</th><th>Hành động</th></tr></thead>
+                <tbody>
+                    @foreach (var s in _sampleShifts)
+                    {
+                        <tr>
+                            <td>@s.Date</td>
+                            <td>@s.ShiftLabel</td>
+                            <td>@s.Staff</td>
+                            <td style="font-family: monospace;">@s.Phone</td>
+                            <td><span class="badge-pill" style="background-color: @(s.StatusBg); color: @(s.StatusText);">@s.Status</span></td>
+                            <td>
+                                <div style="display: flex; gap: 4px;">
+                                    <button class="font-ui" style="background: none; border: none; cursor: pointer; font-size: 14px;">✏️</button>
+                                    <button class="font-ui" style="background: none; border: none; cursor: pointer; font-size: 14px;">🗑️</button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@if (_showAssignModal)
+{
+    <Modal OnClose="() => _showAssignModal = false">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h2 class="font-ui" style="font-size: 18px; font-weight: 700; margin: 0; color: var(--text-primary);">➕ Phân ca trực mới</h2>
+            <button @onclick="() => _showAssignModal = false" style="background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer;">✕</button>
+        </div>
+        <div style="margin-bottom: 16px;">
+            <label class="font-ui" style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Chọn ngày</label>
+            <input type="date" class="filter-input" style="width: 100%;" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+        </div>
+        <div style="margin-bottom: 16px;">
+            <label class="font-ui" style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Ca trực</label>
+            <div style="display: flex; gap: 12px;">
+                <label class="font-ui" style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;"><input type="radio" name="shift" checked /> 🌅 Sáng (6h-14h)</label>
+                <label class="font-ui" style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;"><input type="radio" name="shift" /> 🌆 Chiều (14h-22h)</label>
+                <label class="font-ui" style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;"><input type="radio" name="shift" /> 🌙 Tối (22h-6h)</label>
+            </div>
+        </div>
+        <div style="margin-bottom: 16px;">
+            <label class="font-ui" style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Nhân viên</label>
+            <select multiple class="filter-select" style="width: 100%; min-height: 100px;">
+                <option>Nguyễn Văn A — Staff</option>
+                <option>Trần Thị B — Staff</option>
+                <option>Lê Văn C — Manager</option>
+                <option>Phạm Thị D — Staff</option>
+            </select>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
+            <button @onclick="() => _showAssignModal = false" class="font-ui" style="padding: 10px 20px; border: 1px solid var(--border-primary); border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 13px;">Hủy</button>
+            <button class="font-ui" style="padding: 10px 20px; border: none; border-radius: 8px; background: var(--ice); color: white; cursor: pointer; font-size: 13px; font-weight: 600;">💾 Lưu</button>
+        </div>
+    </Modal>
+}
+
+@code {
+    private string _view = "month";
+    private bool _showAssignModal;
+
+    private readonly string[] _dayHeaders = { "CN", "T2", "T3", "T4", "T5", "T6", "T7" };
+    private int _daysInMonth = DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month);
+    private int _firstDayOffset = (int)new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).DayOfWeek;
+
+    private readonly List<(string Date, string ShiftLabel, string Staff, string Phone, string Status, string StatusBg, string StatusText)> _sampleShifts = new()
+    {
+        ("01/06", "🌅 Sáng", "Nguyễn Văn A", "+84 912 345 678", "Đã xác nhận", "rgba(16,185,129,0.15)", "var(--success)"),
+        ("01/06", "🌆 Chiều", "Trần Thị B", "+84 987 654 321", "Chờ xác nhận", "rgba(245,158,11,0.15)", "var(--candle)"),
+        ("02/06", "🌙 Tối", "Lê Văn C", "+84 923 456 789", "Đã xác nhận", "rgba(16,185,129,0.15)", "var(--success)"),
+    };
+}
