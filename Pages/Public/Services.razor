@@ -1,0 +1,161 @@
+@page "/services"
+@inject IJSRuntime JS
+
+<main>
+    <!-- HERO -->
+    <section class="relative min-h-[60vh] flex items-center justify-center overflow-hidden" style="background-color: var(--bg-primary);">
+        <div class="fog-blob fog-blob-2" style="width: 35vw; height: 35vw; top: 20%; right: 10%;"></div>
+        <div class="relative z-10 text-center px-6 pt-24">
+            <div class="services-hero">
+                <span class="font-ui text-[11px] uppercase tracking-[0.25em] mb-4 block" style="color: var(--text-muted);">DỊCH VỤ</span>
+                <h1 class="font-display text-4xl sm:text-5xl md:text-[56px] font-semibold leading-tight mb-6" style="color: var(--text-primary);">
+                    Giải pháp toàn diện
+                </h1>
+                <p class="font-ui text-base max-w-lg mx-auto" style="color: var(--text-muted);">
+                    Mọi công cụ cần thiết cho quy trình quản lý nhà xác hiện đại
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SERVICES LIST -->
+    <section class="py-16 md:py-24" style="background-color: var(--bg-primary);">
+        <div class="max-w-[1200px] mx-auto px-6 lg:px-10">
+            @for (int i = 0; i < _services.Count; i++)
+            {
+                var service = _services[i];
+                var isReversed = i % 2 == 1;
+                var index = i;
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center py-16 md:py-24 @(index > 0 ? "border-t" : "")"
+                     style="border-color: var(--border-primary);">
+                    <!-- Text side -->
+                    <div class="@(isReversed ? "lg:order-2" : "")">
+                        <span class="font-ui text-[11px] uppercase tracking-[0.25em] mb-3 block" style="color: var(--text-muted);">
+                            @service.Overline
+                        </span>
+                        <div class="font-display text-7xl md:text-[100px] font-bold mb-4 leading-none select-none"
+                             style="color: var(--text-primary); opacity: 0.05;">
+                            @service.Num
+                        </div>
+                        <h2 class="font-display text-2xl md:text-[28px] font-semibold mb-5" style="color: var(--text-primary);">
+                            @service.Title
+                        </h2>
+                        <p class="font-ui text-sm leading-relaxed mb-6" style="color: var(--text-secondary);">
+                            @service.Desc
+                        </p>
+                        <ul class="space-y-3 mb-8" style="list-style: none; padding: 0;">
+                            @foreach (var bullet in service.Bullets)
+                            {
+                                <li class="flex items-start gap-3">
+                                    <LucideIcon Name="diamond" Class="mt-1.5 flex-shrink-0 w-2.5 h-2.5" Style="color: var(--ice);" />
+                                    <span class="font-ui text-sm" style="color: var(--text-muted);">
+                                        @bullet
+                                    </span>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+
+                    <!-- Visual side -->
+                    <div class="@(isReversed ? "lg:order-1" : "")">
+                        <div class="rounded-2xl h-64 md:h-80 flex items-center justify-center relative overflow-hidden transition-all duration-500 hover:shadow-[var(--cold-glow)]"
+                             style="background-color: var(--bg-card); border: 1px solid var(--border-primary);"
+                             onmouseenter="this.style.borderColor='rgba(46,134,222,0.15)'; this.style.boxShadow='var(--shadow-md)';"
+                             onmouseleave="this.style.borderColor='var(--border-primary)'; this.style.boxShadow='none';">
+                            <div class="absolute inset-0 opacity-5">
+                                <svg width="100%" height="100%">
+                                    <defs>
+                                        <pattern id="svc-grid-@index" width="16" height="16" patternUnits="userSpaceOnUse">
+                                            <path d="M 16 0 L 0 0 0 16" fill="none" stroke="var(--ice)" stroke-width="0.5" />
+                                        </pattern>
+                                    </defs>
+                                    <rect width="100%" height="100%" fill="url(#svc-grid-@index)" />
+                                </svg>
+                            </div>
+                            <div class="relative z-10 text-center">
+                                <div class="w-20 h-20 rounded-2xl mx-auto mb-4 flex items-center justify-center"
+                                     style="background-color: rgba(72,219,251,0.06); border: 1px solid rgba(72,219,251,0.15);">
+                                    <LucideIcon Name="@service.Icon" Class="w-9 h-9" Style="color: var(--ice);" />
+                                </div>
+                                <span class="font-display text-lg" style="color: var(--text-secondary);">
+                                    @service.Title
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-20 md:py-28 px-6 lg:px-10 text-center" style="background-color: var(--bg-secondary);">
+        <div class="max-w-2xl mx-auto">
+            <h2 class="font-display text-3xl md:text-4xl font-semibold mb-6" style="color: var(--text-primary);">
+                Sẵn sàng trải nghiệm?
+            </h2>
+            <p class="font-ui text-base mb-8" style="color: var(--text-muted);">
+                Đăng nhập ngay để khám phá toàn bộ tính năng của hệ thống.
+            </p>
+            <a href="/login" class="btn-warm font-ui text-sm font-semibold px-8 py-3.5 rounded-lg inline-flex items-center gap-2" data-cta="true" style="text-decoration: none;">
+                Đăng nhập ngay
+                <LucideIcon Name="arrow-right" Class="w-4 h-4" />
+            </a>
+        </div>
+    </section>
+</main>
+
+@code {
+    private readonly List<ServiceItem> _services = new()
+    {
+        new() {
+            Num = "01", Icon = "snowflake", Overline = "LƯU TRỮ & NHIỆT ĐỘ",
+            Title = "Ngăn Lưu trữ & Nhiệt độ",
+            Desc = "Hệ thống sơ đồ ngăn tủ trực quan với cập nhật real-time. Mỗi ngăn lạnh được giám sát nhiệt độ liên tục, tự động cảnh báo khi vượt ngưỡng an toàn 2-4°C.",
+            Bullets = new() { "Sơ đồ ngăn tủ tương tác real-time", "Cảnh báo nhiệt độ tự động qua SMS/Email", "Lịch sử nhiệt độ 30 ngày", "Báo cáo tuân thủ y tế" }
+        },
+        new() {
+            Num = "02", Icon = "file-text", Overline = "HỒ SƠ",
+            Title = "Quản lý Hồ sơ Thi thể",
+            Desc = "Quy trình khép kín từ tiếp nhận, lưu kho đến bàn giao. Mỗi hồ sơ được gán mã QR duy nhất, timeline đầy đủ và khả năng truy xuất nhanh chóng.",
+            Bullets = new() { "Mã QR duy nhất cho mỗi ca", "Timeline đầy đủ từ tiếp nhận đến bàn giao", "Tìm kiếm đa chiều (tên, ngày, mã số)", "Xuất báo cáo PDF chuẩn y tế" }
+        },
+        new() {
+            Num = "03", Icon = "calendar", Overline = "PHÂN CA",
+            Title = "Phân ca Trực",
+            Desc = "Hệ thống lịch trực thông minh với tích hợp nhắc nhở tự động. Quản lý ca làm, đổi ca, và báo cáo hiệu suất nhân sự.",
+            Bullets = new() { "Calendar tương tác drag-and-drop", "Nhắc nhở tự động qua Cloudflare Workers", "Quản lý đổi ca và phép nghỉ", "Báo cáo giờ làm tích hợp lương" }
+        },
+        new() {
+            Num = "04", Icon = "bar-chart-3", Overline = "BÁO CÁO",
+            Title = "Báo cáo & Phân tích",
+            Desc = "Dashboard KPI toàn diện với biểu đồ xu hướng, báo cáo xuất khẩu định dạng PDF/Excel, và phân tích dự đoán nhu cầu.",
+            Bullets = new() { "Dashboard KPI real-time", "Xuất báo cáo PDF/Excel tùy chỉnh", "Biểu đồ xu hướng theo tháng/quý/năm", "Phân tích dự đoán ngăn lạnh" }
+        }
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("initLucide");
+            }
+            catch
+            {
+                // Ignored
+            }
+        }
+    }
+
+    private class ServiceItem
+    {
+        public string Num { get; set; } = "";
+        public string Icon { get; set; } = "";
+        public string Overline { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string Desc { get; set; } = "";
+        public List<string> Bullets { get; set; } = new();
+    }
+}
