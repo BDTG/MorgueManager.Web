@@ -1,0 +1,93 @@
+@page "/admin/logs"
+@layout Components.Layout.AdminLayout
+
+<div>
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px;">
+        <div>
+            <div class="font-ui" style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Dashboard / Nhật ký</div>
+            <h1 class="font-ui" style="font-size: 22px; font-weight: 700; margin: 0; color: var(--text-primary);">📝 Nhật ký hoạt động</h1>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--success); color: var(--success); background: transparent;">📥 Xuất log</button>
+            <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--border-primary); color: var(--text-secondary); background: transparent;">🔄 Làm mới</button>
+        </div>
+    </div>
+
+    <div class="filter-bar">
+        <input class="filter-input" placeholder="🔍 Tìm theo nội dung..." />
+        <select class="filter-select">
+            <option value="">Người thực hiện</option>
+            <option>Nguyễn Thị B</option>
+            <option>Trần Văn C</option>
+            <option>Lê Thị D</option>
+        </select>
+        <select class="filter-select">
+            <option value="">Loại hành động</option>
+            <option>Tạo mới</option>
+            <option>Cập nhật</option>
+            <option>Xóa</option>
+            <option>Đăng nhập</option>
+            <option>🌡️ Thay đổi nhiệt độ</option>
+        </select>
+        <input type="date" class="filter-input" style="min-width: 140px;" />
+        <button class="font-ui" style="padding: 8px 12px; border: none; background: none; color: var(--text-muted); cursor: pointer; font-size: 12px;">🔄 Xóa bộ lọc</button>
+    </div>
+
+    <div style="border-radius: 12px; border: 1px solid var(--border-primary); overflow: hidden; background-color: var(--bg-card);">
+        <table class="data-table">
+            <thead><tr><th>#</th><th>Thời gian</th><th>Người thực hiện</th><th>Hành động</th><th>Chi tiết</th><th>Trang liên quan</th></tr></thead>
+            <tbody>
+                @foreach (var log in _logs)
+                {
+                    <tr>
+                        <td style="font-size: 12px; color: var(--text-muted);">@log.Id</td>
+                        <td style="font-family: monospace; font-size: 12px;">@log.Time</td>
+                        <td style="font-size: 13px;">@log.User</td>
+                        <td><span class="badge-pill" style="background-color: @(log.BadgeBg); color: @(log.BadgeText);">@log.Action</span></td>
+                        <td style="font-size: 13px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@log.Detail</td>
+                        <td><a href="@log.Link" class="font-ui" style="font-size: 12px; color: var(--ice); text-decoration: none;">@log.LinkText</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+        <div class="font-ui" style="font-size: 13px; color: var(--text-muted);">Hiển thị 1-25 / @_logs.Count kết quả</div>
+        <div style="display: flex; gap: 4px;">
+            <button class="font-ui" style="padding: 6px 12px; border: 1px solid var(--border-primary); background: var(--bg-card); border-radius: 6px; color: var(--text-secondary); cursor: pointer; font-size: 12px;">‹</button>
+            <button class="font-ui" style="padding: 6px 12px; border: 1px solid var(--ice); background: var(--ice); border-radius: 6px; color: var(--bg-primary); cursor: pointer; font-size: 12px; font-weight: 600;">1</button>
+            <button class="font-ui" style="padding: 6px 12px; border: 1px solid var(--border-primary); background: var(--bg-card); border-radius: 6px; color: var(--text-secondary); cursor: pointer; font-size: 12px;">2</button>
+            <button class="font-ui" style="padding: 6px 12px; border: 1px solid var(--border-primary); background: var(--bg-card); border-radius: 6px; color: var(--text-secondary); cursor: pointer; font-size: 12px;">3</button>
+            <button class="font-ui" style="padding: 6px 12px; border: 1px solid var(--border-primary); background: var(--bg-card); border-radius: 6px; color: var(--text-secondary); cursor: pointer; font-size: 12px;">›</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private readonly List<LogEntry> _logs = Enumerable.Range(1, 25).Select(i => new LogEntry
+    {
+        Id = i,
+        Time = $"{(i < 10 ? "0" : "")}{i}/06/2026 0{i % 12 + 8}:{i * 3 % 60:D2}",
+        User = new[] { "Nguyễn Thị B", "Trần Văn C", "Lê Thị D", "Hệ thống" }[i % 4],
+        Action = new[] { "Tạo mới", "Cập nhật", "Xóa", "🌡️ Thay đổi nhiệt độ", "Đăng nhập" }[i % 5],
+        Detail = new[] { "Tạo mới thi thể 'Nguyễn Văn An'", "Cập nhật thông tin thi thể #127", "Điều chỉnh nhiệt độ Khu A: 2.0°C → 2.5°C", "Đăng nhập hệ thống", "Xóa thi thể #89" }[i % 5],
+        BadgeBg = new[] { "rgba(16,185,129,0.15)", "rgba(59,130,246,0.15)", "rgba(239,68,68,0.15)", "rgba(245,158,11,0.15)", "rgba(250,204,21,0.15)" }[i % 5],
+        BadgeText = new[] { "var(--success)", "var(--ice)", "var(--danger)", "var(--candle)", "#EAB308" }[i % 5],
+        Link = new[] { "/admin/corpses", "/admin/corpses/127", "/admin/temperature", "", "" }[i % 5],
+        LinkText = new[] { "Thi thể #127", "Thi thể #127", "Nhiệt độ Khu A", "", "" }[i % 5],
+    }).ToList();
+
+    private class LogEntry
+    {
+        public int Id { get; set; }
+        public string Time { get; set; } = "";
+        public string User { get; set; } = "";
+        public string Action { get; set; } = "";
+        public string Detail { get; set; } = "";
+        public string BadgeBg { get; set; } = "";
+        public string BadgeText { get; set; } = "";
+        public string Link { get; set; } = "";
+        public string LinkText { get; set; } = "";
+    }
+}
