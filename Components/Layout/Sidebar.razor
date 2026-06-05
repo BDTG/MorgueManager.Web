@@ -1,0 +1,75 @@
+@inject NavigationManager Navigation
+@inject AuthService AuthService
+
+<div class="admin-sidebar @(IsCollapsed ? "collapsed" : "") flex flex-col h-screen">
+    <div class="p-5 border-b border-[var(--border-primary)]">
+        <a href="/" class="flex items-center gap-2" style="text-decoration: none;">
+            <span class="w-2 h-2 rounded-full pulse-dot" style="background-color: var(--ice)"></span>
+            <span class="font-display text-xl" style="color: var(--text-primary)">
+                <span class="font-light">Morgue</span>
+                <span class="mx-1.5" style="color: var(--text-secondary)">|</span>
+                <span class="font-ui font-semibold text-sm">Manager</span>
+            </span>
+        </a>
+    </div>
+
+    <nav class="flex-1 py-2 overflow-y-auto">
+        @foreach (var item in _navItems)
+        {
+            var isActive = Navigation.Uri.EndsWith(item.Route) || 
+                (Navigation.Uri.Contains(item.Route) && item.Route != "/admin/dashboard" && item.Route != "/");
+            if (item.IsDivider)
+            {
+                <div class="h-px my-2 mx-4" style="background-color: var(--border-primary);"></div>
+            }
+            else
+            {
+                <a href="@item.Route" class="sidebar-nav-item @(isActive ? "active" : "")" 
+                   style="@(item.IsDanger ? "color: var(--danger) !important;" : "")">
+                    <LucideIcon Name="@item.Icon" Class="w-[18px] h-[18px] flex-shrink-0" />
+                    <span>@item.Label</span>
+                </a>
+            }
+        }
+    </nav>
+
+    <div class="py-2 border-t border-[var(--border-primary)]">
+        <button @onclick="Logout" class="sidebar-nav-item w-full border-none bg-transparent text-[var(--danger)] cursor-pointer flex items-center gap-3">
+            <LucideIcon Name="log-out" Class="w-[18px] h-[18px]" />
+            <span>Đăng xuất</span>
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public bool IsCollapsed { get; set; }
+
+    private readonly List<NavItem> _navItems = new()
+    {
+        new() { Icon = "layout-dashboard", Label = "Dashboard", Route = "/admin/dashboard" },
+        new() { Icon = "users", Label = "Quản lý Thi thể", Route = "/admin/corpses" },
+        new() { Icon = "snowflake", Label = "Sơ đồ Ngăn tủ", Route = "/admin/storages" },
+        new() { Icon = "calendar", Label = "Ca trực", Route = "/admin/shifts" },
+        new() { Icon = "thermometer", Label = "Giám sát Nhiệt độ", Route = "/admin/temperature" },
+        new() { Icon = "bar-chart-3", Label = "Báo cáo", Route = "/admin/reports" },
+        new() { Icon = "users-round", Label = "Nhân viên", Route = "/admin/users" },
+        new() { Icon = "file-text", Label = "Nhật ký", Route = "/admin/logs" },
+        new() { IsDivider = true },
+        new() { Icon = "globe", Label = "Về trang chủ", Route = "/" },
+    };
+
+    private async Task Logout()
+    {
+        await AuthService.LogoutAsync();
+        Navigation.NavigateTo("/login");
+    }
+
+    private class NavItem
+    {
+        public string Icon { get; set; } = "";
+        public string Label { get; set; } = "";
+        public string Route { get; set; } = "";
+        public bool IsDivider { get; set; }
+        public bool IsDanger { get; set; }
+    }
+}

@@ -1,0 +1,108 @@
+<footer style="background-color: var(--bg-footer);">
+    <!-- Frost line -->
+    <div class="cold-divider"></div>
+
+    <!-- Pre-footer CTA -->
+    <div class="max-w-[1200px] mx-auto px-6 lg:px-10 py-20">
+        <div class="relative rounded-2xl p-10 md:p-14 text-center overflow-hidden"
+             style="background-color: var(--bg-card); border: 1px solid var(--border-primary); box-shadow: var(--cold-glow);">
+            <p class="font-display italic text-xl md:text-2xl mb-6" style="color: var(--text-primary)">
+                "Mỗi cá nhân xứng đáng được đối xử trang trọng"
+            </p>
+            <a href="/login" class="btn-warm inline-flex items-center gap-2 font-ui text-sm font-semibold px-8 py-3.5 rounded-lg" data-cta="true" style="text-decoration: none;">
+                Truy cập Hệ thống
+                <LucideIcon Name="arrow-right" Class="w-4 h-4" />
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer grid -->
+    <div class="max-w-[1200px] mx-auto px-6 lg:px-10 pb-16">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+            <!-- Col 1: Logo -->
+            <div>
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="font-display text-xl" style="color: var(--text-primary)">
+                        <span class="font-light">Morgue</span>
+                        <span class="mx-1.5" style="color: var(--text-secondary)">|</span>
+                        <span class="font-ui font-semibold text-sm">Manager</span>
+                    </span>
+                </div>
+                <p class="font-display italic text-sm mb-4" style="color: var(--text-secondary)">
+                    Hệ thống Quản lý Nhà xác Hiện đại
+                </p>
+                <p class="font-ui text-xs" style="color: var(--text-muted)">
+                    © 2026 MorgueManager. All rights reserved.
+                </p>
+            </div>
+
+            <!-- Col 2: Navigation -->
+            <div>
+                <h4 class="font-ui text-xs uppercase tracking-[0.2em] mb-5" style="color: var(--text-muted)">
+                    Điều hướng
+                </h4>
+                <ul class="space-y-3" style="list-style: none; padding: 0; margin: 0;">
+                    @foreach (var link in new[] { ("/", "Trang chủ"), ("/about", "Giới thiệu"), ("/services", "Dịch vụ"), ("/contact", "Liên hệ") })
+                    {
+                        <li>
+                            <a href="@link.Item1" class="font-ui text-sm transition-colors duration-300 hover:text-[var(--ice)]" style="color: var(--text-secondary); text-decoration: none;">
+                                @link.Item2
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+
+            <!-- Col 3: Contact -->
+            <div>
+                <h4 class="font-ui text-xs uppercase tracking-[0.2em] mb-5" style="color: var(--text-muted)">
+                    Liên hệ
+                </h4>
+                <ul class="space-y-4" style="list-style: none; padding: 0; margin: 0;">
+                    <li class="flex items-start gap-3">
+                        <LucideIcon Name="map-pin" Class="mt-0.5 flex-shrink-0 w-4 h-4" Style="color: var(--ice);" />
+                        <span class="font-ui text-sm" style="color: var(--text-secondary)">
+                            215 Đường Hồng Bàng, Phường 11, Quận 5, TP.HCM
+                        </span>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <LucideIcon Name="phone" Class="flex-shrink-0 w-4 h-4" Style="color: var(--ice);" />
+                        <a href="tel:+842838235803" class="font-ui text-sm transition-colors duration-300 hover:text-[var(--ice)]" style="color: var(--text-secondary); text-decoration: none;">
+                            (028) 3823 5803
+                        </a>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <LucideIcon Name="mail" Class="flex-shrink-0 w-4 h-4" Style="color: var(--ice);" />
+                        <a href="mailto:contact@morguemanager.vn" class="font-ui text-sm transition-colors duration-300 hover:text-[var(--ice)]" style="color: var(--text-secondary); text-decoration: none;">
+                            contact@morguemanager.vn
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Col 4: Operating -->
+            <div>
+                <h4 class="font-ui text-xs uppercase tracking-[0.2em] mb-5" style="color: var(--text-muted)">
+                    Hoạt động
+                </h4>
+                <div class="flex items-center gap-3 mb-3">
+                    <LucideIcon Name="clock" Class="w-4 h-4" Style="color: var(--success);" />
+                    <span class="font-ui text-sm font-medium" style="color: var(--text-primary)">
+                        24/7
+                    </span>
+                </div>
+                <p class="font-ui text-sm" style="color: var(--text-secondary)">
+                    Giám sát liên tục — Hệ thống luôn sẵn sàng
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom bar -->
+    <div class="cold-divider"></div>
+    <div class="max-w-[1200px] mx-auto px-6 lg:px-10 py-6">
+        <p class="font-ui text-xs text-center" style="color: var(--text-muted)">
+            Designed for Bệnh viện Chợ Rẫy | Đồ án Lập trình Web 2026
+        </p>
+    </div>
+</footer>
