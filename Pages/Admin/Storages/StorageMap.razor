@@ -1,0 +1,97 @@
+@page "/admin/storages"
+@layout Components.Layout.AdminLayout
+@inject NavigationManager Navigation
+
+<div>
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px;">
+        <div>
+            <div class="font-ui" style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Dashboard / Sơ đồ Ngăn tủ</div>
+            <h1 class="font-ui" style="font-size: 22px; font-weight: 700; margin: 0; color: var(--text-primary);">🗄️ Sơ đồ Ngăn tủ</h1>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button @onclick="() => _showTemp = !_showTemp" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--border-primary); color: @(_showTemp ? "var(--success)" : "var(--text-secondary)"); background: transparent;">🌡️ @(_showTemp ? "Ẩn" : "Hiện") nhiệt độ</button>
+            <button @onclick="NavToTemperature" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--candle); color: var(--candle); background: transparent;">⚙️ Điều chỉnh nhiệt độ</button>
+            <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--border-primary); color: var(--text-secondary); background: transparent;">📊 Thống kê</button>
+        </div>
+    </div>
+
+    <!-- Legend -->
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding: 12px 16px; margin-bottom: 24px; border-radius: 8px; background-color: var(--bg-card); border: 1px solid var(--border-primary);">
+        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+            <span class="font-ui" style="font-size: 12px; color: var(--text-muted);"><span style="color: #10B981;">🟢</span> Trống (10)</span>
+            <span class="font-ui" style="font-size: 12px; color: var(--text-muted);"><span style="color: #EF4444;">🔴</span> Đang sử dụng (8)</span>
+            <span class="font-ui" style="font-size: 12px; color: var(--text-muted);"><span style="color: #F59E0B;">🟡</span> Chờ vệ sinh (1)</span>
+            <span class="font-ui" style="font-size: 12px; color: var(--text-muted);"><span style="color: #6366F1;">🟣</span> Bảo trì (1)</span>
+        </div>
+        <span class="font-ui" style="font-size: 12px; color: var(--text-muted);">Tổng: 20 ngăn | Sử dụng: 50%</span>
+    </div>
+
+    <!-- Zone A -->
+    <StorageZone Name="Khu A — Tủ lạnh chính" TargetTemp="2" CurrentTemp="@_zoneATemp" ShowTemp="_showTemp" Slots="@_zoneASlots" OnSlotClick="SlotClicked" />
+
+    <!-- Zone B -->
+    <StorageZone Name="Khu B — Tủ lạnh phụ" TargetTemp="2" CurrentTemp="@_zoneBTemp" ShowTemp="_showTemp" Slots="@_zoneBSlots" OnSlotClick="SlotClicked" />
+</div>
+
+@if (_selectedSlot is not null)
+{
+    <Modal OnClose="() => _selectedSlot = null">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h2 class="font-ui" style="font-size: 18px; font-weight: 700; margin: 0; color: var(--text-primary);">🗄️ Chi tiết Ngăn @_selectedSlot.Id</h2>
+            <button @onclick="() => _selectedSlot = null" style="background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer;">✕</button>
+        </div>
+        <div style="margin-bottom: 24px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Ngăn</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">@_selectedSlot.Id</div></div>
+                <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Trạng thái</div><div class="font-ui" style="font-size: 14px; color: @(_selectedSlot.Status == Models.SlotStatus.Occupied ? "#EF4444" : "#10B981");">@_selectedSlot.Status</div></div>
+                <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Nhiệt độ</div><div class="font-ui" style="font-size: 14px; color: @(_selectedSlot.Temp > 6 ? "var(--danger)" : "var(--success)");">@_selectedSlot.Temp.ToString("F1")°C</div></div>
+                <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Thời gian lưu</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">@_selectedSlot.DaysStored ngày</div></div>
+            </div>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--ice); color: var(--ice); background: transparent;">👁️ Xem thi thể</button>
+            <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--candle); color: var(--candle); background: transparent;">🔄 Chuyển ngăn</button>
+            <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--candle-deep); color: var(--candle-deep); background: transparent;">🧹 Đánh dấu vệ sinh</button>
+            <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--info); color: var(--info); background: transparent;">🔧 Bảo trì</button>
+        </div>
+    </Modal>
+}
+
+@code {
+    private bool _showTemp = true;
+    private double _zoneATemp = 2.3;
+    private double _zoneBTemp = 3.8;
+    private Models.StorageSlot? _selectedSlot;
+
+    private List<Models.StorageSlot> _zoneASlots = new();
+    private List<Models.StorageSlot> _zoneBSlots = new();
+
+    protected override void OnInitialized()
+    {
+        _zoneASlots = Enumerable.Range(1, 10).Select(i => new Models.StorageSlot
+        {
+            Id = $"A-{i:D2}", Zone = "A",
+            Status = i <= 5 ? Models.SlotStatus.Occupied : Models.SlotStatus.Empty,
+            Temp = 1.8 + (i * 0.3),
+            CorpseName = i <= 5 ? $"Nguyễn Văn {i}" : null,
+            DaysStored = i * 3,
+            LastUpdate = $"{DateTime.Now:HH:mm}",
+        }).ToList();
+
+        _zoneBSlots = Enumerable.Range(1, 10).Select(i => new Models.StorageSlot
+        {
+            Id = $"B-{i:D2}", Zone = "B",
+            Status = i <= 3 ? Models.SlotStatus.Occupied : i == 4 ? Models.SlotStatus.Cleaning : i == 5 ? Models.SlotStatus.Maintenance : Models.SlotStatus.Empty,
+            Temp = 3.0 + (i * 0.4),
+            CorpseName = i <= 3 ? $"Trần Thị {i}" : null,
+            DaysStored = i * 2,
+            LastUpdate = $"{DateTime.Now:HH:mm}",
+        }).ToList();
+    }
+
+    private void NavToTemperature() => Navigation.NavigateTo("/admin/temperature");
+    private void SlotClicked(Models.StorageSlot slot)
+    {
+        _selectedSlot = slot;
+    }
+}
