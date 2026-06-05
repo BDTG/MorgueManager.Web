@@ -1,0 +1,338 @@
+@page "/"
+@inject IJSRuntime JS
+@implements IDisposable
+
+<main>
+    <!-- HERO SECTION -->
+    <section class="relative min-h-screen flex items-center justify-center overflow-hidden" style="background-color: var(--bg-primary)">
+        <!-- Fog layers -->
+        <div class="fog-blob fog-blob-1"></div>
+        <div class="fog-blob fog-blob-2"></div>
+        <div class="fog-blob fog-blob-3"></div>
+
+        <div class="relative z-10 text-center px-6 max-w-4xl mx-auto pt-20">
+            <!-- Overline -->
+            <div class="hero-overline opacity-0 flex items-center justify-center gap-4 mb-8">
+                <span class="hidden sm:block h-px w-12" style="background-color: var(--text-secondary)"></span>
+                <span class="font-ui text-[11px] uppercase tracking-[0.3em]" style="color: var(--text-secondary)">HỆ THỐNG QUẢN LÝ NHÀ XÁC</span>
+                <span class="hidden sm:block h-px w-12" style="background-color: var(--text-secondary)"></span>
+            </div>
+
+            <!-- Main heading -->
+            <h1 class="font-display text-5xl sm:text-6xl md:text-7xl lg:text-[80px] font-semibold leading-[1.1] mb-8">
+                <span class="block overflow-hidden">
+                    <span class="hero-line block" style="color: var(--text-primary)">Trang trọng trong từng</span>
+                </span>
+                <span class="block overflow-hidden">
+                    <span class="hero-line block gradient-text-ice">quy trình quản lý.</span>
+                </span>
+            </h1>
+
+            <!-- Subtitle -->
+            <p class="hero-subtitle opacity-0 font-ui text-base sm:text-lg max-w-[580px] mx-auto mb-10 leading-relaxed" style="color: var(--text-secondary)">
+                Giải pháp số hóa toàn diện cho quy trình tiếp nhận, lưu trữ và bàn giao — tôn trọng, minh bạch, chuyên nghiệp.
+            </p>
+
+            <!-- CTAs -->
+            <div class="hero-cta opacity-0 flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+                <a href="/contact" class="font-ui text-sm font-medium px-7 py-3.5 rounded-lg transition-all duration-400 hover:shadow-[var(--cold-glow)]"
+                   style="border: 1px solid rgba(148,179,210,0.2); color: var(--text-primary); text-decoration: none;">
+                    Đăng ký truy cập (Liên hệ)
+                </a>
+                <a href="/login" class="btn-warm font-ui text-sm font-semibold px-7 py-3.5 rounded-lg flex items-center gap-2" data-cta="true" style="text-decoration: none;">
+                    Đã đăng ký (Portal Quản trị)
+                    <LucideIcon Name="arrow-right" Class="w-4 h-4" />
+                </a>
+            </div>
+
+            <!-- Stats -->
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
+                @foreach (var stat in _stats)
+                {
+                    <div class="hero-stat opacity-0 w-full sm:w-auto px-8 py-5 rounded-xl text-center"
+                         style="background-color: rgba(10,16,24,0.6); border: 1px solid rgba(72,219,251,0.1); backdrop-filter: blur(8px);">
+                        <div class="font-display text-2xl font-bold gradient-text-ice">@stat.Num</div>
+                        <div class="font-ui text-xs mt-1" style="color: var(--text-secondary)">@stat.Label</div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Scroll indicator -->
+        <div class="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
+            <span class="font-ui text-[11px] uppercase tracking-[0.2em]" style="color: var(--text-secondary)">Cuộn để khám phá</span>
+            <div class="scroll-indicator-line">
+                <div class="scroll-indicator-dot"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- COLD AIR DIVIDER -->
+    <div class="cold-divider"></div>
+    <div class="h-5 w-full" style="background: linear-gradient(to bottom, rgba(72,219,251,0.05), transparent);"></div>
+
+    <!-- FEATURES SECTION -->
+    <section id="features" class="py-24 md:py-32 px-6 lg:px-10" style="background-color: var(--bg-primary)">
+        <div class="max-w-[1200px] mx-auto">
+            <!-- Section header -->
+            <div class="text-center mb-16">
+                <span class="font-ui text-[11px] uppercase tracking-[0.25em] mb-4 block" style="color: var(--text-muted)">TÍNH NĂNG</span>
+                <h2 class="font-display text-3xl sm:text-4xl md:text-[44px] font-semibold leading-tight mb-5" style="color: var(--text-primary)">
+                    Quản lý toàn diện,<br />từ tiếp nhận đến bàn giao.
+                </h2>
+                <p class="font-ui text-base max-w-lg mx-auto" style="color: var(--text-muted)">
+                    Mọi công cụ cần thiết cho quy trình quản lý nhà xác hiện đại
+                </p>
+            </div>
+
+            <!-- Feature cards grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                @foreach (var feat in _features)
+                {
+                    <div class="feature-card group relative rounded-2xl p-8 md:p-9 transition-all duration-500 hover:-translate-y-1 marble-texture"
+                         style="background-color: var(--bg-card); border: 1px solid var(--border-primary);"
+                         onmouseenter="this.style.borderColor='rgba(46,134,222,0.2)'; this.style.boxShadow='var(--shadow-lg)';"
+                         onmouseleave="this.style.borderColor='var(--border-primary)'; this.style.boxShadow='none';">
+                        <div class="w-14 h-14 rounded-full flex items-center justify-center mb-6 transition-all duration-500 group-hover:scale-105"
+                             style="border: 1px solid rgba(72,219,251,0.2); backgroundColor: rgba(72,219,251,0.05);">
+                            <LucideIcon Name="@feat.Icon" Class="w-[26px] h-[26px]" Style="color: var(--ice);" />
+                        </div>
+                        <h3 class="font-ui text-lg font-semibold mb-3" style="color: var(--text-primary)">@feat.Title</h3>
+                        <p class="font-ui text-sm leading-relaxed mb-5" style="color: var(--text-muted)">@feat.Desc</p>
+                        <div class="h-px w-full mb-4" style="background-color: var(--border-primary)"></div>
+                        <span class="font-ui text-xs font-medium flex items-center gap-1 transition-all duration-300 group-hover:gap-2" style="color: var(--ice)">
+                            Tìm hiểu <LucideIcon Name="chevron-right" Class="w-3.5 h-3.5" />
+                        </span>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+
+    <!-- TEMPERATURE SHOWCASE -->
+    <section class="py-20 md:py-28 px-6 lg:px-10" style="background-color: var(--bg-secondary)">
+        <div class="max-w-[1000px] mx-auto text-center">
+            <h2 class="font-display text-3xl md:text-4xl font-semibold mb-4" style="color: var(--text-primary)">
+                Giám sát nhiệt độ ngăn lạnh
+            </h2>
+            <p class="font-ui text-base mb-12" style="color: var(--text-muted)">
+                Đảm bảo điều kiện bảo quản tối ưu 24/7
+            </p>
+
+            <div class="temp-section rounded-2xl p-6 md:p-10" style="background-color: var(--bg-card); border: 1px solid var(--border-primary)">
+                <!-- Storage grid mockup -->
+                <div class="grid grid-cols-5 gap-3 mb-8">
+                    @for (int i = 0; i < 10; i++)
+                    {
+                        var index = i;
+                        var isAlert = index == 7;
+                        var tempStr = isAlert ? "7.2°C" : $"{_mockTemps[index]:F1}°C";
+                        <div class="relative rounded-lg p-3 text-center transition-all duration-300"
+                             style="background-color: @(isAlert ? "rgba(238,90,36,0.08)" : "var(--bg-elevated)"); border: 1px solid @(isAlert ? "rgba(238,90,36,0.3)" : "var(--border-primary)");">
+                            @if (isAlert)
+                            {
+                                <div class="absolute -top-1.5 -right-1.5">
+                                    <LucideIcon Name="alert-triangle" Class="w-3.5 h-3.5" Style="color: var(--danger);" />
+                                </div>
+                            }
+                            <div class="font-ui text-[10px] uppercase tracking-wider mb-1" style="color: var(--text-muted)">
+                                N-@(string.Format("{0:00}", index + 1))
+                            </div>
+                            <div class="font-ui text-sm font-semibold" style="color: @(isAlert ? "var(--danger)" : "var(--ice)");">
+                                @tempStr
+                            </div>
+                            @if (isAlert)
+                            {
+                                <div class="absolute inset-0 rounded-lg animate-pulse" style="box-shadow: inset 0 0 12px rgba(238,90,36,0.2)"></div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <!-- Mini chart mockup -->
+                <div class="h-24 flex items-end justify-center gap-1 mb-6">
+                    @for (int i = 0; i < 30; i++)
+                    {
+                        var height = _chartBarHeights[i];
+                        var isHigh = height > 70;
+                        <div class="flex-1 rounded-t transition-all duration-300 hover:opacity-80"
+                             style="height: @(height)%; background-color: @(isHigh ? "rgba(238,90,36,0.5)" : "rgba(72,219,251,0.3)");">
+                        </div>
+                    }
+                </div>
+
+                <a href="/login" class="font-ui text-sm font-medium inline-flex items-center gap-1 transition-all duration-300 hover:gap-2"
+                   style="color: var(--ice); text-decoration: none;">
+                    Xem chi tiết <LucideIcon Name="arrow-right" Class="w-[14px] h-[14px]" />
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- COUNTER SECTION -->
+    <section class="py-20 md:py-28 px-6 lg:px-10" style="background: linear-gradient(180deg, var(--bg-primary), var(--bg-secondary))">
+        <div class="cold-divider mb-16"></div>
+        <div class="max-w-[1200px] mx-auto">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
+                @foreach (var c in _counters)
+                {
+                    <div class="counter-item text-center">
+                        <div class="font-display text-4xl md:text-5xl lg:text-[56px] font-bold gradient-text-ice mb-3">@c.Value</div>
+                        <div class="font-ui text-[11px] uppercase tracking-[0.25em]" style="color: var(--text-muted)">@c.Label</div>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+
+    <!-- SHOWCASE SECTION -->
+    <section class="py-20 md:py-28 px-6 lg:px-10" style="background-color: var(--bg-primary)">
+        <div class="max-w-[1200px] mx-auto">
+            <div class="text-center mb-14">
+                <h2 class="font-display text-3xl md:text-[32px] font-semibold mb-4" style="color: var(--text-primary)">
+                    Xem qua hệ thống
+                </h2>
+                <p class="font-ui text-base max-w-md mx-auto" style="color: var(--text-muted)">
+                    Giao diện trực quan, thiết kế tối ưu cho quy trình y tế
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                @foreach (var item in _showcaseItems)
+                {
+                    <div class="showcase-item group rounded-2xl overflow-hidden transition-all duration-500 hover:-translate-y-1"
+                         style="background-color: var(--bg-card); border: 1px solid var(--border-primary);"
+                         onmouseenter="this.style.borderColor='rgba(46,134,222,0.15)'; this.style.boxShadow='var(--shadow-md)';"
+                         onmouseleave="this.style.borderColor='var(--border-primary)'; this.style.boxShadow='none';">
+                        <!-- Mockup visual -->
+                        <div class="h-48 md:h-56 flex items-center justify-center relative overflow-hidden" style="background-color: var(--bg-elevated)">
+                            <div class="absolute inset-0 opacity-10">
+                                <svg width="100%" height="100%">
+                                    <defs>
+                                        <pattern id="grid-pattern-@_showcaseItems.IndexOf(item)" width="20" height="20" patternUnits="userSpaceOnUse">
+                                            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="var(--ice)" stroke-width="0.5" />
+                                        </pattern>
+                                    </defs>
+                                    <rect width="100%" height="100%" fill="url(#grid-pattern-@_showcaseItems.IndexOf(item))" />
+                                </svg>
+                            </div>
+                            <div class="relative z-10 text-center">
+                                <div class="w-16 h-16 rounded-xl mx-auto mb-3 flex items-center justify-center"
+                                     style="background-color: rgba(72,219,251,0.08); border: 1px solid rgba(72,219,251,0.15)">
+                                    <span class="font-display text-2xl" style="color: var(--ice)">
+                                        @(string.Format("{0:00}", _showcaseItems.IndexOf(item) + 1))
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="font-ui text-base font-semibold mb-2" style="color: var(--text-primary)">@item.Title</h3>
+                            <p class="font-ui text-sm" style="color: var(--text-muted)">@item.Desc</p>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA SECTION -->
+    <section class="py-32 md:py-40 px-6 lg:px-10 relative overflow-hidden" style="background-color: var(--bg-primary)">
+        <div class="fog-blob fog-blob-1" style="opacity: 0.5"></div>
+        <div class="max-w-3xl mx-auto text-center relative z-10">
+            <div class="cta-content">
+                <span class="font-ui text-[11px] uppercase tracking-[0.25em] mb-6 block" style="color: var(--text-muted)">SẴN SÀNG?</span>
+                <h2 class="font-display text-3xl sm:text-4xl md:text-[44px] font-semibold leading-tight mb-6" style="color: var(--text-primary)">
+                    Nâng tầm quy trình quản lý<br />ngay hôm nay.
+                </h2>
+                <p class="font-ui text-base mb-10" style="color: var(--text-muted)">Đăng nhập để trải nghiệm hệ thống toàn diện.</p>
+                <a href="/login" class="btn-warm font-ui text-base font-semibold px-10 py-4 rounded-lg inline-flex items-center gap-2" data-cta="true" style="text-decoration: none;">
+                    Đăng nhập Quản trị
+                    <LucideIcon Name="arrow-right" Class="w-[18px] h-[18px]" />
+                </a>
+                <div class="mt-6">
+                    <a href="/contact" class="font-ui text-sm transition-colors duration-300 hover:text-[var(--ice)]" style="color: var(--text-muted); text-decoration: none;">
+                        Hoặc liên hệ để được hỗ trợ →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+@code {
+    private readonly List<(string Num, string Label)> _stats = new()
+    {
+        ("500+", "Ca đã quản lý"),
+        ("99.9%", "Uptime hệ thống"),
+        ("24/7", "Giám sát liên tục")
+    };
+
+    private readonly List<FeatureItem> _features = new()
+    {
+        new() { Icon = "snowflake", Title = "Ngăn Lưu trữ Trực quan", Desc = "Sơ đồ ngăn tủ real-time, trạng thái từng ngăn lạnh." },
+        new() { Icon = "thermometer", Title = "Giám sát Nhiệt độ 24/7", Desc = "Cảnh báo tự động khi vượt ngưỡng an toàn." },
+        new() { Icon = "file-text", Title = "Hồ sơ Thi thể Toàn diện", Desc = "Tiếp nhận → Lưu kho → Bàn giao. QR code, timeline." },
+        new() { Icon = "calendar", Title = "Phân ca Trực Thông minh", Desc = "Ca trực phân lịch trực tuyến, thông báo tự động." },
+        new() { Icon = "bar-chart-3", Title = "Báo cáo & Phân tích", Desc = "PDF/Excel, biểu đồ xu hướng, KPI dashboard." },
+        new() { Icon = "shield", Title = "Bảo mật & Kiểm toán", Desc = "Xác thực hai lớp OTP, phân quyền chặt chẽ, lịch sử log." }
+    };
+
+    private readonly List<(string Value, string Label)> _counters = new()
+    {
+        ("500+", "THI THỂ ĐÃ QUẢN LÝ"),
+        ("20", "NGĂN LƯU TRỮ"),
+        ("2-4°C", "NHIỆT ĐỘ BẢO QUẢN"),
+        ("24/7", "GIÁM SÁT LIÊN TỤC")
+    };
+
+    private readonly List<ShowcaseItem> _showcaseItems = new()
+    {
+        new() { Title = "Dashboard Tổng quan", Desc = "Theo dõi toàn bộ hệ thống trong một góc nhìn" },
+        new() { Title = "Sơ đồ Ngăn lạnh", Desc = "Trực quan hóa từng ngăn lưu trữ real-time" },
+        new() { Title = "Chi tiết Hồ sơ", Desc = "Thông tin đầy đủ với timeline và QR code" },
+        new() { Title = "Lịch Trực & Ca làm", Desc = "Phân ca thông minh với nhắc nhở tự động" }
+    };
+
+    private readonly double[] _mockTemps = { 2.1, 1.8, 2.3, 2.0, 2.2, 1.9, 2.4, 7.2, 2.1, 1.7 };
+    private readonly List<double> _chartBarHeights = new();
+
+    protected override void OnInitialized()
+    {
+        var rand = new Random();
+        for (int i = 0; i < 30; i++)
+        {
+            _chartBarHeights.Add(20 + rand.NextDouble() * 60);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                // Chạy hiệu ứng hoạt ảnh premium (GSAP, Lenis)
+                await JS.InvokeVoidAsync("initPremiumEffects");
+            }
+            catch
+            {
+                // Ignored
+            }
+        }
+    }
+
+    public void Dispose() { }
+
+    private class FeatureItem
+    {
+        public string Icon { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string Desc { get; set; } = "";
+    }
+
+    private class ShowcaseItem
+    {
+        public string Title { get; set; } = "";
+        public string Desc { get; set; } = "";
+    }
+}
