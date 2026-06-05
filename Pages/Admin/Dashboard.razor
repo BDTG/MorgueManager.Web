@@ -1,0 +1,236 @@
+@page "/admin/dashboard"
+@layout Components.Layout.AdminLayout
+@inject NavigationManager Navigation
+@inject TemperatureSimulatorService TempService
+@implements IDisposable
+
+<div class="min-h-screen pt-4 pb-12">
+    <div class="max-w-[1400px] mx-auto">
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+            <div>
+                <div class="flex items-center gap-2 font-ui text-xs mb-1" style="color: var(--text-muted);">
+                    <span>Dashboard</span>
+                </div>
+                <h1 class="font-ui text-2xl font-bold" style="color: var(--text-primary);">
+                    Xin chào, Admin 👋
+                </h1>
+                <p class="font-ui text-sm mt-1" style="color: var(--text-secondary);">
+                    @_currentTime.ToString("dddd, dd/MM/yyyy", new System.Globalization.CultureInfo("vi-VN")) · @_currentTime.ToString("HH:mm:ss")
+                </p>
+            </div>
+            <div class="flex items-center gap-3">
+                <button class="relative p-2.5 rounded-xl transition-all hover:opacity-80 flex items-center justify-center cursor-pointer"
+                        style="background-color: var(--bg-card); border: 1px solid var(--border-primary); color: var(--text-secondary);">
+                    <LucideIcon Name="bell" Class="w-[18px] h-[18px]" />
+                    <span class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">3</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- KPI Cards Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+            <KpiCard Icon="users" Label="Tổng thi thể" Value="127" SubText="+3 tuần này" Color="#3B82F6" OnClick="NavToCorpses" />
+            <KpiCard Icon="snowflake" Label="Đang lưu kho" Value="10" SubText="Hiện tại" Color="#0EA5E9" OnClick="NavToCorpses" />
+            <KpiCard Icon="alert-triangle" Label="Quá hạn / Cảnh báo" Value="2 / 3" Color="#EF4444" OnClick="NavToCorpses" />
+            <KpiCard Icon="check-square" Label="Đã bàn giao" Value="8" SubText="Tháng này" Color="#10B981" OnClick="NavToCorpses" />
+            <KpiCard Icon="thermometer" Label="Cảnh báo nhiệt độ" Value="3" SubText="Ngăn bất thường" Color="#F59E0B" OnClick="NavToTemperature" />
+        </div>
+
+        <!-- Charts + Overdue Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Chart Container -->
+            <div class="lg:col-span-2 rounded-xl p-6" style="background-color: var(--bg-card); border: 1px solid var(--border-primary);">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-ui text-sm font-semibold flex items-center gap-2" style="color: var(--text-primary);">
+                        <LucideIcon Name="trending-up" Class="w-4 h-4" Style="color: var(--ice);" /> 
+                        <span>Xu hướng tiếp nhận — 2026</span>
+                    </h3>
+                    <span class="font-ui text-xs" style="color: var(--text-muted);">Tháng 1 - Tháng 12</span>
+                </div>
+                
+                <!-- Mini Chart -->
+                <div class="flex items-end gap-1 h-36">
+                    @for (int i = 0; i < _chartData.Count; i++)
+                    {
+                        var index = i;
+                        var v = _chartData[index];
+                        <div class="flex-1 rounded-t transition-all duration-300 hover:opacity-80"
+                             style="height: @(v)%; background-color: @(index == _chartData.Count - 1 ? "var(--ice)" : "var(--ice-deep)"); opacity: @(0.3 + (index * 0.7 / _chartData.Count));"></div>
+                    }
+                </div>
+                
+                <!-- Chart Footer -->
+                <div class="flex items-center justify-between mt-4 pt-4" style="border-top: 1px solid var(--border-primary);">
+                    <div class="flex items-center gap-2">
+                        <LucideIcon Name="thermometer" Class="w-3.5 h-3.5" Style="color: var(--ice);" />
+                        <span class="font-ui text-xs" style="color: var(--text-muted);">Nhiệt độ TB ngăn lạnh:</span>
+                        <span class="font-ui text-sm font-semibold font-mono" style="color: var(--success);">@TempService.ZoneACurrent.ToString("F1")°C</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <LucideIcon Name="activity" Class="w-3.5 h-3.5" Style="color: var(--success);" />
+                        <span class="font-ui text-xs" style="color: var(--text-muted);">Hệ thống hoạt động bình thường</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overdue List Container -->
+            <div class="rounded-xl p-6" style="background-color: var(--bg-card); border: 1px solid var(--border-primary);">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-ui text-sm font-semibold flex items-center gap-2" style="color: var(--text-primary);">
+                        <LucideIcon Name="alert-triangle" Class="w-4 h-4" Style="color: var(--danger);" /> 
+                        <span>Cần xử lý</span>
+                    </h3>
+                    <a href="/admin/corpses" class="font-ui text-xs hover:underline" style="color: var(--ice); text-decoration: none;">Xem tất cả</a>
+                </div>
+                
+                <div class="space-y-2 flex flex-col gap-2">
+                    @foreach (var c in _overdueList)
+                    {
+                        <div class="flex items-center justify-between p-3 rounded-lg transition-all duration-200 cursor-pointer"
+                             style="background-color: var(--bg-elevated); border: 1px solid var(--border-primary);"
+                             onmouseenter="this.style.borderColor='rgba(239,68,68,0.3)';"
+                             onmouseleave="this.style.borderColor='var(--border-primary)';"
+                             @onclick="NavToCorpses">
+                            <div class="flex items-center gap-3">
+                                <span class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: @(c.Days >= 14 ? "#EF4444" : "#F59E0B");"></span>
+                                <div>
+                                    <div class="font-ui text-sm font-medium" style="color: var(--text-primary);">@c.Name</div>
+                                    <div class="font-ui text-xs font-mono" style="color: var(--text-muted);">@c.CaseId</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-ui text-sm font-semibold" style="color: @(c.Days >= 14 ? "#EF4444" : "#F59E0B");">@c.Days ngày</div>
+                                <div class="font-ui text-xs" style="color: var(--text-muted);">@c.Slot</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Links -->
+        <h3 class="font-ui text-sm font-semibold mb-4 flex items-center gap-2" style="color: var(--text-primary);">
+            <LucideIcon Name="package" Class="w-4 h-4" Style="color: var(--ice);" /> 
+            <span>Truy cập nhanh</span>
+        </h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            @foreach (var link in _quickLinks)
+            {
+                <button @onclick="() => Navigation.NavigateTo(link.Route)" 
+                        class="w-full text-left rounded-xl p-5 transition-all duration-300 hover:-translate-y-0.5 group cursor-pointer"
+                        style="background-color: var(--bg-card); border: 1px solid var(--border-primary);"
+                        onmouseenter="this.style.borderColor='@(link.Color + "40")';"
+                        onmouseleave="this.style.borderColor='var(--border-primary)';">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: @(link.Color + "15");">
+                            <LucideIcon Name="@link.Icon" Class="w-5 h-5" Style="@($"color: {link.Color};")" />
+                        </div>
+                        <LucideIcon Name="arrow-right" Class="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" Style="color: var(--text-muted);" />
+                    </div>
+                    <div class="font-ui text-sm font-semibold" style="color: var(--text-primary);">@link.Title</div>
+                    <div class="font-ui text-xs mt-0.5" style="color: var(--text-muted);">@link.Desc</div>
+                </button>
+            }
+        </div>
+
+        <!-- Recent Activity Table -->
+        <div class="rounded-xl p-6" style="background-color: var(--bg-card); border: 1px solid var(--border-primary);">
+            <h3 class="font-ui text-sm font-semibold mb-4 flex items-center gap-2" style="color: var(--text-primary);">
+                <LucideIcon Name="search" Class="w-4 h-4" Style="color: var(--ice);" /> 
+                <span>Hoạt động gần đây</span>
+            </h3>
+            <div class="overflow-x-auto">
+                <table class="w-full data-table">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--table-border);">
+                            <th class="px-3 py-2 font-ui text-[10px] uppercase tracking-wider text-left" style="color: var(--text-muted);">Thời gian</th>
+                            <th class="px-3 py-2 font-ui text-[10px] uppercase tracking-wider text-left" style="color: var(--text-muted);">Hành động</th>
+                            <th class="px-3 py-2 font-ui text-[10px] uppercase tracking-wider text-left" style="color: var(--text-muted);">Đối tượng</th>
+                            <th class="px-3 py-2 font-ui text-[10px] uppercase tracking-wider text-left" style="color: var(--text-muted);">Người thực hiện</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in _recentActivity)
+                        {
+                            <tr style="border-bottom: 1px solid var(--table-border);">
+                                <td class="px-3 py-2.5 font-ui text-xs font-mono" style="color: var(--text-muted);">@row.Time</td>
+                                <td class="px-3 py-2.5">
+                                    <span class="badge-pill font-ui text-xs px-2.5 py-0.5 rounded-full font-medium"
+                                          style="background-color: @row.BadgeBg; color: @row.BadgeText;">
+                                        @row.Action
+                                    </span>
+                                </td>
+                                <td class="px-3 py-2.5 font-ui text-sm" style="color: var(--text-primary);">@row.Target</td>
+                                <td class="px-3 py-2.5 font-ui text-xs" style="color: var(--text-secondary);">@row.By</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private System.Threading.Timer? _timer;
+    private DateTime _currentTime = DateTime.Now;
+
+    private List<int> _chartData = new() { 12, 19, 15, 25, 22, 30, 28, 35, 32, 40, 38, 45 };
+
+    private readonly List<(string Name, string CaseId, int Days, string Slot)> _overdueList = new()
+    {
+        new("Nguyễn Văn An", "MC-2026-0127", 18, "A-03"),
+        new("Trần Thị Bích", "MC-2026-0120", 14, "B-02"),
+        new("Lê Hoàng Nam", "MC-2026-0115", 9, "A-07"),
+        new("Phạm Minh Tuấn", "MC-2026-0110", 8, "B-05"),
+        new("Hoàng Thị Lan", "MC-2026-0108", 7, "A-01"),
+    };
+
+    private readonly List<(string Icon, string Title, string Desc, string Color, string Route)> _quickLinks = new()
+    {
+        new("users", "Quản lý Thi thể", "Danh sách, thêm, sửa, xóa", "#3B82F6", "/admin/corpses"),
+        new("snowflake", "Ngăn Lưu trữ", "Sơ đồ ngăn tủ real-time", "#0EA5E9", "/admin/storages"),
+        new("calendar", "Phân ca Trực", "Lịch trực & nhắc nhở", "#8B5CF6", "/admin/shifts"),
+        new("bar-chart-3", "Báo cáo", "Thống kê & xuất file", "#10B981", "/admin/reports"),
+    };
+
+    private readonly List<(string Time, string Action, string Target, string By, string BadgeBg, string BadgeText)> _recentActivity = new()
+    {
+        new("10:30", "Tiếp nhận", "MC-2026-0127", "Nguyễn Thị B", "var(--badge-tiepnhan-bg)", "var(--badge-tiepnhan-text)"),
+        new("10:15", "Chuyển ngăn", "A-03 → A-05", "Trần Văn C", "var(--badge-luukho-bg)", "var(--badge-luukho-text)"),
+        new("09:45", "Bàn giao", "MC-2026-0089", "Lê Thị D", "var(--badge-bangiao-bg)", "var(--badge-bangiao-text)"),
+        new("09:20", "Cập nhật nhiệt độ", "Cold Room A", "Hệ thống", "var(--badge-luukho-bg)", "var(--badge-luukho-text)"),
+        new("08:55", "Tiếp nhận", "MC-2026-0126", "Nguyễn Thị B", "var(--badge-tiepnhan-bg)", "var(--badge-tiepnhan-text)"),
+    };
+
+    protected override void OnInitialized()
+    {
+        // Khởi tạo timer cập nhật đồng hồ mỗi giây
+        _timer = new System.Threading.Timer(Callback, null, 0, 1000);
+    }
+
+    private bool _isDisposed = false;
+
+    private void Callback(object? state)
+    {
+        if (_isDisposed) return;
+        _currentTime = DateTime.Now;
+        InvokeAsync(() =>
+        {
+            if (!_isDisposed)
+            {
+                StateHasChanged();
+            }
+        });
+    }
+
+    private void NavToCorpses() => Navigation.NavigateTo("/admin/corpses");
+    private void NavToTemperature() => Navigation.NavigateTo("/admin/temperature");
+
+    public void Dispose()
+    {
+        _isDisposed = true;
+        _timer?.Dispose();
+    }
+}
