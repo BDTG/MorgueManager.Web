@@ -1,0 +1,183 @@
+@page "/about"
+@inject IJSRuntime JS
+
+<main>
+    <!-- HERO -->
+    <section class="relative min-h-[60vh] flex items-center justify-center overflow-hidden" style="background-color: var(--bg-primary);">
+        <div class="fog-blob fog-blob-1" style="width: 40vw; height: 40vw; top: 10%; left: 20%;"></div>
+        <div class="relative z-10 text-center px-6 pt-24">
+            <div class="about-hero-content">
+                <span class="font-ui text-[11px] uppercase tracking-[0.25em] mb-4 block" style="color: var(--text-muted);">VỀ CHÚNG TÔI</span>
+                <h1 class="font-display text-4xl sm:text-5xl md:text-[56px] font-semibold leading-tight mb-6" style="color: var(--text-primary);">
+                    Câu chuyện của chúng tôi
+                </h1>
+                <p class="font-display italic text-xl md:text-2xl" style="color: var(--text-secondary);">
+                    Nơi công nghệ phục vụ lòng nhân ái
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- MISSION -->
+    <section class="py-20 md:py-28 px-6 lg:px-10" style="background-color: var(--bg-primary);">
+        <div class="max-w-[1200px] mx-auto">
+            <div class="mission-block grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+                <div>
+                    <blockquote class="font-display italic text-xl md:text-[28px] leading-relaxed pl-6 mb-8"
+                                style="color: var(--text-primary); border-left: 3px solid var(--ice-deep);">
+                        "Chúng tôi tin rằng công nghệ có thể mang lại sự trang trọng và chính xác trong những khoảnh khắc nhạy cảm nhất."
+                    </blockquote>
+                    <div class="space-y-4 font-ui text-sm leading-relaxed" style="color: var(--text-secondary);">
+                        <p>
+                            MorgueManager ra đời từ nhu cầu thực tế của các bệnh viện lớn tại Việt Nam — nơi quy trình quản lý nhà xác vẫn còn nhiều thủ công, thiếu minh bạch và dễ xảy ra sai sót.
+                        </p>
+                        <p>
+                            Với đội ngũ kỹ sư phần mềm và chuyên gia y tế, chúng tôi xây dựng một hệ thống toàn diện: từ tiếp nhận thi thể, phân bổ ngăn lạnh, giám sát nhiệt độ, đến bàn giao cho gia đình — tất cả được ghi nhận chính xác và bảo mật tuyệt đối.
+                        </p>
+                        <p>
+                            Mỗi dòng code, mỗi thiết kế giao diện đều hướng đến một mục tiêu: tôn trọng người đã khuất và hỗ trợ tối đa cho đội ngũ y tế.
+                        </p>
+                    </div>
+                </div>
+                <div class="relative rounded-2xl overflow-hidden h-80 lg:h-[500px]"
+                     style="background-color: var(--bg-secondary); border: 1px solid var(--border-primary);">
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center"
+                                 style="background-color: rgba(72,219,251,0.05); border: 1px solid rgba(72,219,251,0.15);">
+                                <span class="font-display text-4xl" style="color: var(--ice);">M</span>
+                            </div>
+                            <p class="font-display italic text-lg" style="color: var(--text-secondary);">
+                                MorgueManager
+                            </p>
+                        </div>
+                    </div>
+                    <!-- Frost overlay -->
+                    <div class="absolute inset-0 pointer-events-none"
+                         style="background: linear-gradient(180deg, transparent 60%, var(--bg-secondary));"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- VALUES -->
+    <section class="py-20 md:py-28 px-6 lg:px-10" style="background-color: var(--bg-secondary);">
+        <div class="max-w-[1200px] mx-auto">
+            <div class="text-center mb-14">
+                <span class="font-ui text-[11px] uppercase tracking-[0.25em] mb-4 block" style="color: var(--text-muted);">GIÁ TRỊ CỐT LÕI</span>
+                <h2 class="font-display text-3xl md:text-4xl font-semibold" style="color: var(--text-primary);">
+                    Những điều chúng tôi theo đuổi
+                </h2>
+            </div>
+
+            <div class="values-grid grid grid-cols-1 md:grid-cols-3 gap-6">
+                @foreach (var v in _values)
+                {
+                    <div class="value-card group rounded-2xl p-8 md:p-10 text-center transition-all duration-500 hover:-translate-y-1 marble-texture"
+                         style="background-color: var(--bg-card); border: 1px solid var(--border-primary);"
+                         onmouseenter="this.style.borderColor='rgba(46,134,222,0.2)'; this.style.boxShadow='var(--shadow-lg)';"
+                         onmouseleave="this.style.borderColor='var(--border-primary)'; this.style.boxShadow='none';">
+                        <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 transition-all duration-500 group-hover:scale-105"
+                             style="border: 1px solid rgba(72,219,251,0.2); background-color: rgba(72,219,251,0.05);">
+                            <LucideIcon Name="@v.Icon" Class="w-7 h-7" Style="color: var(--ice);" />
+                        </div>
+                        <h3 class="font-ui text-lg font-semibold mb-3" style="color: var(--text-primary)">@v.Title</h3>
+                        <p class="font-ui text-sm leading-relaxed" style="color: var(--text-muted)">@v.Desc</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+
+    <!-- TEAM -->
+    <section class="py-20 md:py-28 px-6 lg:px-10" style="background-color: var(--bg-primary);">
+        <div class="max-w-[1200px] mx-auto">
+            <div class="text-center mb-14">
+                <span class="font-ui text-[11px] uppercase tracking-[0.25em] mb-4 block" style="color: var(--text-muted);">ĐỘI NGŨ</span>
+                <h2 class="font-display text-3xl md:text-4xl font-semibold" style="color: var(--text-primary);">
+                    Những người đứng sau
+                </h2>
+            </div>
+
+            <div class="team-grid grid grid-cols-2 md:grid-cols-4 gap-8">
+                @foreach (var member in _team)
+                {
+                    <div class="team-member text-center group">
+                        <div class="w-24 h-24 md:w-[120px] md:h-[120px] rounded-full mx-auto mb-4 flex items-center justify-center transition-all duration-500 group-hover:scale-105 group-hover:-translate-y-1"
+                             style="background: linear-gradient(135deg, var(--ice-deep), var(--ice)); padding: 2px;">
+                            <div class="w-full h-full rounded-full flex items-center justify-center"
+                                 style="background-color: var(--bg-card);">
+                                <span class="font-display text-2xl md:text-3xl" style="color: var(--text-primary);">
+                                    @member.Name.Substring(0, 1)
+                                </span>
+                            </div>
+                        </div>
+                        <h4 class="font-display text-lg" style="color: var(--text-primary);">@member.Name</h4>
+                        <p class="font-ui text-xs mt-1" style="color: var(--text-muted);">@member.Role</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-20 md:py-28 px-6 lg:px-10 text-center" style="background-color: var(--bg-secondary);">
+        <div class="max-w-2xl mx-auto">
+            <h2 class="font-display text-3xl md:text-4xl font-semibold mb-6" style="color: var(--text-primary);">
+                Muốn tìm hiểu thêm?
+            </h2>
+            <p class="font-ui text-base mb-8" style="color: var(--text-muted);">
+                Chúng tôi luôn sẵn sàng lắng nghe và hỗ trợ.
+            </p>
+            <a href="/contact" class="btn-warm font-ui text-sm font-semibold px-8 py-3.5 rounded-lg inline-flex items-center gap-2" data-cta="true" style="text-decoration: none;">
+                Liên hệ với chúng tôi
+                <LucideIcon Name="arrow-right" Class="w-4 h-4" />
+            </a>
+        </div>
+    </section>
+</main>
+
+@code {
+    private readonly List<ValueItem> _values = new()
+    {
+        new() { Icon = "handshake", Title = "Tôn trọng", Desc = "Mỗi cá nhân xứng đáng được đối xử trang trọng." },
+        new() { Icon = "gem", Title = "Chuyên nghiệp", Desc = "Quy trình chuẩn quốc tế, công nghệ tiên tiến." },
+        new() { Icon = "shield-check", Title = "Minh bạch", Desc = "Nhật ký hoạt động đầy đủ, kiểm toán rõ ràng." }
+    };
+
+    private readonly List<TeamItem> _team = new()
+    {
+        new() { Name = "Nguyễn Văn A", Role = "Giám đốc Dự án" },
+        new() { Name = "Trần Thị B", Role = "Trưởng phòng CNTT" },
+        new() { Name = "Lê Văn C", Role = "Chuyên gia Y tế" },
+        new() { Name = "Phạm Thị D", Role = "Quản lý Vận hành" }
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("initLucide");
+            }
+            catch
+            {
+                // Ignored
+            }
+        }
+    }
+
+    private class ValueItem
+    {
+        public string Icon { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string Desc { get; set; } = "";
+    }
+
+    private class TeamItem
+    {
+        public string Name { get; set; } = "";
+        public string Role { get; set; } = "";
+    }
+}
