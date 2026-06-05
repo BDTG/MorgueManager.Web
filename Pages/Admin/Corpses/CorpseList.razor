@@ -1,0 +1,490 @@
+@page "/admin/corpses"
+@layout Components.Layout.AdminLayout
+@inject NavigationManager Navigation
+
+<div>
+    <!-- Top Bar -->
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px;">
+        <div>
+            <div class="font-ui" style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Dashboard / Quản lý Thi thể</div>
+            <h1 class="font-ui" style="font-size: 22px; font-weight: 700; margin: 0; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                <span style="color: var(--ice);">📋</span> Quản lý Thi thể
+            </h1>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--success); color: var(--success); background: transparent; display: flex; align-items: center; gap: 4px;">📊 Xuất Excel</button>
+            <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--danger); color: var(--danger); background: transparent; display: flex; align-items: center; gap: 4px;">📄 Xuất PDF</button>
+            <button @onclick="() => _showCreateModal = true" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; background: linear-gradient(135deg, #3B82F6, #2563EB); color: white; display: flex; align-items: center; gap: 4px;">
+                <span>➕</span> Thêm thi thể mới
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <div style="position: relative; flex: 1; min-width: 200px;">
+            <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 14px; color: var(--text-muted);">🔍</span>
+            <input class="filter-input" style="width: 100%; padding-left: 36px;" placeholder="Tìm theo tên, mã thi thể, CCCD..."
+                   @bind="_search" @bind:after="ApplyFilters" />
+        </div>
+        <select class="filter-select" @bind="_statusFilter" @bind:after="ApplyFilters">
+            <option value="">Tất cả trạng thái</option>
+            <option value="Tiếp nhận">Tiếp nhận</option>
+            <option value="Lưu kho">Lưu kho</option>
+            <option value="Bàn giao">Bàn giao</option>
+            <option value="Quá hạn">Quá hạn</option>
+        </select>
+        <select class="filter-select" @bind="_genderFilter" @bind:after="ApplyFilters">
+            <option value="">Tất cả giới tính</option>
+            <option value="Nam">Nam</option>
+            <option value="Nữ">Nữ</option>
+            <option value="Không xác định">Không xác định</option>
+        </select>
+        <input type="date" class="filter-input" value="@_dateFrom" @onchange="OnDateFromChanged" style="min-width: 140px;" />
+        <span class="font-ui" style="font-size: 12px; color: var(--text-muted);">—</span>
+        <input type="date" class="filter-input" value="@_dateTo" @onchange="OnDateToChanged" style="min-width: 140px;" />
+        @if (HasFilters)
+        {
+            <button @onclick="ResetFilters" class="font-ui" style="padding: 8px 12px; border: none; background: none; color: var(--text-muted); cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 4px;">🔄 Xóa bộ lọc</button>
+        }
+    </div>
+
+    <!-- Table -->
+    <div style="border-radius: 12px; border: 1px solid var(--border-primary); overflow: hidden; background-color: var(--bg-card);">
+        <div style="overflow-x: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 40px; cursor: default;">PRIORITY</th>
+                        <th class="sortable" @onclick="SortByCaseId">CASE ID <span style="font-size: 10px; color: @(_sortCol == "caseId" ? "var(--ice)" : "var(--text-muted)"); margin-left: 2px;">@GetSortIcon("caseId")</span></th>
+                        <th class="sortable" @onclick="SortByName">DECEASED <span style="font-size: 10px; color: @(_sortCol == "name" ? "var(--ice)" : "var(--text-muted)"); margin-left: 2px;">@GetSortIcon("name")</span></th>
+                        <th>DEMOGRAPHICS</th>
+                        <th>CAUSE OF DEATH</th>
+                        <th>STATUS</th>
+                        <th>STORAGE</th>
+                        <th>TEMP</th>
+                        <th class="sortable" @onclick="SortByDateAdmitted">DATES <span style="font-size: 10px; color: @(_sortCol == "dateAdmitted" ? "var(--ice)" : "var(--text-muted)"); margin-left: 2px;">@GetSortIcon("dateAdmitted")</span></th>
+                        <th style="width: 140px; cursor: default;">ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in _paginatedCorpses)
+                    {
+                        var isExpanded = _expandedRow == c.Id;
+                        <tr @onclick="() => ToggleExpand(c.Id)"
+                            class="@(isExpanded ? "corpse-row-expanded" : "")">
+                            <td><PriorityBadge Priority="@c.Priority" /></td>
+                            <td style="font-family: monospace; color: var(--text-muted); font-size: 12px;">@c.CaseId</td>
+                            <td>
+                                <div class="font-ui" style="font-weight: 600; color: var(--text-primary); font-size: 14px;">@c.Name</div>
+                                <div class="font-ui" style="font-size: 11px; color: var(--text-muted);">@c.Cccd</div>
+                            </td>
+                            <td>
+                                <div class="font-ui" style="font-size: 14px; color: var(--text-primary);">@c.Age yrs</div>
+                                <div class="font-ui" style="font-size: 11px; color: var(--text-muted);">@c.Gender</div>
+                            </td>
+                            <td>
+                                <div class="font-ui" style="font-size: 13px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-secondary);" title="@c.CauseOfDeath">@c.CauseOfDeath</div>
+                            </td>
+                            <td><StatusBadge Status="@c.Status" /></td>
+                            <td>
+                                @if (c.StorageSlot is not null)
+                                {
+                                    <div>
+                                        <div class="font-ui" style="font-size: 12px; color: var(--text-secondary);">@c.StorageUnit</div>
+                                        <div class="font-ui" style="font-size: 11px; font-family: monospace; color: var(--ice); cursor: pointer;" @onclick="NavToStorages" @onclick:stopPropagation="true">@c.StorageSlot</div>
+                                    </div>
+                                }
+                                else { <span style="color: var(--text-muted);">—</span> }
+                            </td>
+                            <td><TempDisplay Temp="@c.Temp" /></td>
+                            <td>
+                                <div class="font-ui" style="font-weight: 500; color: var(--text-primary); font-size: 14px;">@c.DateOfDeath</div>
+                                <div class="font-ui" style="font-size: 11px; color: var(--text-muted);">Admitted @c.DateAdmitted</div>
+                            </td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 2px;">
+                                    <button @onclick="() => OpenCorpseDetail(c.Id)" @onclick:stopPropagation="true" class="action-btn" style="color: var(--ice);" title="Xem chi tiết">👁</button>
+                                    <button @onclick="() => EditCorpse(c)" @onclick:stopPropagation="true" class="action-btn" style="color: var(--candle);" title="Sửa">✏</button>
+                                    <button @onclick="() => DeleteCorpse(c)" @onclick:stopPropagation="true" class="action-btn" style="color: var(--danger);" title="Xóa">🗑</button>
+                                    @if (c.Status == "Lưu kho")
+                                    {
+                                        <button @onclick="() => HandoverCorpse(c)" @onclick:stopPropagation="true" class="action-btn" style="color: var(--success);" title="Bàn giao">📋</button>
+                                    }
+                                </div>
+                                <div style="display: flex; justify-content: flex-end; margin-top: 2px;">
+                                    <span style="font-size: 12px; color: var(--text-muted);">@(isExpanded ? "▲" : "▼")</span>
+                                </div>
+                            </td>
+                        </tr>
+                        @if (isExpanded)
+                        {
+                            <tr>
+                                <td colspan="10" style="padding: 16px; background-color: var(--bg-elevated); border-top: 1px solid var(--border-primary);">
+                                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;">
+                                        <div>
+                                            <div class="font-ui" style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-muted); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                                                <span>👤</span> Deceased Details
+                                            </div>
+                                            <div class="font-ui" style="font-size: 13px; color: var(--text-primary); line-height: 1.8;">
+                                                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted);">Cause of Death:</span> <span>@c.CauseOfDeath</span></div>
+                                                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted);">Date of Death:</span> <span>@c.DateOfDeath</span></div>
+                                                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted);">Date Admitted:</span> <span>@c.DateAdmitted</span></div>
+                                                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted);">CCCD:</span> <span style="font-family: monospace;">@c.Cccd</span></div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="font-ui" style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-muted); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                                                <span>📍</span> Storage Location
+                                            </div>
+                                            <div class="font-ui" style="font-size: 13px; color: var(--text-primary); line-height: 1.8;">
+                                                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted);">Unit:</span> <span>@(c.StorageUnit ?? "—")</span></div>
+                                                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted);">Slot:</span> <span style="font-family: monospace; color: var(--ice);">@(c.StorageSlot ?? "—")</span></div>
+                                                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted);">Temperature:</span> <TempDisplay Temp="@c.Temp" /></div>
+                                                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted);">Days Stored:</span> <span style="color: @(c.DaysStored >= 14 ? "var(--danger)" : "var(--text-primary)"); font-weight: @(c.DaysStored >= 14 ? "600" : "400");">@c.DaysStored ngày</span></div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="font-ui" style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-muted); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                                                <span>📞</span> Next of Kin
+                                            </div>
+                                            <div class="font-ui" style="font-size: 13px; color: var(--text-primary); line-height: 1.8;">
+                                                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted);">Name:</span> <span>@c.NextOfKin.Name</span></div>
+                                                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted);">Contact:</span> <a href="tel:@c.NextOfKin.Phone" style="color: var(--ice); text-decoration: none;">@c.NextOfKin.Phone</a></div>
+                                                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted);">Relationship:</span> <span>@c.NextOfKin.Relationship</span></div>
+                                                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted);">Case ID:</span> <span style="font-family: monospace; color: var(--text-muted);">@c.CaseId</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-primary);">
+                                        <button @onclick="() => OpenCorpseDetail(c.Id)" class="font-ui" style="font-size: 12px; font-weight: 500; color: var(--ice); background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 4px;">👁 Xem hồ sơ đầy đủ</button>
+                                        <a href="tel:@c.NextOfKin.Phone" class="font-ui" style="font-size: 12px; font-weight: 500; color: var(--success); text-decoration: none; display: flex; align-items: center; gap: 4px;">📞 Liên hệ thân nhân</a>
+                                        @if (c.Status == "Lưu kho")
+                                        {
+                                            <button @onclick="() => HandoverCorpse(c)" class="font-ui" style="font-size: 12px; font-weight: 500; color: var(--success); background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 4px;">📋 Bàn giao</button>
+                                        }
+                                        @if (c.StorageSlot is not null)
+                                        {
+                                            <span class="font-ui" style="font-size: 12px; font-weight: 500; color: var(--ice-deep); display: flex; align-items: center; gap: 4px;">📍 Xem ngăn @c.StorageSlot</span>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--table-border);">
+            <span class="font-ui" style="font-size: 12px; color: var(--text-muted);">
+                Hiển thị @(_filteredCorpses.Count > 0 ? (_page - 1) * _pageSize + 1 : 0)-@Math.Min(_page * _pageSize, _filteredCorpses.Count) / @_filteredCorpses.Count kết quả
+            </span>
+            <div style="display: flex; align-items: center; gap: 4px;">
+                <button @onclick="() => SetPage(_page - 1)" disabled="@(_page == 1)" class="page-btn" style="padding: 4px 8px;">◀</button>
+                @foreach (var p in GetPageNumbers())
+                {
+                    if (p == -1)
+                    {
+                        <span style="color: var(--text-muted); padding: 0 4px;">…</span>
+                    }
+                    else
+                    {
+                        <button @onclick="() => SetPage(p)" class="page-btn" style="width: 32px; height: 32px; border-radius: 6px; font-weight: 500; background-color: @(p == _page ? "var(--input-focus)" : "transparent"); color: @(p == _page ? "#fff" : "var(--text-secondary)"); border: @(p == _page ? "none" : "1px solid var(--border-primary)");">@p</button>
+                    }
+                }
+                <button @onclick="() => SetPage(_page + 1)" disabled="@(_page == _totalPages)" class="page-btn" style="padding: 4px 8px;">▶</button>
+                <select @bind="_pageSize" @bind:after="() => { _page = 1; ApplyFilters(); }" class="filter-select" style="margin-left: 8px; padding: 4px 8px; font-size: 12px;">
+                    <option value="10">10 / trang</option>
+                    <option value="25">25 / trang</option>
+                    <option value="50">50 / trang</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Modal -->
+@if (_showCreateModal)
+{
+    <Modal OnClose="() => _showCreateModal = false">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h2 class="font-ui" style="font-size: 18px; font-weight: 700; margin: 0; color: var(--text-primary);">➕ Thêm thi thể mới</h2>
+            <button @onclick="() => _showCreateModal = false" style="background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer;">✕</button>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div>
+                <label class="font-ui" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: block; margin-bottom: 6px;">Họ và tên *</label>
+                <input class="filter-input" style="width: 100%;" />
+            </div>
+            <div>
+                <label class="font-ui" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: block; margin-bottom: 6px;">Giới tính</label>
+                <select class="filter-select" style="width: 100%;"><option>Nam</option><option>Nữ</option><option>Không xác định</option></select>
+            </div>
+            <div>
+                <label class="font-ui" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: block; margin-bottom: 6px;">Ngày sinh</label>
+                <input type="date" class="filter-input" style="width: 100%;" />
+            </div>
+            <div>
+                <label class="font-ui" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: block; margin-bottom: 6px;">CCCD/CMND</label>
+                <input class="filter-input" style="width: 100%;" placeholder="079201012345" />
+            </div>
+            <div>
+                <label class="font-ui" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: block; margin-bottom: 6px;">SĐT thân nhân</label>
+                <input class="filter-input" style="width: 100%;" placeholder="+84 912 345 678" />
+            </div>
+            <div>
+                <label class="font-ui" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: block; margin-bottom: 6px;">Nguyên nhân tử vong</label>
+                <textarea class="filter-input" style="width: 100%; min-height: 60px;"></textarea>
+            </div>
+            <div>
+                <label class="font-ui" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: block; margin-bottom: 6px;">Ngày tử vong</label>
+                <input type="date" class="filter-input" style="width: 100%;" />
+            </div>
+            <div>
+                <label class="font-ui" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: block; margin-bottom: 6px;">Ngày tiếp nhận</label>
+                <input type="date" class="filter-input" style="width: 100%;" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+            </div>
+            <div>
+                <label class="font-ui" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: block; margin-bottom: 6px;">Ngăn tủ</label>
+                <select class="filter-select" style="width: 100%;">
+                    <option value="">— Chọn —</option>
+                    @foreach (var s in _availableSlots)
+                    {
+                        <option value="@s">@s (Trống)</option>
+                    }
+                </select>
+            </div>
+            <div>
+                <label class="font-ui" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: block; margin-bottom: 6px;">Ghi chú</label>
+                <textarea class="filter-input" style="width: 100%; min-height: 60px;"></textarea>
+            </div>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+            <button @onclick="() => _showCreateModal = false" class="font-ui" style="padding: 10px 20px; border: 1px solid var(--border-primary); border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 13px;">Hủy</button>
+            <button class="font-ui" style="padding: 10px 20px; border: 1px solid var(--input-focus); border-radius: 8px; background: transparent; color: var(--input-focus); cursor: pointer; font-size: 13px;">Lưu & Tiếp tục</button>
+            <button class="font-ui" style="padding: 10px 20px; border: none; border-radius: 8px; background: linear-gradient(135deg, #3B82F6, #2563EB); color: white; cursor: pointer; font-size: 13px; font-weight: 600;">Lưu</button>
+        </div>
+    </Modal>
+}
+
+@code {
+    private string _search = "";
+    private string _statusFilter = "";
+    private string _genderFilter = "";
+    private string _dateFrom = "";
+    private string _dateTo = "";
+    private int? _expandedRow;
+    private bool _showCreateModal;
+
+    private string _sortCol = "dateAdmitted";
+    private string _sortDir = "desc";
+    private int _page = 1;
+    private int _pageSize = 10;
+    private int _totalPages = 1;
+
+    private readonly string[] _names = [
+        "Nguyễn Văn An", "Trần Thị Bích", "Lê Hoàng Nam", "Phạm Minh Tuấn", "Hoàng Thị Lan",
+        "Vũ Đức Thịnh", "Đặng Thị Hoa", "Bùi Văn Hùng", "Đỗ Thị Mai", "Ngô Văn Phúc",
+        "Lý Thị Hồng", "Dương Văn Tài", "Mai Thị Sen", "Phan Văn Long", "Trịnh Thị Dao",
+        "Lâm Văn Khoa", "Tô Thị Nga", "Chu Văn Hải", "Hồ Thị Liên", "Võ Văn Minh"
+    ];
+    private readonly string[] _causes = [
+        "Nhồi máu cơ tim", "Tai nạn giao thông", "Đột quỵ", "Ung thư phổi", "Suy đa tạng",
+        "Viêm phổi nặng", "Ngộ độc thực phẩm", "Tự tử", "Bệnh gan giai đoạn cuối", "Suy tim",
+        "Chấn thương sọ não", "Sốc nhiễm khuẩn", "Bỏng nặng", "Đuối nước", "Tai nạn lao động"
+    ];
+    private readonly string[] _relationships = ["Vợ", "Chồng", "Con", "Cha", "Mẹ", "Anh", "Chị", "Em", "Cháu", "Bạn"];
+    private readonly string[] _storageUnits = ["Cold Room A", "Cold Room B", "Cold Room C"];
+    private readonly string[] _availableSlots = [
+        "A-01","A-02","A-03","A-04","A-05","A-06","A-07","A-08","A-09","A-10",
+        "B-01","B-02","B-03","B-04","B-05","B-06","B-07","B-08","B-09","B-10"
+    ];
+
+    private List<Models.Corpse> _allCorpses = new();
+    private List<Models.Corpse> _filteredCorpses = new();
+    private List<Models.Corpse> _paginatedCorpses = new();
+
+    private bool HasFilters => !string.IsNullOrEmpty(_search) || !string.IsNullOrEmpty(_statusFilter) || !string.IsNullOrEmpty(_genderFilter) || !string.IsNullOrEmpty(_dateFrom) || !string.IsNullOrEmpty(_dateTo);
+
+    protected override void OnInitialized()
+    {
+        var rng = new Random(42);
+        var now = new DateTime(2026, 6, 25);
+
+        _allCorpses = Enumerable.Range(1, 127).Select(i =>
+        {
+            var id = i;
+            var year = 2026;
+            var seq = id.ToString("D4");
+            var dateOfDeathDt = RandomDateTime(new DateTime(2026, 1, 1), new DateTime(2026, 6, 20), rng);
+            var dateAdmittedDt = RandomDateTime(dateOfDeathDt, new DateTime(2026, 6, 25), rng);
+            var dateOfDeath = dateOfDeathDt.ToString("yyyy-MM-dd");
+            var dateAdmitted = dateAdmittedDt.ToString("yyyy-MM-dd");
+            var daysDiff = (now - dateAdmittedDt).Days;
+            var daysStored = Math.Max(1, daysDiff);
+
+            var statuses = new[] { "Tiếp nhận", "Lưu kho", "Bàn giao", "Quá hạn" };
+            var status = statuses[rng.Next(statuses.Length)];
+            var hasStorage = status == "Lưu kho" || status == "Quá hạn";
+            var temp = hasStorage ? Math.Round(1.5 + rng.NextDouble() * 6, 1) : (double?)null;
+
+            var priority = daysStored >= 14 ? "CRITICAL" : daysStored >= 7 ? "WARNING" : "NORMAL";
+            var name = _names[i % _names.Length] + (i >= 20 ? $" {Convert.ToChar(65 + i / 20)}" : "");
+
+            return new Models.Corpse
+            {
+                Id = id,
+                CaseId = $"MC-{year}-{seq}",
+                Name = name,
+                Cccd = $"079{(201000000 + i * 12345):D9}",
+                Gender = new[] { "Nam", "Nữ", "Không xác định" }[rng.Next(3)],
+                BirthDate = RandomDateTime(new DateTime(1940, 1, 1), new DateTime(2000, 1, 1), rng).ToString("yyyy-MM-dd"),
+                Age = 25 + rng.Next(70),
+                CauseOfDeath = _causes[rng.Next(_causes.Length)],
+                DateOfDeath = dateOfDeath,
+                DateAdmitted = dateAdmitted,
+                Status = status,
+                StorageUnit = hasStorage ? _storageUnits[rng.Next(_storageUnits.Length)] : null,
+                StorageSlot = hasStorage ? _availableSlots[rng.Next(_availableSlots.Length)] : null,
+                Temp = temp,
+                DaysStored = daysStored,
+                Priority = priority,
+                NextOfKin = new()
+                {
+                    Name = _names[rng.Next(_names.Length)],
+                    Phone = $"+84 9{rng.Next(10000000, 99999999)}",
+                    Relationship = _relationships[rng.Next(_relationships.Length)]
+                },
+                Notes = i % 5 == 0 ? "Cần xác minh danh tính qua CCCD" : ""
+            };
+        }).ToList();
+
+        ApplyFilters();
+    }
+
+    private static DateTime RandomDateTime(DateTime start, DateTime end, Random rng)
+    {
+        var range = (end - start).Days;
+        return start.AddDays(rng.Next(range));
+    }
+
+    private void ApplyFilters()
+    {
+        var rows = _allCorpses.AsEnumerable();
+
+        if (!string.IsNullOrEmpty(_search))
+        {
+            var q = _search.ToLowerInvariant();
+            rows = rows.Where(r => r.Name.ToLowerInvariant().Contains(q) || r.CaseId.ToLowerInvariant().Contains(q) || r.Cccd.Contains(q));
+        }
+        if (!string.IsNullOrEmpty(_statusFilter))
+            rows = rows.Where(r => r.Status == _statusFilter);
+        if (!string.IsNullOrEmpty(_genderFilter))
+            rows = rows.Where(r => r.Gender == _genderFilter);
+        if (!string.IsNullOrEmpty(_dateFrom))
+            rows = rows.Where(r => string.Compare(r.DateAdmitted, _dateFrom) >= 0);
+        if (!string.IsNullOrEmpty(_dateTo))
+            rows = rows.Where(r => string.Compare(r.DateAdmitted, _dateTo) <= 0);
+
+        rows = _sortCol switch
+        {
+            "name" => _sortDir == "asc" ? rows.OrderBy(r => r.Name) : rows.OrderByDescending(r => r.Name),
+            "caseId" => _sortDir == "asc" ? rows.OrderBy(r => r.CaseId) : rows.OrderByDescending(r => r.CaseId),
+            "dateAdmitted" => _sortDir == "asc" ? rows.OrderBy(r => r.DateAdmitted) : rows.OrderByDescending(r => r.DateAdmitted),
+            "age" => _sortDir == "asc" ? rows.OrderBy(r => r.Age) : rows.OrderByDescending(r => r.Age),
+            "daysStored" => _sortDir == "asc" ? rows.OrderBy(r => r.DaysStored) : rows.OrderByDescending(r => r.DaysStored),
+            _ => rows
+        };
+
+        _filteredCorpses = rows.ToList();
+        _totalPages = Math.Max(1, (int)Math.Ceiling(_filteredCorpses.Count / (double)_pageSize));
+        if (_page > _totalPages) _page = _totalPages;
+        if (_page < 1) _page = 1;
+
+        _paginatedCorpses = _filteredCorpses.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
+    }
+
+    private void ResetFilters()
+    {
+        _search = "";
+        _statusFilter = "";
+        _genderFilter = "";
+        _dateFrom = "";
+        _dateTo = "";
+        _page = 1;
+        ApplyFilters();
+    }
+
+    private void HandleSort(string col)
+    {
+        if (_sortCol == col)
+            _sortDir = _sortDir == "asc" ? "desc" : "asc";
+        else
+        {
+            _sortCol = col;
+            _sortDir = "asc";
+        }
+        ApplyFilters();
+    }
+
+    private void SetPage(int p)
+    {
+        if (p < 1 || p > _totalPages) return;
+        _page = p;
+        ApplyFilters();
+    }
+
+    private List<int> GetPageNumbers()
+    {
+        var pages = new List<int>();
+        var maxVisible = 5;
+        if (_totalPages <= maxVisible)
+        {
+            for (int i = 1; i <= _totalPages; i++) pages.Add(i);
+            return pages;
+        }
+
+        int start = Math.Max(1, _page - 2);
+        int end = Math.Min(_totalPages, start + maxVisible - 1);
+        if (end - start < maxVisible - 1) start = Math.Max(1, end - maxVisible + 1);
+
+        for (int i = start; i <= end; i++) pages.Add(i);
+        if (start > 2) { pages.Insert(0, -1); pages.Insert(0, 1); }
+        else if (start == 2) { pages.Insert(0, 1); }
+        else if (start == 1 && end < _totalPages - 1) pages.Add(-1);
+
+        if (end < _totalPages) pages.Add(_totalPages);
+        return pages;
+    }
+
+    private void ToggleExpand(int id) => _expandedRow = _expandedRow == id ? null : id;
+    private void OpenCorpseDetail(int id) => Navigation.NavigateTo($"/admin/corpses/{id}");
+    private void NavToStorages() => Navigation.NavigateTo("/admin/storages");
+    private void EditCorpse(Models.Corpse c) { }
+    private void DeleteCorpse(Models.Corpse c) { }
+    private void HandoverCorpse(Models.Corpse c) { }
+
+    private string GetSortIcon(string col)
+    {
+        if (_sortCol != col) return "⇅";
+        return _sortDir == "asc" ? "▲" : "▼";
+    }
+
+    private void SortByCaseId() => HandleSort("caseId");
+    private void SortByName() => HandleSort("name");
+    private void SortByDateAdmitted() => HandleSort("dateAdmitted");
+
+    private void OnDateFromChanged(ChangeEventArgs e)
+    {
+        _dateFrom = e.Value?.ToString() ?? "";
+        ApplyFilters();
+    }
+
+    private void OnDateToChanged(ChangeEventArgs e)
+    {
+        _dateTo = e.Value?.ToString() ?? "";
+        ApplyFilters();
+    }
+}
