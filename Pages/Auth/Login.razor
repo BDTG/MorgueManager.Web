@@ -1,0 +1,441 @@
+@page "/login"
+@implements IDisposable
+@inject NavigationManager Navigation
+@inject AuthService AuthService
+@inject IJSRuntime JS
+
+<div class="relative min-h-screen flex flex-col items-center justify-center px-4 overflow-hidden w-full"
+     style="background: linear-gradient(135deg, var(--login-bg-from), var(--login-bg-to)); transition: background 0.5s ease;">
+    
+    <!-- Background effects -->
+    <!-- Fixed background gradient spots -->
+    <div class="fixed inset-0 pointer-events-none z-0" style="background: radial-gradient(ellipse at 30% 20%, rgba(59,130,246,0.06) 0%, transparent 50%);"></div>
+    <div class="fixed inset-0 pointer-events-none z-0" style="background: radial-gradient(ellipse at 70% 80%, rgba(16,185,129,0.04) 0%, transparent 50%);"></div>
+
+    <!-- Floating Particles -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        @foreach (var p in _particles)
+        {
+            <span class="absolute rounded-full"
+                  style="left: @p.Left; top: @p.Top; width: @(p.Size)px; height: @(p.Size)px; background-color: var(--ice); opacity: calc(@p.Opacity * var(--login-particle-opacity)); animation: loginParticleFloat @(p.Duration)s ease-in-out @(p.Delay)s infinite alternate;"></span>
+        }
+    </div>
+
+    <!-- Top Left back to home link -->
+    <div class="absolute top-5 left-5 z-50">
+        <a href="/" class="font-ui transition-all duration-300 hover:opacity-80 flex items-center gap-1.5" style="font-size: 13px; color: var(--text-secondary); text-decoration: none;">
+            <LucideIcon Name="arrow-left" Class="w-4 h-4" />
+            <span>Về trang chủ</span>
+        </a>
+    </div>
+
+    <!-- Top Right Theme toggle button container -->
+    <div class="absolute top-5 right-5 z-50 rounded-xl transition-all duration-300 hover:scale-110"
+         style="background-color: var(--login-card-bg); border: 1px solid var(--login-card-border); backdrop-filter: blur(12px); color: var(--text-secondary);">
+        <ThemeToggle />
+    </div>
+
+    <!-- Toast Message -->
+    @if (!string.IsNullOrEmpty(_toastMessage))
+    {
+        <div class="fixed top-6 left-1/2 -translate-x-1/2 z-[3000] flex items-center gap-2 px-5 py-3 rounded-xl shadow-lg animate-toast-in"
+             style="background-color: @(_toastType == "error" ? "rgba(220,38,38,0.95)" : "rgba(16,185,129,0.95)"); color: #fff; backdrop-filter: blur(12px);">
+            <LucideIcon Name="@(_toastType == "error" ? "alert-circle" : "check")" Class="w-[18px] h-[18px]" />
+            <span class="font-ui text-sm font-medium">@_toastMessage</span>
+        </div>
+    }
+
+    <!-- Login Card -->
+    <div class="relative z-10 w-full max-w-[420px] rounded-2xl p-7 sm:p-9 transition-all duration-500"
+         style="background-color: var(--login-card-bg); border: 1px solid var(--login-card-border); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);">
+        
+        <!-- Logo & Title Header -->
+        <div class="text-center mb-8">
+            <div class="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center"
+                 style="background: linear-gradient(135deg, var(--login-btn-blue-from), var(--login-btn-blue-to)); box-shadow: 0 8px 24px rgba(59,130,246,0.25);">
+                <LucideIcon Name="hospital" Class="w-7 h-7 text-white" />
+            </div>
+            <h1 class="font-ui text-xl font-bold tracking-tight" style="color: var(--text-primary);">
+                MorgueManager
+            </h1>
+            <p class="font-ui text-sm mt-1.5" style="color: var(--text-secondary);">
+                Hệ thống Quản lý Nhà xác
+            </p>
+        </div>
+
+        @if (_step == 1)
+        {
+            <!-- STEP 1: Email & Access Key -->
+            <div class="space-y-5">
+                <div>
+                    <label class="block font-ui text-xs font-medium uppercase tracking-wider mb-2" style="color: var(--text-muted);">
+                        Email đăng nhập
+                    </label>
+                    <input type="email" placeholder="admin@hospital.vn" @bind="_email" @bind:event="oninput" @onkeydown="HandleKeyDown"
+                           class="w-full px-4 py-3 rounded-lg font-ui text-sm outline-none transition-all duration-200"
+                           style="background-color: var(--login-input-bg); border: 1.5px solid @(string.IsNullOrEmpty(_emailError) ? "var(--login-input-border)" : "var(--danger)"); color: var(--text-primary);" />
+                    @if (!string.IsNullOrEmpty(_emailError))
+                    {
+                        <p class="font-ui text-xs mt-2 flex items-center gap-1" style="color: var(--danger);">
+                            <LucideIcon Name="alert-circle" Class="w-3.5 h-3.5" />
+                            <span>@_emailError</span>
+                        </p>
+                    }
+                </div>
+
+                <div>
+                    <label class="block font-ui text-xs font-medium uppercase tracking-wider mb-2" style="color: var(--text-muted);">
+                        Khóa truy cập (Access Key)
+                    </label>
+                    <input type="text" placeholder="MM-XXXX-XXXX" @bind="_accessKey" @bind:event="oninput" @onkeydown="HandleKeyDown"
+                           class="w-full px-4 py-3 rounded-lg font-ui text-sm outline-none transition-all duration-200"
+                           style="background-color: var(--login-input-bg); border: 1.5px solid @(string.IsNullOrEmpty(_accessKeyError) ? "var(--login-input-border)" : "var(--danger)"); color: var(--text-primary);" />
+                    @if (!string.IsNullOrEmpty(_accessKeyError))
+                    {
+                        <p class="font-ui text-xs mt-2 flex items-center gap-1" style="color: var(--danger);">
+                            <LucideIcon Name="alert-circle" Class="w-3.5 h-3.5" />
+                            <span>@_accessKeyError</span>
+                        </p>
+                    }
+                </div>
+
+                <button @onclick="SendOtp" disabled="@_loading"
+                        class="w-full py-3 rounded-lg font-ui text-sm font-semibold text-white transition-all duration-300 hover:opacity-90 hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-6"
+                        style="background: linear-gradient(135deg, var(--login-btn-blue-from), var(--login-btn-blue-to)); box-shadow: 0 4px 16px rgba(59,130,246,0.3); border: none; cursor: pointer;">
+                    @if (_loading)
+                    {
+                        <LucideIcon Name="loader" Class="w-4 h-4 animate-spin" />
+                        <span>Đang gửi...</span>
+                    }
+                    else
+                    {
+                        <span>Gửi mã OTP</span>
+                    }
+                </button>
+
+                <p class="text-center font-ui text-xs mt-4" style="color: var(--text-muted);">
+                    Liên hệ quản trị viên hoặc đăng ký liên hệ để được cấp khóa truy cập.
+                </p>
+            </div>
+        }
+        else if (_step == 2)
+        {
+            <!-- STEP 2: Verify OTP -->
+            <div class="space-y-5">
+                <div class="text-center mb-4">
+                    <h2 class="font-ui text-base font-semibold" style="color: var(--text-primary);">Xác thực mã OTP</h2>
+                    <p class="font-ui text-xs mt-1" style="color: var(--text-muted);">
+                        Mã OTP đã được gửi đến <span class="font-semibold" style="color: var(--text-primary);">@_email</span>
+                    </p>
+                </div>
+
+                <div>
+                    <input type="text" placeholder="••••••" maxlength="6" @bind="_otpText" @bind:event="oninput" @onkeydown="HandleKeyDown"
+                           class="w-full py-3.5 rounded-xl text-center text-2xl font-mono tracking-[0.75em] outline-none transition-all duration-200"
+                           style="background-color: var(--login-otp-bg); border: 2px solid @(string.IsNullOrEmpty(_otpError) ? "var(--login-otp-border)" : "var(--danger)"); color: var(--text-primary); box-sizing: border-box;" />
+                    @if (!string.IsNullOrEmpty(_otpError))
+                    {
+                        <p class="font-ui text-xs mt-2 text-center flex items-center justify-center gap-1" style="color: var(--danger);">
+                            <LucideIcon Name="alert-circle" Class="w-3.5 h-3.5" />
+                            <span>@_otpError</span>
+                        </p>
+                    }
+                </div>
+
+                <!-- Countdown & Resend -->
+                <div class="flex items-center justify-between mt-4">
+                    <span class="font-ui text-xs" style="color: var(--text-muted);">
+                        Mã hết hạn sau: <span class="font-mono text-[#EE5A24] font-semibold">@GetCountdownText()</span>
+                    </span>
+                    <button @onclick="ResendOtp" disabled="@(!_canResend || _loading)"
+                            class="font-ui text-xs font-medium transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:underline bg-none border-none cursor-pointer"
+                            style="color: @(_canResend ? "var(--ice)" : "var(--text-muted)"); background: none; border: none; cursor: @(_canResend ? "pointer" : "not-allowed");">
+                        Gửi lại mã
+                    </button>
+                </div>
+
+                <button @onclick="VerifyOtp" disabled="@(_loading || _otpText.Length < 6)"
+                        class="w-full py-3 rounded-lg font-ui text-sm font-semibold text-white transition-all duration-300 hover:opacity-90 hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-6"
+                        style="background: linear-gradient(135deg, var(--login-btn-green-from), var(--login-btn-green-to)); box-shadow: 0 4px 16px rgba(16,185,129,0.3); border: none; cursor: pointer;">
+                    @if (_loading)
+                    {
+                        <LucideIcon Name="loader" Class="w-4 h-4 animate-spin" />
+                        <span>Đang xác thực...</span>
+                    }
+                    else
+                    {
+                        <span>Xác nhận đăng nhập</span>
+                    }
+                </button>
+
+                <button @onclick="GoBack" class="w-full py-2 font-ui text-xs flex items-center justify-center gap-1 transition-colors duration-200 hover:opacity-70 bg-none border-none cursor-pointer mt-4" style="color: var(--text-muted); background: none; border: none; cursor: pointer;">
+                    <LucideIcon Name="arrow-left" Class="w-3 h-3" />
+                    <span>Quay lại</span>
+                </button>
+            </div>
+        }
+
+    </div>
+
+    <!-- Footer -->
+    <p class="relative z-10 mt-8 font-ui text-[11px] text-center" style="color: var(--text-muted);">
+        © 2026 MorgueManager — Bệnh viện Chợ Rẫy
+    </p>
+
+    <!-- CSS Animations styles -->
+    <style>
+        @@keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-6px); }
+            40% { transform: translateX(6px); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+        }
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+        @@keyframes toast-in {
+            from { opacity: 0; transform: translate(-50%, -20px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+        .animate-toast-in {
+            animation: toast-in 0.3s ease-out;
+        }
+        @@keyframes loginParticleFloat {
+            0% { transform: translateY(0) translateX(0); opacity: calc(0.2 * var(--login-particle-opacity)); }
+            100% { transform: translateY(-30px) translateX(10px); opacity: calc(0.6 * var(--login-particle-opacity)); }
+        }
+    </style>
+</div>
+
+@code {
+    private int _step = 1;
+    private string _email = "";
+    private string _accessKey = "";
+    private string _otpText = "";
+    private bool _loading;
+
+    private string _emailError = "";
+    private string _accessKeyError = "";
+    private string _otpError = "";
+
+    private string _toastMessage = "";
+    private string _toastType = ""; // "error" or "success"
+
+    private int _countdown = 300;
+    private bool _canResend = false;
+    private System.Threading.Timer? _timer;
+    private bool _isDisposed = false;
+
+    private class Particle
+    {
+        public string Left { get; set; } = "0%";
+        public string Top { get; set; } = "0%";
+        public string Size { get; set; } = "2px";
+        public string Delay { get; set; } = "0s";
+        public string Duration { get; set; } = "10s";
+        public string Opacity { get; set; } = "0.5";
+    }
+
+    private List<Particle> _particles = new();
+
+    protected override void OnInitialized()
+    {
+        var random = new Random(42);
+        for (int i = 0; i < 24; i++)
+        {
+            _particles.Add(new Particle
+            {
+                Left = $"{(random.NextDouble() * 100).ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}%",
+                Top = $"{(random.NextDouble() * 100).ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}%",
+                Size = (2 + random.NextDouble() * 4).ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+                Delay = (random.NextDouble() * 8).ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+                Duration = (6 + random.NextDouble() * 10).ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+                Opacity = (0.2 + random.NextDouble() * 0.5).ToString("F2", System.Globalization.CultureInfo.InvariantCulture)
+            });
+        }
+    }
+
+    private async Task ShowToast(string message, string type = "error")
+    {
+        _toastMessage = message;
+        _toastType = type;
+        StateHasChanged();
+        await Task.Delay(4000);
+        _toastMessage = "";
+        StateHasChanged();
+    }
+
+    private void StartCountdown()
+    {
+        _countdown = 300;
+        _canResend = false;
+        _timer?.Dispose();
+        _timer = new System.Threading.Timer(async _ =>
+        {
+            if (_isDisposed) return;
+            try
+            {
+                if (_countdown > 0)
+                {
+                    _countdown--;
+                    if (!_isDisposed)
+                    {
+                        await InvokeAsync(StateHasChanged);
+                    }
+                }
+                else
+                {
+                    _canResend = true;
+                    _timer?.Dispose();
+                    if (!_isDisposed)
+                    {
+                        await InvokeAsync(StateHasChanged);
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore background thread exceptions during disposal
+            }
+        }, null, 1000, 1000);
+    }
+
+    private string GetCountdownText()
+    {
+        int mm = _countdown / 60;
+        int ss = _countdown % 60;
+        return $"{mm:D2}:{ss:D2}";
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            if (_step == 1)
+            {
+                await SendOtp();
+            }
+            else if (_step == 2 && _otpText.Length == 6)
+            {
+                await VerifyOtp();
+            }
+        }
+    }
+
+    private async Task SendOtp()
+    {
+        _emailError = "";
+        _accessKeyError = "";
+        bool hasError = false;
+
+        if (string.IsNullOrWhiteSpace(_email))
+        {
+            _emailError = "Vui lòng nhập email";
+            hasError = true;
+        }
+        else if (!_email.Contains("@") || !_email.Contains("."))
+        {
+            _emailError = "Email không hợp lệ";
+            hasError = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(_accessKey))
+        {
+            _accessKeyError = "Vui lòng nhập khóa truy cập";
+            hasError = true;
+        }
+        else if (_accessKey.Trim().ToUpper() != "MM-ACTIVE-2026")
+        {
+            _accessKeyError = "Khóa truy cập không chính xác hoặc chưa được duyệt";
+            hasError = true;
+        }
+
+        if (hasError)
+        {
+            await ShowToast("Vui lòng điền đúng thông tin yêu cầu", "error");
+            return;
+        }
+
+        _loading = true;
+        StateHasChanged();
+
+        await Task.Delay(1200);
+
+        _loading = false;
+        _step = 2;
+        _otpText = "";
+        _otpError = "";
+        StartCountdown();
+        await ShowToast("Đã gửi mã OTP thành công!", "success");
+    }
+
+    private async Task ResendOtp()
+    {
+        if (!_canResend || _loading) return;
+
+        _loading = true;
+        StateHasChanged();
+
+        await Task.Delay(1200);
+
+        _loading = false;
+        _otpText = "";
+        _otpError = "";
+        StartCountdown();
+        await ShowToast("Đã gửi lại mã OTP mới!", "success");
+    }
+
+    private async Task VerifyOtp()
+    {
+        _otpError = "";
+        if (string.IsNullOrWhiteSpace(_otpText) || _otpText.Length < 6)
+        {
+            _otpError = "Vui lòng nhập đủ 6 chữ số";
+            return;
+        }
+
+        _loading = true;
+        StateHasChanged();
+
+        await Task.Delay(1500);
+
+        _loading = false;
+        if (_otpText == "123456" || _otpText.Length == 6)
+        {
+            try
+            {
+                var token = "mock-jwt-token-" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                await AuthService.LoginAsync(token);
+                await ShowToast("Đăng nhập thành công!", "success");
+                await Task.Delay(800);
+                Navigation.NavigateTo("/admin/dashboard");
+            }
+            catch (Exception ex)
+            {
+                _otpError = "Lỗi: " + ex.Message;
+                await ShowToast("Lỗi hệ thống", "error");
+            }
+        }
+        else
+        {
+            _otpError = "Mã OTP không đúng";
+            await ShowToast("Mã OTP không chính xác", "error");
+        }
+    }
+
+    private void GoBack()
+    {
+        _step = 1;
+        _otpText = "";
+        _otpError = "";
+        _emailError = "";
+        _accessKeyError = "";
+    }
+
+    public void Dispose()
+    {
+        _isDisposed = true;
+        _timer?.Dispose();
+    }
+}

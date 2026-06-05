@@ -1,0 +1,308 @@
+@page "/contact"
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<main>
+    <!-- HERO -->
+    <section class="relative min-h-[50vh] flex items-center justify-center overflow-hidden" style="background-color: var(--bg-primary);">
+        <div class="fog-blob fog-blob-1" style="width: 30vw; height: 30vw; top: 5%; left: 30%;"></div>
+        <div class="relative z-10 text-center px-6 pt-24">
+            <div class="contact-hero">
+                <span class="font-ui text-[11px] uppercase tracking-[0.25em] mb-4 block" style="color: var(--text-muted);">LIÊN HỆ</span>
+                <h1 class="font-display text-4xl sm:text-5xl md:text-[56px] font-semibold leading-tight" style="color: var(--text-primary);">
+                    Hãy kết nối
+                </h1>
+            </div>
+        </div>
+    </section>
+
+    <!-- CONTACT CONTENT -->
+    <section class="py-20 md:py-28 px-6 lg:px-10" style="background-color: var(--bg-primary);">
+        <div class="max-w-[1200px] mx-auto">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
+                <!-- LEFT: Form -->
+                <div class="lg:col-span-7 contact-form-block">
+                    <h2 class="font-display text-2xl md:text-3xl font-semibold mb-2" style="color: var(--text-primary);">
+                        Gửi tin nhắn
+                    </h2>
+                    <p class="font-ui text-sm mb-10" style="color: var(--text-muted);">
+                        Chúng tôi sẽ phản hồi trong vòng 24 giờ.
+                    </p>
+
+                    <form @submit:preventDefault="HandleSubmit" class="space-y-8">
+                        @foreach (var field in _inputFields)
+                        {
+                            <div class="relative">
+                                <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-2 transition-all duration-300"
+                                       style="color: @(GetFocusedColor(field.Name, field.Value)); transform: @(GetFocusedTransform(field.Name, field.Value));">
+                                    @field.Label
+                                </label>
+                                <input type="@field.Type"
+                                       @bind="field.Value"
+                                       @onfocus="() => HandleFocus(field.Name)"
+                                       @onblur="HandleBlur"
+                                       class="cold-input"
+                                       required="@(field.Name != "phone")" />
+                                <div class="h-px w-full transition-all duration-500"
+                                     style="background: @(_focusedField == field.Name ? "linear-gradient(90deg, var(--ice-deep), var(--ice))" : "var(--input-border)");
+                                            transform: @(_focusedField == field.Name ? "scaleX(1)" : "scaleX(0)");
+                                            transform-origin: left;"></div>
+                            </div>
+                        }
+
+                        <div class="relative">
+                            <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-2 transition-all duration-300"
+                                   style="color: @(GetFocusedColor("message", _message));">
+                                Nội dung
+                            </label>
+                            <textarea @bind="_message"
+                                      @onfocus='() => HandleFocus("message")'
+                                      @onblur="HandleBlur"
+                                      rows="5"
+                                      class="cold-input resize-none"
+                                      required></textarea>
+                            <div class="h-px w-full transition-all duration-500"
+                                 style="background: @(_focusedField == "message" ? "linear-gradient(90deg, var(--ice-deep), var(--ice))" : "var(--input-border)");
+                                        transform: @(_focusedField == "message" ? "scaleX(1)" : "scaleX(0)");
+                                        transform-origin: left;"></div>
+                        </div>
+
+                        <button type="submit" class="btn-warm w-full font-ui text-sm font-semibold py-4 rounded-lg flex items-center justify-center gap-2" data-cta="true">
+                            @if (_submitted)
+                            {
+                                <LucideIcon Name="check" Class="w-[18px] h-[18px]" />
+                                <span>Đã gửi thành công</span>
+                            }
+                            else
+                            {
+                                <span>Gửi tin nhắn</span>
+                                <LucideIcon Name="arrow-right" Class="w-4 h-4" />
+                            }
+                        </button>
+                    </form>
+                </div>
+
+                <!-- RIGHT: Info -->
+                <div class="lg:col-span-5 contact-info-block">
+                    <div class="space-y-4">
+                        @foreach (var card in _contactCards)
+                        {
+                            RenderFragment element = @<div class="group rounded-xl p-6 transition-all duration-500 hover:-translate-y-0.5"
+                                                style="background-color: var(--bg-card); border: 1px solid var(--border-primary);"
+                                                onmouseenter="this.style.borderColor='rgba(46,134,222,0.15)'; this.style.boxShadow='var(--shadow-sm)';"
+                                                onmouseleave="this.style.borderColor='var(--border-primary)'; this.style.boxShadow='none';">
+                                             <div class="flex items-start gap-4">
+                                                 <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                                                      style="background-color: rgba(72,219,251,0.06); border: 1px solid rgba(72,219,251,0.1);">
+                                                     <LucideIcon Name="@card.Icon" Class="w-[18px] h-[18px]" Style="color: var(--ice);" />
+                                                 </div>
+                                                 <div>
+                                                     <h4 class="font-ui text-xs uppercase tracking-[0.15em] mb-1" style="color: var(--text-muted)">
+                                                         @card.Title
+                                                     </h4>
+                                                     <p class="font-ui text-sm text-[var(--text-primary)]">
+                                                         @card.Content
+                                                     </p>
+                                                 </div>
+                                             </div>
+                                         </div>;
+
+                            @if (card.Href != null)
+                            {
+                                <a href="@card.Href" class="block" style="text-decoration: none;">
+                                    @element
+                                </a>
+                            }
+                            else
+                            {
+                                <div>@element</div>
+                            }
+                        }
+                    </div>
+
+                    <!-- Map placeholder -->
+                    <div class="mt-6 rounded-xl overflow-hidden h-56 relative"
+                         style="background-color: var(--bg-card); border: 1px solid var(--border-primary);">
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="text-center">
+                                <LucideIcon Name="map-pin" Class="mx-auto mb-3 w-8 h-8" Style="color: var(--ice);" />
+                                <p class="font-ui text-sm" style="color: var(--text-secondary);">
+                                    Bệnh viện Chợ Rẫy
+                                </p>
+                                <p class="font-ui text-xs mt-1" style="color: var(--text-muted);">
+                                    215 Hồng Bàng, Quận 5, TP.HCM
+                                </p>
+                            </div>
+                        </div>
+                        <div class="absolute inset-0 pointer-events-none opacity-20"
+                             style="background-image: radial-gradient(circle at 50% 50%, var(--ice-deep) 0%, transparent 70%);"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+@if (_showAccessKeyModal)
+{
+    <div class="fixed inset-0 z-[2000] flex items-center justify-center p-4">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @onclick="CloseModal"></div>
+        
+        <!-- Content -->
+        <div class="relative z-10 w-full max-w-md p-8 rounded-2xl border border-[var(--border-primary)] shadow-2xl overflow-hidden text-center"
+             style="background-color: rgba(10, 16, 24, 0.85); backdrop-filter: blur(16px);">
+            <!-- Decorative blur background -->
+            <div class="absolute -top-12 -left-12 w-24 h-24 rounded-full bg-[var(--ice)]/20 filter blur-xl pointer-events-none"></div>
+            
+            <div class="w-16 h-16 rounded-full mx-auto mb-6 flex items-center justify-center"
+                 style="background-color: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2);">
+                <LucideIcon Name="check" Class="w-8 h-8 text-[#10B981]" />
+            </div>
+            
+            <h3 class="font-display text-2xl font-bold mb-2" style="color: var(--text-primary);">
+                Đăng ký truy cập thành công!
+            </h3>
+            <p class="font-ui text-sm mb-6" style="color: var(--text-secondary);">
+                Yêu cầu của bạn đã được duyệt. Dưới đây là khóa truy cập (Access Key) của bạn:
+            </p>
+            
+            <!-- Access Key Display Box -->
+            <div class="flex items-center justify-between p-4 rounded-xl mb-6 font-mono text-base font-bold tracking-wider"
+                 style="background-color: var(--bg-elevated); border: 1px solid var(--border-primary); color: var(--ice);">
+                <span>MM-ACTIVE-2026</span>
+                <button @onclick="CopyAccessKey" class="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-white cursor-pointer transition-all flex items-center justify-center" style="border: none; background: rgba(255,255,255,0.05); padding: 6px;">
+                    @if (_copied)
+                    {
+                        <LucideIcon Name="check" Class="w-4 h-4 text-[#10B981]" />
+                    }
+                    else
+                    {
+                        <LucideIcon Name="copy" Class="w-4 h-4 text-[var(--text-secondary)]" />
+                    }
+                </button>
+            </div>
+            
+            <p class="font-ui text-xs mb-8" style="color: var(--text-muted);">
+                * Vui lòng sao chép mã này và sử dụng tại trang Đăng nhập để mở khóa cổng thông tin nhà xác.
+            </p>
+            
+            <div class="flex flex-col gap-3">
+                <button @onclick="GoToLogin" class="btn-warm font-ui text-sm font-semibold py-3.5 rounded-lg w-full flex items-center justify-center gap-2 cursor-pointer" style="border: none; outline: none;">
+                    <span>Đi đến Đăng nhập</span>
+                    <LucideIcon Name="arrow-right" Class="w-4 h-4" />
+                </button>
+                <button @onclick="CloseModal" class="font-ui text-xs py-2 rounded-lg w-full hover:underline" style="color: var(--text-secondary); background: none; border: none; cursor: pointer;">
+                    Đóng cửa sổ
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private string? _focusedField = null;
+    private string _message = "";
+    private bool _submitted = false;
+    private bool _showAccessKeyModal = false;
+    private bool _copied = false;
+
+    private void HandleFocus(string fieldName) => _focusedField = fieldName;
+    private void HandleBlur() => _focusedField = null;
+
+    private List<InputField> _inputFields = new()
+    {
+        new() { Name = "name", Label = "Họ tên", Type = "text", Value = "" },
+        new() { Name = "email", Label = "Email", Type = "email", Value = "" },
+        new() { Name = "phone", Label = "Số điện thoại", Type = "tel", Value = "" },
+        new() { Name = "subject", Label = "Chủ đề", Type = "text", Value = "" }
+    };
+
+    private readonly List<ContactCard> _contactCards = new()
+    {
+        new() { Icon = "map-pin", Title = "Địa chỉ", Content = "215 Đường Hồng Bàng, Phường 11, Quận 5, TP.HCM", Href = null },
+        new() { Icon = "phone", Title = "Số điện thoại", Content = "(028) 3823 5803", Href = "tel:+842838235803" },
+        new() { Icon = "mail", Title = "Email", Content = "contact@morguemanager.vn", Href = "mailto:contact@morguemanager.vn" },
+        new() { Icon = "clock", Title = "Giờ làm việc", Content = "24/7 — Giám sát liên tục", Href = null }
+    };
+
+    private string GetFocusedColor(string fieldName, string value)
+    {
+        return _focusedField == fieldName || !string.IsNullOrEmpty(value) ? "var(--ice)" : "var(--text-muted)";
+    }
+
+    private string GetFocusedTransform(string fieldName, string value)
+    {
+        return _focusedField == fieldName || !string.IsNullOrEmpty(value) ? "translateY(-2px)" : "translateY(0)";
+    }
+
+    private async Task HandleSubmit()
+    {
+        _message = "";
+        foreach (var field in _inputFields)
+        {
+            field.Value = "";
+        }
+        
+        _copied = false;
+        _showAccessKeyModal = true;
+        StateHasChanged();
+        await Task.CompletedTask;
+    }
+
+    private async Task CopyAccessKey()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", "MM-ACTIVE-2026");
+        }
+        catch
+        {
+            // Ignored
+        }
+        _copied = true;
+        StateHasChanged();
+    }
+
+    private void GoToLogin()
+    {
+        _showAccessKeyModal = false;
+        Navigation.NavigateTo("/login");
+    }
+
+    private void CloseModal()
+    {
+        _showAccessKeyModal = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("initLucide");
+            }
+            catch
+            {
+                // Ignored
+            }
+        }
+    }
+
+    private class InputField
+    {
+        public string Name { get; set; } = "";
+        public string Label { get; set; } = "";
+        public string Type { get; set; } = "";
+        public string Value { get; set; } = "";
+    }
+
+    private class ContactCard
+    {
+        public string Icon { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string Content { get; set; } = "";
+        public string? Href { get; set; }
+    }
+}
