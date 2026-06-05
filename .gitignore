@@ -427,3 +427,7 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Allow Blazor Pages/Admin/Logs folder
+!Pages/Admin/Logs/
+!Pages/Admin/Logs/**
