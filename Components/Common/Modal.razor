@@ -1,0 +1,10 @@
+<div class="modal-overlay" @onclick="OnClose">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content" @onclick:stopPropagation>
+        @ChildContent
+    </div>
+</div>
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+}

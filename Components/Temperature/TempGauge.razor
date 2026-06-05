@@ -1,0 +1,24 @@
+<div class="temp-gauge">
+    <svg width="180" height="180" viewBox="0 0 180 180" style="transform: rotate(-90deg);">
+        <circle class="temp-gauge-ring" cx="90" cy="90" r="70" style="stroke: var(--border-primary);" />
+        <circle class="temp-gauge-ring" cx="90" cy="90" r="70" style="stroke: @_color; stroke-dasharray: 440; stroke-dashoffset: @_offset; transition: stroke-dashoffset 0.5s ease;" />
+    </svg>
+    <div class="temp-gauge-value">
+        <div class="font-display" style="font-size: 36px; font-weight: 600; color: var(--text-primary);">@CurrentTemp.ToString("F1")°C</div>
+        <div class="font-ui" style="font-size: 11px; color: var(--text-muted);">Mục tiêu: @TargetTemp.ToString("F1")°C</div>
+    </div>
+</div>
+@code {
+    [Parameter] public double CurrentTemp { get; set; }
+    [Parameter] public double TargetTemp { get; set; }
+    
+    private string _color = "#10B981";
+    private double _offset;
+    
+    protected override void OnInitialized()
+    {
+        _color = CurrentTemp > 6 ? "#EF4444" : CurrentTemp > 4 ? "#F59E0B" : "#10B981";
+        var percentage = Math.Clamp(CurrentTemp / 10.0, 0, 1);
+        _offset = 440 * (1 - percentage);
+    }
+}

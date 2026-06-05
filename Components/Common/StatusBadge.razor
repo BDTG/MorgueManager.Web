@@ -1,0 +1,19 @@
+@if (_bg is not null)
+{
+    <span class="badge-pill" style="background-color: @_bg; color: @_text;">@Status</span>
+}
+@code {
+    [Parameter] public string Status { get; set; } = "";
+    private string? _bg, _text;
+    protected override void OnInitialized()
+    {
+        var map = new Dictionary<string, (string bg, string text)>
+        {
+            ["Tiếp nhận"] = ("var(--badge-tiepnhan-bg)", "var(--badge-tiepnhan-text)"),
+            ["Lưu kho"] = ("var(--badge-luukho-bg)", "var(--badge-luukho-text)"),
+            ["Bàn giao"] = ("var(--badge-bangiao-bg)", "var(--badge-bangiao-text)"),
+            ["Quá hạn"] = ("var(--badge-quahan-bg)", "var(--badge-quahan-text)"),
+        };
+        if (map.TryGetValue(Status, out var c)) { _bg = c.bg; _text = c.text; }
+    }
+}

@@ -1,0 +1,15 @@
+@if (Temp is null)
+{
+    <span style="color: var(--text-muted);">—</span>
+}
+else
+{
+    var color = Temp > 6 ? "var(--danger)" : Temp > 4 ? "var(--candle)" : "var(--success)";
+    <span class="font-mono" style="font-weight: 600; color: @color;">
+        @if (Temp > 6) { <span>⚠️</span> }
+        @Temp.Value.ToString("F1")°C
+    </span>
+}
+@code {
+    [Parameter] public double? Temp { get; set; }
+}

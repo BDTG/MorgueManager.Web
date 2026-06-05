@@ -1,0 +1,26 @@
+<div class="kpi-card rounded-xl p-5 transition-all duration-300 hover:-translate-y-0.5 cursor-pointer"
+     style="background-color: var(--bg-card); border: 1px solid var(--border-primary);"
+     @onclick="OnClick"
+     onmouseenter="this.style.borderColor='@(Color + "40")'; this.style.boxShadow='0 8px 24px @(Color + "15")';"
+     onmouseleave="this.style.borderColor='var(--border-primary)'; this.style.boxShadow='none';">
+    <div class="flex items-start justify-between mb-3">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: @(Color + "15");">
+            <LucideIcon Name="@Icon" Class="w-5 h-5" Style="@($"color: {Color};")" />
+        </div>
+        @if (!string.IsNullOrEmpty(SubText))
+        {
+            <span class="font-ui text-[10px] uppercase tracking-wider text-[var(--text-muted)]">@SubText</span>
+        }
+    </div>
+    <div class="font-ui text-2xl font-bold text-[var(--text-primary)]">@Value</div>
+    <div class="font-ui text-xs mt-1 text-[var(--text-muted)]">@Label</div>
+</div>
+
+@code {
+    [Parameter] public string Icon { get; set; } = "";
+    [Parameter] public string Label { get; set; } = "";
+    [Parameter] public string Value { get; set; } = "";
+    [Parameter] public string? SubText { get; set; }
+    [Parameter] public string Color { get; set; } = "#3B82F6";
+    [Parameter] public EventCallback OnClick { get; set; }
+}

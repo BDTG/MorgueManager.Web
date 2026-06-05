@@ -1,0 +1,7 @@
+<div style="width: 100%; height: @(Height)px;">
+    @ChildContent
+</div>
+@code {
+    [Parameter] public int Height { get; set; } = 200;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

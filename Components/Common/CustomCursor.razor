@@ -1,0 +1,21 @@
+@inject IJSRuntime JS
+
+<div id="custom-cursor" class="fixed top-0 left-0 w-8 h-8 rounded-full border border-white/20 pointer-events-none z-[9999] transition-transform duration-100 ease-out hidden md:block"></div>
+<div id="custom-cursor-dot" class="fixed top-0 left-0 w-1 h-1 rounded-full bg-white/60 pointer-events-none z-[9999] transition-transform duration-75 ease-out hidden md:block"></div>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("initCustomCursor");
+            }
+            catch
+            {
+                // Ignored
+            }
+        }
+    }
+}

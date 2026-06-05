@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="10.0.8" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.8" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.8" PrivateAssets="all" />
+  </ItemGroup>
+
+  <Target Name="CompileTailwind" BeforeTargets="BeforeBuild">
+    <Message Importance="high" Text="⚡ Đang biên dịch Tailwind CSS v4..." />
+    <Exec Command="npx @tailwindcss/cli -i wwwroot/css/input.css -o wwwroot/css/app.compiled.css --minify" />
+  </Target>
+
+</Project>
+
