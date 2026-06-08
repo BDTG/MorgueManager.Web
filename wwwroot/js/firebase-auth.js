@@ -2,15 +2,14 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/fireba
 import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCYRv1mjJRta-HPvfVpzK8YqED94lQyCQc",
+  apiKey: "AIzaSyCYRv1mJjRTa-HPvfVpZk8YqED941QyCQc",
   authDomain: "morguemanager-588fd.firebaseapp.com",
   projectId: "morguemanager-588fd",
   storageBucket: "morguemanager-588fd.firebasestorage.app",
   messagingSenderId: "740307579938",
-  appId: "1:740307579938:web:b315a515463ce4322a067b",
+  appId: "1:740307579938:web:b315e515463ce4322a067b",
   measurementId: "G-CEJ73C6VM0"
 };
-
 // Khởi tạo Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
