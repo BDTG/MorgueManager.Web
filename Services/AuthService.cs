@@ -50,4 +50,34 @@ public class AuthService
         }
         catch { }
     }
+
+    public async Task<string?> LoginWithGoogleAsync()
+    {
+        try
+        {
+            // Gọi hàm Javascript 'window.loginWithGoogle'
+            var result = await _js.InvokeAsync<GoogleLoginResult>("loginWithGoogle");
+            if (result != null && result.Success && !string.IsNullOrEmpty(result.Token))
+            {
+                await LoginAsync(result.Token);
+                return null; // Thành công, không có lỗi
+            }
+            
+            return result?.ErrorMessage ?? "Lỗi không xác định từ Google Sign-in";
+        }
+        catch (Exception ex)
+        {
+            return "Lỗi kết nối Firebase: " + ex.Message;
+        }
+    }
+}
+
+public class GoogleLoginResult
+{
+    public bool Success { get; set; }
+    public string? Token { get; set; }
+    public string? Email { get; set; }
+    public string? DisplayName { get; set; }
+    public string? PhotoUrl { get; set; }
+    public string? ErrorMessage { get; set; }
 }
