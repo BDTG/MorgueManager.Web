@@ -1,6 +1,12 @@
-﻿<Router AppAssembly="@typeof(App).Assembly">
+<Router AppAssembly="@typeof(App).Assembly">
     <Found Context="routeData">
         <RouteView RouteData="@routeData" DefaultLayout="@typeof(Components.Layout.PublicLayout)" />
         <FocusOnNavigate RouteData="@routeData" Selector="h1" />
     </Found>
+    <NotFound>
+        <PageTitle>Không tìm thấy trang - MorgueManager</PageTitle>
+        <LayoutView Layout="@typeof(Components.Layout.PublicLayout)">
+            <MorgueManager.Web.Pages.Auth.NotFound />
+        </LayoutView>
+    </NotFound>
 </Router>
