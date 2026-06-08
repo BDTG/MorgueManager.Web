@@ -417,28 +417,6 @@
         StateHasChanged();
     }
 
-    private async Task LoginWithGoogle()
-    {
-        _loading = true;
-        StateHasChanged();
-
-        var errorMsg = await AuthService.LoginWithGoogleAsync();
-        
-        _loading = false;
-        if (errorMsg == null)
-        {
-            // Success
-            await ShowToast("Đăng nhập Google thành công!", "success");
-            await Task.Delay(800);
-            Navigation.NavigateTo("/admin/dashboard");
-        }
-        else
-        {
-            // Fail
-            await ShowToast(errorMsg, "error");
-        }
-        StateHasChanged();
-    }
 
     private async Task ResendOtp()
     {
