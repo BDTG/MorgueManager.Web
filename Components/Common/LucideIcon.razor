@@ -1,24 +1,7 @@
-@inject IJSRuntime JS
-
-<i data-lucide="@Name" class="@Class" style="@Style"></i>
+<span class="@Class" style="display: inline-block; background-color: currentColor; mask: url('https://unpkg.com/lucide-static@latest/icons/@(Name).svg') no-repeat center / contain; -webkit-mask: url('https://unpkg.com/lucide-static@latest/icons/@(Name).svg') no-repeat center / contain; @Style" aria-hidden="true"></span>
 
 @code {
     [Parameter] public string Name { get; set; } = "";
     [Parameter] public string Class { get; set; } = "";
     [Parameter] public string Style { get; set; } = "";
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            try
-            {
-                await JS.InvokeVoidAsync("initLucide");
-            }
-            catch
-            {
-                // Ignored
-            }
-        }
-    }
 }
