@@ -50,9 +50,9 @@
                 @foreach (var stat in _stats)
                 {
                     <div class="hero-stat opacity-0 w-full sm:w-auto px-8 py-5 rounded-xl text-center"
-                         style="background-color: rgba(10,16,24,0.6); border: 1px solid rgba(72,219,251,0.1); backdrop-filter: blur(8px);">
+                         style="background-color: var(--bg-card); border: 1px solid var(--border-primary); backdrop-filter: blur(8px); box-shadow: var(--shadow-sm);">
                         <div class="font-display text-2xl font-bold gradient-text-ice">@stat.Num</div>
-                        <div class="font-ui text-xs mt-1" style="color: var(--text-secondary)">@stat.Label</div>
+                        <div class="font-ui text-xs mt-1 font-medium" style="color: var(--text-secondary)">@stat.Label</div>
                     </div>
                 }
             </div>
