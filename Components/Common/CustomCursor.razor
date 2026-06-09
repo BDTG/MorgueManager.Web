@@ -1,7 +1,7 @@
 @inject IJSRuntime JS
 
-<div id="custom-cursor" class="fixed top-0 left-0 w-8 h-8 rounded-full border border-white/20 pointer-events-none z-[9999] transition-transform duration-100 ease-out hidden md:block"></div>
-<div id="custom-cursor-dot" class="fixed top-0 left-0 w-1 h-1 rounded-full bg-white/60 pointer-events-none z-[9999] transition-transform duration-75 ease-out hidden md:block"></div>
+<div id="custom-cursor" class="fixed top-0 left-0 w-8 h-8 rounded-full border border-white/20 pointer-events-none z-[9999] transition-all duration-100 ease-out hidden md:block" style="transform: translate3d(var(--cx, 0), var(--cy, 0), 0) scale(var(--cscale, 1)); border-color: var(--cborder, rgba(255,255,255,0.2)); background-color: var(--cbg, transparent);"></div>
+<div id="custom-cursor-dot" class="fixed top-0 left-0 w-1 h-1 rounded-full bg-white/60 pointer-events-none z-[9999] transition-all duration-75 ease-out hidden md:block" style="transform: translate3d(var(--dotx, 0), var(--doty, 0), 0); background-color: var(--dotbg, rgba(255,255,255,0.6));"></div>
 
 @code {
     protected override async Task OnAfterRenderAsync(bool firstRender)

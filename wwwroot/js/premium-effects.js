@@ -104,20 +104,26 @@ window.initCustomCursor = () => {
     cursorDot.style.display = 'block';
 
     const onMouseMove = (e) => {
-        cursor.style.transform = `translate3d(${e.clientX - 16}px, ${e.clientY - 16}px, 0)`;
-        cursorDot.style.transform = `translate3d(${e.clientX - 2}px, ${e.clientY - 2}px, 0)`;
+        cursor.style.setProperty('--cx', `${e.clientX - 16}px`);
+        cursor.style.setProperty('--cy', `${e.clientY - 16}px`);
+        cursorDot.style.setProperty('--dotx', `${e.clientX - 2}px`);
+        cursorDot.style.setProperty('--doty', `${e.clientY - 2}px`);
     };
     
     document.removeEventListener('mousemove', onMouseMove);
     document.addEventListener('mousemove', onMouseMove);
 
     const onMouseEnter = () => {
-        cursor.classList.add('scale-150', 'border-[var(--ice)]', 'bg-[rgba(72,219,251,0.05)]');
-        cursorDot.classList.add('bg-[var(--ice)]');
+        cursor.style.setProperty('--cscale', '1.5');
+        cursor.style.setProperty('--cborder', 'var(--ice)');
+        cursor.style.setProperty('--cbg', 'rgba(72,219,251,0.05)');
+        cursorDot.style.setProperty('--dotbg', 'var(--ice)');
     };
     const onMouseLeave = () => {
-        cursor.classList.remove('scale-150', 'border-[var(--ice)]', 'bg-[rgba(72,219,251,0.05)]');
-        cursorDot.classList.remove('bg-[var(--ice)]');
+        cursor.style.setProperty('--cscale', '1');
+        cursor.style.setProperty('--cborder', 'rgba(255,255,255,0.2)');
+        cursor.style.setProperty('--cbg', 'transparent');
+        cursorDot.style.setProperty('--dotbg', 'rgba(255,255,255,0.6)');
     };
 
     document.querySelectorAll('a, button, [data-cta]').forEach(el => {
