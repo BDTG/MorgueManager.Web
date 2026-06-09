@@ -53,6 +53,8 @@
     --table-header-bg: rgba(15, 23, 42, 0.5);
     --table-row-hover: rgba(30, 41, 59, 0.6);
     --table-border: rgba(148, 179, 210, 0.08);
+    --cursor-ring: rgba(255, 255, 255, 0.2);
+    --cursor-dot: rgba(255, 255, 255, 0.6);
     --badge-tiepnhan-bg: rgba(16, 185, 129, 0.15);
     --badge-tiepnhan-text: #10B981;
     --badge-luukho-bg: rgba(59, 130, 246, 0.15);
@@ -119,6 +121,8 @@
     --table-header-bg: #F8FAFC;
     --table-row-hover: #F1F5F9;
     --table-border: #E2E8F0;
+    --cursor-ring: rgba(15, 23, 42, 0.2);
+    --cursor-dot: rgba(15, 23, 42, 0.6);
     --badge-tiepnhan-bg: #ECFDF5;
     --badge-tiepnhan-text: #059669;
     --badge-luukho-bg: #EFF6FF;

@@ -113,25 +113,31 @@ window.initCustomCursor = () => {
     document.removeEventListener('mousemove', onMouseMove);
     document.addEventListener('mousemove', onMouseMove);
 
-    const onMouseEnter = () => {
-        cursor.style.setProperty('--cscale', '1.5');
-        cursor.style.setProperty('--cborder', 'var(--ice)');
-        cursor.style.setProperty('--cbg', 'rgba(72,219,251,0.05)');
-        cursorDot.style.setProperty('--dotbg', 'var(--ice)');
-    };
-    const onMouseLeave = () => {
-        cursor.style.setProperty('--cscale', '1');
-        cursor.style.setProperty('--cborder', 'rgba(255,255,255,0.2)');
-        cursor.style.setProperty('--cbg', 'transparent');
-        cursorDot.style.setProperty('--dotbg', 'rgba(255,255,255,0.6)');
+    const handleMouseOver = (e) => {
+        const target = e.target.closest('a, button, [data-cta]');
+        if (target) {
+            cursor.style.setProperty('--cscale', '1.5');
+            cursor.style.setProperty('--cborder', 'var(--ice)');
+            cursor.style.setProperty('--cbg', 'rgba(72,219,251,0.05)');
+            cursorDot.style.setProperty('--dotbg', 'var(--ice)');
+        }
     };
 
-    document.querySelectorAll('a, button, [data-cta]').forEach(el => {
-        el.removeEventListener('mouseenter', onMouseEnter);
-        el.removeEventListener('mouseleave', onMouseLeave);
-        el.addEventListener('mouseenter', onMouseEnter);
-        el.addEventListener('mouseleave', onMouseLeave);
-    });
+    const handleMouseOut = (e) => {
+        const target = e.target.closest('a, button, [data-cta]');
+        if (target) {
+            cursor.style.setProperty('--cscale', '1');
+            cursor.style.setProperty('--cborder', 'var(--cursor-ring)');
+            cursor.style.setProperty('--cbg', 'transparent');
+            cursorDot.style.setProperty('--dotbg', 'var(--cursor-dot)');
+        }
+    };
+
+    document.removeEventListener('mouseover', handleMouseOver);
+    document.removeEventListener('mouseout', handleMouseOut);
+    
+    document.addEventListener('mouseover', handleMouseOver);
+    document.addEventListener('mouseout', handleMouseOut);
 };
 
 // Cập nhật Icons Lucide
