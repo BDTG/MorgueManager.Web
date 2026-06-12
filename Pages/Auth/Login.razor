@@ -55,7 +55,7 @@
                  style="background: linear-gradient(135deg, var(--login-btn-blue-from), var(--login-btn-blue-to)); box-shadow: 0 8px 24px rgba(59,130,246,0.25);">
                 <LucideIcon Name="hospital" Class="w-7 h-7 text-white" />
             </div>
-            <h1 class="font-ui text-xl font-bold tracking-tight" style="color: var(--text-primary);">
+            <h1 class="font-ui text-xl font-bold tracking-tight" style="color: var(--text-primary); outline: none;">
                 MorgueManager
             </h1>
             <p class="font-ui text-sm mt-1.5" style="color: var(--text-secondary);">
@@ -72,8 +72,10 @@
                         Email đăng nhập
                     </label>
                     <input type="email" placeholder="admin@hospital.vn" @bind="_email" @bind:event="oninput" @onkeydown="HandleKeyDown"
+                           @onfocus='() => HandleInputFocus("email")'
+                           @onblur="HandleInputBlur"
                            class="w-full px-4 py-3 rounded-lg font-ui text-sm outline-none transition-all duration-200"
-                           style="background-color: var(--login-input-bg); border: 1.5px solid @(string.IsNullOrEmpty(_emailError) ? "var(--login-input-border)" : "var(--danger)"); color: var(--text-primary);" />
+                           style="background-color: var(--login-input-bg); border: 1.5px solid @(GetInputBorderColor("email", _emailError)); color: var(--text-primary); box-shadow: @(GetInputBoxShadow("email"));" />
                     @if (!string.IsNullOrEmpty(_emailError))
                     {
                         <p class="font-ui text-xs mt-2 flex items-center gap-1" style="color: var(--danger);">
@@ -88,8 +90,10 @@
                         Khóa truy cập (Access Key)
                     </label>
                     <input type="text" placeholder="MM-XXXX-XXXX" @bind="_accessKey" @bind:event="oninput" @onkeydown="HandleKeyDown"
+                           @onfocus='() => HandleInputFocus("accesskey")'
+                           @onblur="HandleInputBlur"
                            class="w-full px-4 py-3 rounded-lg font-ui text-sm outline-none transition-all duration-200"
-                           style="background-color: var(--login-input-bg); border: 1.5px solid @(string.IsNullOrEmpty(_accessKeyError) ? "var(--login-input-border)" : "var(--danger)"); color: var(--text-primary);" />
+                           style="background-color: var(--login-input-bg); border: 1.5px solid @(GetInputBorderColor("accesskey", _accessKeyError)); color: var(--text-primary); box-shadow: @(GetInputBoxShadow("accesskey"));" />
                     @if (!string.IsNullOrEmpty(_accessKeyError))
                     {
                         <p class="font-ui text-xs mt-2 flex items-center gap-1" style="color: var(--danger);">
@@ -107,6 +111,10 @@
                         <LucideIcon Name="loader" Class="w-4 h-4 animate-spin" />
                         <span>Đang gửi...</span>
                     }
+                    else
+                    {
+                        <span>Gửi mã OTP</span>
+                        <LucideIcon Name="arrow-right" Class="w-4 h-4" />
                     }
                 </button>
 
@@ -118,8 +126,10 @@
                 </div>
 
                 <button @onclick="LoginWithGoogle" disabled="@_loading" type="button"
-                        class="w-full py-3 rounded-lg font-ui text-sm font-semibold transition-all duration-300 hover:opacity-90 hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        style="background-color: var(--login-input-bg); border: 1.5px solid var(--login-input-border); color: var(--text-primary); cursor: pointer;">
+                        @onmouseenter="() => _hoverGoogle = true"
+                        @onmouseleave="() => _hoverGoogle = false"
+                        class="w-full py-3 rounded-lg font-ui text-sm font-semibold transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        style="background-color: @(_hoverGoogle ? "rgba(255, 255, 255, 0.08)" : "var(--login-input-bg)"); border: 1.5px solid @(_hoverGoogle ? "var(--login-btn-blue-from)" : "var(--login-input-border)"); color: var(--text-primary); cursor: pointer; box-shadow: @(_hoverGoogle ? "0 4px 12px rgba(59, 130, 246, 0.15)" : "none"); transform: @(_hoverGoogle ? "scale(1.01)" : "scale(1)"); outline: none;">
                     @if (_loading)
                     {
                         <LucideIcon Name="loader" Class="w-4 h-4 animate-spin" />
@@ -241,6 +251,24 @@
 
     private string _emailError = "";
     private string _accessKeyError = "";
+
+    private string _focusedInput = "";
+    private bool _hoverGoogle = false;
+
+    private void HandleInputFocus(string name) => _focusedInput = name;
+    private void HandleInputBlur() => _focusedInput = "";
+
+    private string GetInputBorderColor(string field, string error)
+    {
+        if (!string.IsNullOrEmpty(error))
+            return "var(--danger)";
+        return _focusedInput == field ? "var(--login-btn-blue-from)" : "var(--login-input-border)";
+    }
+
+    private string GetInputBoxShadow(string field)
+    {
+        return _focusedInput == field ? "0 0 10px rgba(59, 130, 246, 0.25)" : "none";
+    }
     private string _otpError = "";
 
     private string _toastMessage = "";
