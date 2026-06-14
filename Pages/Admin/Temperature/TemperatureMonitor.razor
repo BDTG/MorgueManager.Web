@@ -17,7 +17,7 @@
     </div>
 
     <!-- Overview Cards -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px;">
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 32px;">
         <!-- Zone A Gauge -->
         <div style="padding: 24px; border-radius: 12px; background-color: var(--bg-card); border: 1px solid var(--border-primary); text-align: center; display: flex; flex-direction: column; align-items: center;">
             <TempGauge CurrentTemp="@TempService.ZoneACurrent" TargetTemp="@TempService.ZoneATarget" />
@@ -43,35 +43,75 @@
                 🎛️ @GetZoneBLabel() nhiệt độ Khu B
             </button>
         </div>
+
+        <!-- Zone C Gauge -->
+        <div style="padding: 24px; border-radius: 12px; background-color: var(--bg-card); border: 1px solid var(--border-primary); text-align: center; display: flex; flex-direction: column; align-items: center;">
+            <TempGauge CurrentTemp="@_zoneCCurrent" TargetTemp="@_zoneCTarget" />
+            <div class="font-ui" style="margin-top: 12px;">❄️ Khu C — Tủ cấp đông chuyên dụng</div>
+            <div style="margin-top: 4px;">
+                <span class="badge-pill" style="background-color: rgba(59,130,246,0.15); color: var(--ice);">✅ Lạnh sâu</span>
+            </div>
+            <div class="font-ui" style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Min: -6.0°C | Max: -4.0°C</div>
+            <button @onclick="ToggleZoneC" class="font-ui" style="margin-top: 16px; padding: 10px 20px; border: 1px solid var(--ice); border-radius: 8px; background: transparent; color: var(--ice); cursor: pointer; font-size: 13px;">
+                🎛️ @GetZoneCLabel() nhiệt độ Khu C
+            </button>
+        </div>
     </div>
 
     <!-- Control Panel -->
     @if (_expandedZone is not null)
     {
         var zone = _expandedZone;
-        var currentTarget = zone == "A" ? TempService.ZoneATarget : TempService.ZoneBTarget;
+        var currentTarget = zone == "A" ? TempService.ZoneATarget : zone == "B" ? TempService.ZoneBTarget : _zoneCTarget;
+        var sliderBackground = zone == "C" ? "linear-gradient(to right, #2563EB, var(--ice))" : "linear-gradient(to right, var(--ice), var(--candle), var(--danger))";
         <div style="padding: 24px; border-radius: 12px; background-color: var(--bg-secondary); border: 1px solid var(--border-primary); margin-bottom: 32px;">
             <h3 class="font-ui" style="font-size: 16px; font-weight: 600; margin: 0 0 16px; color: var(--text-primary);">🎛️ Bảng điều khiển — Khu @zone</h3>
             <div style="margin-bottom: 16px;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <span class="font-ui" style="font-size: 12px; color: var(--text-muted);">0°C ❄️</span>
-                    <span class="font-ui" style="font-size: 16px; font-weight: 600; color: var(--ice);">@currentTarget.ToString("F1")°C</span>
-                    <span class="font-ui" style="font-size: 12px; color: var(--text-muted);">8°C 🔥</span>
+                    @if (zone == "C")
+                    {
+                        <span class="font-ui" style="font-size: 12px; color: var(--text-muted);">-12°C ❄️❄️</span>
+                        <span class="font-ui" style="font-size: 16px; font-weight: 600; color: var(--ice);">@currentTarget.ToString("F1")°C</span>
+                        <span class="font-ui" style="font-size: 12px; color: var(--text-muted);">0°C ❄️</span>
+                    }
+                    else
+                    {
+                        <span class="font-ui" style="font-size: 12px; color: var(--text-muted);">0°C ❄️</span>
+                        <span class="font-ui" style="font-size: 16px; font-weight: 600; color: var(--ice);">@currentTarget.ToString("F1")°C</span>
+                        <span class="font-ui" style="font-size: 12px; color: var(--text-muted);">8°C 🔥</span>
+                    }
                 </div>
-                <input type="range" min="0" max="8" step="0.5" value="@currentTarget"
+                <input type="range" 
+                       min="@(zone == "C" ? -12 : 0)" 
+                       max="@(zone == "C" ? 0 : 8)" 
+                       step="0.5" 
+                       value="@currentTarget"
                        @onchange="OnSliderChange"
-                       style="width: 100%; height: 6px; border-radius: 3px; background: linear-gradient(to right, var(--ice), var(--candle), var(--danger));" />
+                       style="width: 100%; height: 6px; border-radius: 3px; background: @sliderBackground;" />
             </div>
             <div style="display: flex; gap: 8px; margin-bottom: 16px;">
-                @foreach (var preset in new[] { 1.0, 2.0, 3.0, 4.0 })
+                @if (zone == "C")
                 {
-                    <button @onclick="() => SetTarget(zone, preset)"
-                            class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid @(currentTarget == preset ? "var(--ice)" : "var(--border-primary)"); color: @(currentTarget == preset ? "var(--ice)" : "var(--text-secondary)"); background: transparent;">@preset°C</button>
+                    @foreach (var preset in new[] { -10.0, -8.0, -5.0, -2.0 })
+                    {
+                        <button @onclick="() => SetTarget(zone, preset)"
+                                class="font-ui" style="@GetPresetButtonStyle(zone, preset, currentTarget)">@preset°C</button>
+                    }
+                }
+                else
+                {
+                    @foreach (var preset in new[] { 1.0, 2.0, 3.0, 4.0 })
+                    {
+                        <button @onclick="() => SetTarget(zone, preset)"
+                                class="font-ui" style="@GetPresetButtonStyle(zone, preset, currentTarget)">@preset°C</button>
+                    }
                 }
             </div>
             <div style="display: flex; gap: 8px;">
                 <button @onclick="() => SetTarget(zone, currentTarget)" class="font-ui" style="padding: 10px 24px; border: none; border-radius: 8px; background: var(--success); color: white; cursor: pointer; font-size: 13px; font-weight: 600;">✅ Áp dụng</button>
-                <button @onclick="() => SetTarget(zone, 2.0)" class="font-ui" style="padding: 10px 24px; border: 1px solid var(--border-primary); border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 13px;">↩️ Đặt lại 2°C</button>
+                <button @onclick="() => ResetZoneTarget(zone)" class="font-ui" style="padding: 10px 24px; border: 1px solid var(--border-primary); border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 13px;">
+                    ↩️ Đặt lại @(zone == "C" ? "-5°C" : "2°C")
+                </button>
             </div>
             <div class="font-ui" style="font-size: 12px; color: var(--candle); margin-top: 12px;">⚠️ Thay đổi nhiệt độ có thể mất 5-10 phút để ổn định</div>
         </div>
@@ -79,15 +119,16 @@
 
     <!-- Slot Grid -->
     <div style="padding: 24px; border-radius: 12px; background-color: var(--bg-card); border: 1px solid var(--border-primary); margin-bottom: 32px;">
-        <h3 class="font-ui" style="font-size: 14px; font-weight: 600; margin: 0 0 16px; color: var(--text-primary);">📋 Chi tiết từng ngăn</h3>
+        <h3 class="font-ui" style="font-size: 14px; font-weight: 600; margin: 0; color: var(--text-primary);">📋 Chi tiết từng ngăn</h3>
         <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;">
-            @foreach (var kvp in TempService.SlotTemperatures)
+            @foreach (var kvp in GetCombinedSlotTemperatures())
             {
                 var temp = kvp.Value;
-                var color = temp > 6 ? "#EF4444" : temp > 4 ? "#F59E0B" : "#10B981";
-                <div style="padding: 16px 12px; border-radius: 8px; text-align: center; border: 1px solid @color; background-color: rgba(@(color == "#EF4444" ? "239,68,68" : color == "#F59E0B" ? "245,158,11" : "16,185,129"), 0.06);">
+                var style = GetSlotStyle(kvp.Key, temp);
+                var textColor = GetSlotColor(kvp.Key, temp);
+                <div style="@style">
                     <div class="font-ui" style="font-weight: 700; font-size: 13px; color: var(--text-primary);">@kvp.Key</div>
-                    <div class="font-mono" style="font-size: 18px; font-weight: 600; color: @color; margin-top: 4px;">@temp.ToString("F1")°C</div>
+                    <div class="font-mono" style="font-size: 18px; font-weight: 600; color: @textColor; margin-top: 4px;">@temp.ToString("F1")°C</div>
                 </div>
             }
         </div>
@@ -108,8 +149,9 @@
             @foreach (var data in _historyPoints)
             {
                 <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 1px;">
-                    <div style="width: 100%; height: @(data.ZoneA * 10)px; border-radius: 2px 2px 0 0; background-color: var(--ice); opacity: 0.7;"></div>
-                    <div style="width: 100%; height: @(data.ZoneB * 8)px; border-radius: 2px 2px 0 0; background-color: var(--success); opacity: 0.7;"></div>
+                    <div style="width: 100%; height: @(data.ZoneA * 10)px; border-radius: 2px 2px 0 0; background-color: var(--ice); opacity: 0.7;" title="Khu A: @(data.ZoneA.ToString("F1"))°C"></div>
+                    <div style="width: 100%; height: @(data.ZoneB * 8)px; border-radius: 2px 2px 0 0; background-color: var(--success); opacity: 0.7;" title="Khu B: @(data.ZoneB.ToString("F1"))°C"></div>
+                    <div style="width: 100%; height: @(Math.Abs(data.ZoneC) * 8)px; border-radius: 2px 2px 0 0; background-color: #3B82F6; opacity: 0.7;" title="Khu C: @(data.ZoneC.ToString("F1"))°C"></div>
                 </div>
             }
         </div>
@@ -118,33 +160,119 @@
 
 @code {
     private string? _expandedZone;
+    private double _zoneCTarget = -5.0;
+    private double _zoneCCurrent = -4.8;
+    private Dictionary<string, double> _cSlotTemps = new()
+    {
+        { "C-01", -4.8 },
+        { "C-02", -5.2 },
+        { "C-03", -5.0 },
+        { "C-04", -4.6 },
+        { "C-05", -4.9 }
+    };
+
     private void ToggleZoneA() => _expandedZone = _expandedZone == "A" ? null : "A";
     private void ToggleZoneB() => _expandedZone = _expandedZone == "B" ? null : "B";
+    private void ToggleZoneC() => _expandedZone = _expandedZone == "C" ? null : "C";
     private string GetZoneALabel() => _expandedZone == "A" ? "Ẩn" : "Điều chỉnh";
     private string GetZoneBLabel() => _expandedZone == "B" ? "Ẩn" : "Điều chỉnh";
+    private string GetZoneCLabel() => _expandedZone == "C" ? "Ẩn" : "Điều chỉnh";
+
     private void OnSliderChange(ChangeEventArgs e)
     {
         if (_expandedZone is not null && double.TryParse(e.Value?.ToString(), out var val))
-            TempService.SetTarget(_expandedZone, val);
+        {
+            if (_expandedZone == "C")
+            {
+                _zoneCTarget = val;
+                UpdateZoneCTemp();
+            }
+            else
+            {
+                TempService.SetTarget(_expandedZone, val);
+            }
+        }
     }
-    private readonly List<(double ZoneA, double ZoneB)> _historyPoints = Enumerable.Range(0, 24).Select(i => {
+
+    private readonly List<(double ZoneA, double ZoneB, double ZoneC)> _historyPoints = Enumerable.Range(0, 24).Select(i => {
         var rng = new Random(i);
-        return (2.0 + Math.Sin(i * 0.3) * 0.5, 2.5 + Math.Sin(i * 0.25 + 1) * 0.6);
+        return (
+            2.0 + Math.Sin(i * 0.3) * 0.5, 
+            2.5 + Math.Sin(i * 0.25 + 1) * 0.6,
+            -5.0 + Math.Sin(i * 0.2) * 0.4
+        );
     }).ToList();
 
     protected override void OnInitialized()
     {
         TempService.OnTemperatureChanged += Refresh;
+        UpdateZoneCTemp();
     }
 
     private void SetTarget(string zone, double value)
     {
-        TempService.SetTarget(zone, value);
+        if (zone == "C")
+        {
+            _zoneCTarget = value;
+            UpdateZoneCTemp();
+        }
+        else
+        {
+            TempService.SetTarget(zone, value);
+        }
+    }
+
+    private void ResetZoneTarget(string zone)
+    {
+        SetTarget(zone, zone == "C" ? -5.0 : 2.0);
+    }
+
+    private string GetPresetButtonStyle(string zone, double preset, double currentTarget)
+    {
+        var active = currentTarget == preset;
+        var border = active ? "var(--ice)" : "var(--border-primary)";
+        var color = active ? "var(--ice)" : "var(--text-secondary)";
+        return $"padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid {border}; color: {color}; background: transparent;";
+    }
+
+    private string GetSlotStyle(string key, double temp)
+    {
+        var isDeepFreeze = key.StartsWith("C");
+        var color = isDeepFreeze 
+            ? (temp > 0 ? "#EF4444" : temp > -2 ? "#F59E0B" : "#10B981")
+            : (temp > 6 ? "#EF4444" : temp > 4 ? "#F59E0B" : "#10B981");
+            
+        var rgb = color == "#EF4444" ? "239,68,68" : color == "#F59E0B" ? "245,158,11" : "16,185,129";
+        return $"padding: 16px 12px; border-radius: 8px; text-align: center; border: 1px solid {color}; background-color: rgba({rgb}, 0.06);";
+    }
+    
+    private string GetSlotColor(string key, double temp)
+    {
+        var isDeepFreeze = key.StartsWith("C");
+        return isDeepFreeze 
+            ? (temp > 0 ? "#EF4444" : temp > -2 ? "#F59E0B" : "#10B981")
+            : (temp > 6 ? "#EF4444" : temp > 4 ? "#F59E0B" : "#10B981");
     }
 
     private void Refresh()
     {
+        UpdateZoneCTemp();
         InvokeAsync(StateHasChanged);
+    }
+
+    private void UpdateZoneCTemp()
+    {
+        var rng = new Random();
+        _zoneCCurrent = Math.Round(_zoneCTarget + (rng.NextDouble() * 0.8 - 0.4), 1);
+        for (int i = 1; i <= 5; i++)
+        {
+            _cSlotTemps[$"C-{i:D2}"] = Math.Round(_zoneCCurrent + (rng.NextDouble() * 0.4 - 0.2), 1);
+        }
+    }
+
+    private IEnumerable<KeyValuePair<string, double>> GetCombinedSlotTemperatures()
+    {
+        return TempService.SlotTemperatures.Concat(_cSlotTemps).OrderBy(x => x.Key);
     }
 
     public void Dispose()
