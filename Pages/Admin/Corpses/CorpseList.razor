@@ -14,7 +14,7 @@
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--success); color: var(--success); background: transparent; display: flex; align-items: center; gap: 4px;">📊 Xuất Excel</button>
             <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--danger); color: var(--danger); background: transparent; display: flex; align-items: center; gap: 4px;">📄 Xuất PDF</button>
-            <button @onclick="() => _showCreateModal = true" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; background: linear-gradient(135deg, #3B82F6, #2563EB); color: white; display: flex; align-items: center; gap: 4px;">
+            <button @onclick="OpenCreateModal" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; background: linear-gradient(135deg, #3B82F6, #2563EB); color: white; display: flex; align-items: center; gap: 4px;">
                 <span>➕</span> Thêm thi thể mới
             </button>
         </div>
@@ -230,6 +230,12 @@
                 <label class="font-ui" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: block; margin-bottom: 6px;">CCCD/CMND</label>
                 <input class="filter-input" style="width: 100%;" placeholder="079201012345" />
             </div>
+            <div style="grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; margin: 8px 0 4px;">
+                <input type="checkbox" id="isNonIntact" @bind="_newIsNonIntact" @bind:after="OnNonIntactChanged" style="width: 16px; height: 16px; cursor: pointer;" />
+                <label for="isNonIntact" class="font-ui" style="font-size: 13px; color: var(--text-primary); cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                    ⚠️ Thi thể không nguyên vẹn (Bảo quản chuyên dụng tại Khu C - Lạnh sâu)
+                </label>
+            </div>
             <div>
                 <label class="font-ui" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: block; margin-bottom: 6px;">SĐT thân nhân</label>
                 <input class="filter-input" style="width: 100%;" placeholder="+84 912 345 678" />
@@ -248,17 +254,17 @@
             </div>
             <div>
                 <label class="font-ui" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: block; margin-bottom: 6px;">Ngăn tủ</label>
-                <select class="filter-select" style="width: 100%;">
+                <select class="filter-select" style="width: 100%;" @bind="_newSlot">
                     <option value="">— Chọn —</option>
-                    @foreach (var s in _availableSlots)
+                    @foreach (var s in GetAvailableSlotsForNewCorpse())
                     {
-                        <option value="@s">@s (Trống)</option>
+                        <option value="@s">@s (@(s.StartsWith("C") ? "Khu C - Đặc biệt (Lạnh sâu)" : "Mát"))</option>
                     }
                 </select>
             </div>
             <div>
                 <label class="font-ui" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: block; margin-bottom: 6px;">Ghi chú</label>
-                <textarea class="filter-input" style="width: 100%; min-height: 60px;"></textarea>
+                <textarea class="filter-input" style="width: 100%; min-height: 60px;" @bind="_newNotes"></textarea>
             </div>
         </div>
         <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
@@ -299,8 +305,13 @@
     private readonly string[] _storageUnits = ["Cold Room A", "Cold Room B", "Cold Room C"];
     private readonly string[] _availableSlots = [
         "A-01","A-02","A-03","A-04","A-05","A-06","A-07","A-08","A-09","A-10",
-        "B-01","B-02","B-03","B-04","B-05","B-06","B-07","B-08","B-09","B-10"
+        "B-01","B-02","B-03","B-04","B-05","B-06","B-07","B-08","B-09","B-10",
+        "C-01","C-02","C-03","C-04","C-05"
     ];
+
+    private bool _newIsNonIntact = false;
+    private string _newNotes = "";
+    private string _newSlot = "";
 
     private List<Models.Corpse> _allCorpses = new();
     private List<Models.Corpse> _filteredCorpses = new();
@@ -328,7 +339,27 @@
             var statuses = new[] { "Tiếp nhận", "Lưu kho", "Bàn giao", "Quá hạn" };
             var status = statuses[rng.Next(statuses.Length)];
             var hasStorage = status == "Lưu kho" || status == "Quá hạn";
-            var temp = hasStorage ? Math.Round(1.5 + rng.NextDouble() * 6, 1) : (double?)null;
+
+            string? slot = null;
+            string? unit = null;
+            double? temp = null;
+            string notes = i % 5 == 0 ? "Cần xác minh danh tính qua CCCD" : "";
+
+            if (hasStorage)
+            {
+                slot = _availableSlots[rng.Next(_availableSlots.Length)];
+                if (slot.StartsWith("C"))
+                {
+                    unit = "Cold Room C";
+                    temp = Math.Round(-5.5 + rng.NextDouble() * 1.5, 1);
+                    notes = string.IsNullOrEmpty(notes) ? "[Thi thể không nguyên vẹn - Bảo quản đặc biệt]" : "[Thi thể không nguyên vẹn] " + notes;
+                }
+                else
+                {
+                    unit = slot.StartsWith("A") ? "Cold Room A" : "Cold Room B";
+                    temp = Math.Round(1.5 + rng.NextDouble() * 5, 1);
+                }
+            }
 
             var priority = daysStored >= 14 ? "CRITICAL" : daysStored >= 7 ? "WARNING" : "NORMAL";
             var name = _names[i % _names.Length] + (i >= 20 ? $" {Convert.ToChar(65 + i / 20)}" : "");
@@ -342,12 +373,12 @@
                 Gender = new[] { "Nam", "Nữ", "Không xác định" }[rng.Next(3)],
                 BirthDate = RandomDateTime(new DateTime(1940, 1, 1), new DateTime(2000, 1, 1), rng).ToString("yyyy-MM-dd"),
                 Age = 25 + rng.Next(70),
-                CauseOfDeath = _causes[rng.Next(_causes.Length)],
+                CauseOfDeath = slot != null && slot.StartsWith("C") ? "Tai nạn nghiêm trọng (Đa chấn thương)" : _causes[rng.Next(_causes.Length)],
                 DateOfDeath = dateOfDeath,
                 DateAdmitted = dateAdmitted,
                 Status = status,
-                StorageUnit = hasStorage ? _storageUnits[rng.Next(_storageUnits.Length)] : null,
-                StorageSlot = hasStorage ? _availableSlots[rng.Next(_availableSlots.Length)] : null,
+                StorageUnit = unit,
+                StorageSlot = slot,
                 Temp = temp,
                 DaysStored = daysStored,
                 Priority = priority,
@@ -357,7 +388,7 @@
                     Phone = $"+84 9{rng.Next(10000000, 99999999)}",
                     Relationship = _relationships[rng.Next(_relationships.Length)]
                 },
-                Notes = i % 5 == 0 ? "Cần xác minh danh tính qua CCCD" : ""
+                Notes = notes
             };
         }).ToList();
 
@@ -486,5 +517,43 @@
     {
         _dateTo = e.Value?.ToString() ?? "";
         ApplyFilters();
+    }
+
+    private void OpenCreateModal()
+    {
+        _newIsNonIntact = false;
+        _newNotes = "";
+        _newSlot = "";
+        _showCreateModal = true;
+    }
+
+    private void OnNonIntactChanged()
+    {
+        if (_newIsNonIntact)
+        {
+            _newNotes = "[Thi thể không nguyên vẹn - Bảo quản đặc biệt tại Khu C]";
+            var firstCSlot = _availableSlots.FirstOrDefault(s => s.StartsWith("C"));
+            if (!string.IsNullOrEmpty(firstCSlot))
+            {
+                _newSlot = firstCSlot;
+            }
+        }
+        else
+        {
+            _newNotes = "";
+            _newSlot = "";
+        }
+    }
+
+    private IEnumerable<string> GetAvailableSlotsForNewCorpse()
+    {
+        if (_newIsNonIntact)
+        {
+            return _availableSlots.Where(s => s.StartsWith("C"));
+        }
+        else
+        {
+            return _availableSlots.Where(s => !s.StartsWith("C"));
+        }
     }
 }
