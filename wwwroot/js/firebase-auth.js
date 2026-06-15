@@ -1,22 +1,30 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCYRv1mJjRTa-HPvfVpZk8YqED941QyCQc",
-  authDomain: "morguemanager-588fd.firebaseapp.com",
-  projectId: "morguemanager-588fd",
-  storageBucket: "morguemanager-588fd.firebasestorage.app",
-  messagingSenderId: "740307579938",
-  appId: "1:740307579938:web:b315e515463ce4322a067b",
-  measurementId: "G-CEJ73C6VM0"
+let app;
+let auth;
+let provider;
+
+// Hàm khởi tạo Firebase được gọi động từ Blazor WASM bằng cấu hình từ appsettings.json
+window.initializeFirebase = (config) => {
+    try {
+        app = initializeApp(config);
+        auth = getAuth(app);
+        provider = new GoogleAuthProvider();
+    } catch (error) {
+        console.error("Lỗi khởi tạo Firebase:", error);
+    }
 };
-// Khởi tạo Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
 
 // Hàm được thiết lập ở global scope (window) để Blazor WASM có thể gọi thông qua JSInterop
 window.loginWithGoogle = async () => {
+    if (!auth || !provider) {
+        console.error("Firebase Auth chưa được khởi tạo!");
+        return {
+            success: false,
+            errorMessage: "Firebase Auth chưa được khởi tạo. Vui lòng kiểm tra lại cấu hình."
+        };
+    }
     try {
         const result = await signInWithPopup(auth, provider);
         const user = result.user;

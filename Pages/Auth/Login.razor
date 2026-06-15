@@ -104,8 +104,7 @@
                 </div>
 
                 <button @onclick="SendOtp" disabled="@_loading"
-                        class="w-full py-3 rounded-lg font-ui text-sm font-semibold text-white transition-all duration-300 hover:opacity-90 hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-6"
-                        style="background: linear-gradient(135deg, var(--login-btn-blue-from), var(--login-btn-blue-to)); box-shadow: 0 4px 16px rgba(59,130,246,0.3); border: none; cursor: pointer;">
+                        class="btn-primary-gradient w-full py-3 rounded-lg font-ui text-sm font-semibold text-white transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-6">
                     @if (_loading)
                     {
                         <LucideIcon Name="loader" Class="w-4 h-4 animate-spin" />
@@ -126,10 +125,7 @@
                 </div>
 
                 <button @onclick="LoginWithGoogle" disabled="@_loading" type="button"
-                        @onmouseenter="() => _hoverGoogle = true"
-                        @onmouseleave="() => _hoverGoogle = false"
-                        class="w-full py-3 rounded-lg font-ui text-sm font-semibold transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        style="background-color: @(_hoverGoogle ? "rgba(255, 255, 255, 0.08)" : "var(--login-input-bg)"); border: 1.5px solid @(_hoverGoogle ? "var(--login-btn-blue-from)" : "var(--login-input-border)"); color: var(--text-primary); cursor: pointer; box-shadow: @(_hoverGoogle ? "0 4px 12px rgba(59, 130, 246, 0.15)" : "none"); transform: @(_hoverGoogle ? "scale(1.01)" : "scale(1)"); outline: none;">
+                        class="btn-google-login w-full py-3 rounded-lg font-ui text-sm font-semibold transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2.5">
                     @if (_loading)
                     {
                         <LucideIcon Name="loader" Class="w-4 h-4 animate-spin" />
@@ -189,8 +185,7 @@
                 </div>
 
                 <button @onclick="VerifyOtp" disabled="@(_loading || _otpText.Length < 6)"
-                        class="w-full py-3 rounded-lg font-ui text-sm font-semibold text-white transition-all duration-300 hover:opacity-90 hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-6"
-                        style="background: linear-gradient(135deg, var(--login-btn-green-from), var(--login-btn-green-to)); box-shadow: 0 4px 16px rgba(16,185,129,0.3); border: none; cursor: pointer;">
+                        class="btn-success-gradient w-full py-3 rounded-lg font-ui text-sm font-semibold text-white transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-6">
                     @if (_loading)
                     {
                         <LucideIcon Name="loader" Class="w-4 h-4 animate-spin" />
@@ -239,6 +234,57 @@
             0% { transform: translateY(0) translateX(0); opacity: calc(0.2 * var(--login-particle-opacity)); }
             100% { transform: translateY(-30px) translateX(10px); opacity: calc(0.6 * var(--login-particle-opacity)); }
         }
+
+        /* Premium custom buttons */
+        .btn-primary-gradient {
+            background: linear-gradient(135deg, var(--login-btn-blue-from), var(--login-btn-blue-to));
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(46, 134, 222, 0.25);
+            transition: all 0.3s ease;
+        }
+        .btn-primary-gradient:hover:not(:disabled) {
+            box-shadow: 0 6px 20px rgba(46, 134, 222, 0.45), var(--cold-glow);
+            transform: translateY(-1px);
+            opacity: 0.95;
+        }
+        .btn-primary-gradient:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn-success-gradient {
+            background: linear-gradient(135deg, var(--login-btn-green-from), var(--login-btn-green-to));
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.25);
+            transition: all 0.3s ease;
+        }
+        .btn-success-gradient:hover:not(:disabled) {
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+            transform: translateY(-1px);
+            opacity: 0.95;
+        }
+        .btn-success-gradient:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn-google-login {
+            background-color: var(--login-input-bg);
+            border: 1.5px solid var(--login-input-border);
+            color: var(--text-primary);
+            cursor: pointer;
+            outline: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-google-login:hover:not(:disabled) {
+            border-color: var(--ice);
+            background-color: rgba(72, 219, 251, 0.06);
+            box-shadow: 0 4px 16px rgba(72, 219, 251, 0.2), var(--cold-glow);
+            transform: translateY(-1.5px);
+        }
+        .btn-google-login:active:not(:disabled) {
+            transform: translateY(0);
+        }
     </style>
 </div>
 
@@ -253,7 +299,6 @@
     private string _accessKeyError = "";
 
     private string _focusedInput = "";
-    private bool _hoverGoogle = false;
 
     private void HandleInputFocus(string name) => _focusedInput = name;
     private void HandleInputBlur() => _focusedInput = "";
@@ -267,7 +312,7 @@
 
     private string GetInputBoxShadow(string field)
     {
-        return _focusedInput == field ? "0 0 10px rgba(59, 130, 246, 0.25)" : "none";
+        return _focusedInput == field ? "0 0 10px rgba(46, 134, 222, 0.25)" : "none";
     }
     private string _otpError = "";
 
