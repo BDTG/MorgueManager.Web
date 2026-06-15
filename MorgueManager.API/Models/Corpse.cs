@@ -23,6 +23,7 @@ public class Corpse
     public string Priority { get; set; } = "NORMAL";
     public NextOfKinInfo NextOfKin { get; set; } = new();
     public string Notes { get; set; } = "";
+    public AutopsyReport? AutopsyReport { get; set; }
     public List<Belonging> Belongings { get; set; } = new();
     public List<HistoryEntry> History { get; set; } = new();
     public List<Document> Documents { get; set; } = new();

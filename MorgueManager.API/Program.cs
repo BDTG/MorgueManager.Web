@@ -10,6 +10,8 @@ using MorgueManager.API.Data;
 using Microsoft.EntityFrameworkCore;
 using System;
 
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Register DbContext
@@ -69,6 +71,7 @@ builder.Services.AddHttpContextAccessor();
 
 // Register background simulation services
 builder.Services.AddHostedService<TemperatureSimulationWorker>();
+builder.Services.AddHostedService<OverdueScannerWorker>();
 
 // Configure Swagger
 builder.Services.AddEndpointsApiExplorer();
