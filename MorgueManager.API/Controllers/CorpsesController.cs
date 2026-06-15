@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using MorgueManager.API.Models;
 using MorgueManager.API.Exceptions;
 using MorgueManager.API.Data;
+using MorgueManager.API.Dtos;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -55,14 +56,14 @@ public class CorpsesController : ControllerBase
 
     [HttpPost]
     [Authorize(Roles = "Admin")]
-    public IActionResult Create([FromBody] Corpse corpse)
+    public IActionResult Create([FromBody] CreateCorpseDto dto)
     {
         var errors = new Dictionary<string, string[]>();
-        if (string.IsNullOrWhiteSpace(corpse.Name))
+        if (string.IsNullOrWhiteSpace(dto.Name))
         {
             errors.Add("name", new[] { "Họ và tên không được để trống." });
         }
-        if (string.IsNullOrWhiteSpace(corpse.Cccd))
+        if (string.IsNullOrWhiteSpace(dto.Cccd))
         {
             errors.Add("cccd", new[] { "Số CCCD/CMND không được để trống." });
         }
@@ -78,10 +79,32 @@ public class CorpsesController : ControllerBase
         {
             nextId = _context.Corpses.Max(c => c.Id) + 1;
         }
-        corpse.CaseId = $"MC-2026-{nextId:D4}";
-        corpse.DateAdmitted = DateTime.Now.ToString("yyyy-MM-dd");
-        corpse.DaysStored = 1;
-        corpse.Priority = "NORMAL";
+
+        var corpse = new Corpse
+        {
+            Name = dto.Name,
+            Cccd = dto.Cccd,
+            Gender = dto.Gender,
+            BirthDate = dto.BirthDate,
+            Age = dto.Age,
+            CauseOfDeath = dto.CauseOfDeath,
+            DateOfDeath = dto.DateOfDeath,
+            Status = dto.Status,
+            StorageUnit = dto.StorageUnit,
+            StorageSlot = dto.StorageSlot,
+            Temp = dto.Temp,
+            Notes = dto.Notes,
+            NextOfKin = new NextOfKinInfo
+            {
+                Name = dto.NextOfKin?.Name ?? "",
+                Phone = dto.NextOfKin?.Phone ?? "",
+                Relationship = dto.NextOfKin?.Relationship ?? ""
+            },
+            CaseId = $"MC-2026-{nextId:D4}",
+            DateAdmitted = DateTime.Now.ToString("yyyy-MM-dd"),
+            DaysStored = 1,
+            Priority = "NORMAL"
+        };
 
         _context.Corpses.Add(corpse);
         _context.SaveChanges();
@@ -91,13 +114,10 @@ public class CorpsesController : ControllerBase
 
     [HttpPut("{id:int}")]
     [Authorize(Roles = "Admin,Manager")]
-    public IActionResult Update(int id, [FromBody] Corpse updatedCorpse)
+    public IActionResult Update(int id, [FromBody] UpdateCorpseDto dto)
     {
         var corpse = _context.Corpses
             .Include(c => c.NextOfKin)
-            .Include(c => c.Belongings)
-            .Include(c => c.History)
-            .Include(c => c.Documents)
             .FirstOrDefault(c => c.Id == id);
 
         if (corpse == null)
@@ -106,7 +126,7 @@ public class CorpsesController : ControllerBase
         }
 
         var errors = new Dictionary<string, string[]>();
-        if (string.IsNullOrWhiteSpace(updatedCorpse.Name))
+        if (string.IsNullOrWhiteSpace(dto.Name))
         {
             errors.Add("name", new[] { "Họ và tên không được để trống." });
         }
@@ -116,42 +136,23 @@ public class CorpsesController : ControllerBase
             throw new AppValidationException("Thông tin thi thể gửi lên không hợp lệ.", errors);
         }
 
-        corpse.Name = updatedCorpse.Name;
-        corpse.Cccd = updatedCorpse.Cccd;
-        corpse.Gender = updatedCorpse.Gender;
-        corpse.BirthDate = updatedCorpse.BirthDate;
-        corpse.Age = updatedCorpse.Age;
-        corpse.CauseOfDeath = updatedCorpse.CauseOfDeath;
-        corpse.DateOfDeath = updatedCorpse.DateOfDeath;
-        corpse.Status = updatedCorpse.Status;
-        corpse.StorageUnit = updatedCorpse.StorageUnit;
-        corpse.StorageSlot = updatedCorpse.StorageSlot;
-        corpse.Temp = updatedCorpse.Temp;
-        corpse.Notes = updatedCorpse.Notes;
-        if (updatedCorpse.NextOfKin != null)
+        corpse.Name = dto.Name;
+        corpse.Cccd = dto.Cccd;
+        corpse.Gender = dto.Gender;
+        corpse.BirthDate = dto.BirthDate;
+        corpse.Age = dto.Age;
+        corpse.CauseOfDeath = dto.CauseOfDeath;
+        corpse.DateOfDeath = dto.DateOfDeath;
+        corpse.Status = dto.Status;
+        corpse.StorageUnit = dto.StorageUnit;
+        corpse.StorageSlot = dto.StorageSlot;
+        corpse.Temp = dto.Temp;
+        corpse.Notes = dto.Notes;
+        if (dto.NextOfKin != null)
         {
-            corpse.NextOfKin = updatedCorpse.NextOfKin;
-        }
-
-        // Replace belongings list
-        if (updatedCorpse.Belongings != null)
-        {
-            corpse.Belongings.Clear();
-            corpse.Belongings.AddRange(updatedCorpse.Belongings);
-        }
-
-        // Replace history list
-        if (updatedCorpse.History != null)
-        {
-            corpse.History.Clear();
-            corpse.History.AddRange(updatedCorpse.History);
-        }
-
-        // Replace documents list
-        if (updatedCorpse.Documents != null)
-        {
-            corpse.Documents.Clear();
-            corpse.Documents.AddRange(updatedCorpse.Documents);
+            corpse.NextOfKin.Name = dto.NextOfKin.Name;
+            corpse.NextOfKin.Phone = dto.NextOfKin.Phone;
+            corpse.NextOfKin.Relationship = dto.NextOfKin.Relationship;
         }
 
         _context.SaveChanges();
