@@ -431,3 +431,5 @@ FodyWeavers.xsd
 # Allow Blazor Pages/Admin/Logs folder
 !Pages/Admin/Logs/
 !Pages/Admin/Logs/**
+.agents/
+.vscode/
