@@ -5,6 +5,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Configuration;
+using MorgueManager.API.Data;
+using MorgueManager.API.Models;
+using System.Linq;
 
 namespace MorgueManager.API.Controllers;
 
@@ -13,10 +16,12 @@ namespace MorgueManager.API.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IConfiguration _config;
+    private readonly AppDbContext _context;
 
-    public AuthController(IConfiguration config)
+    public AuthController(IConfiguration config, AppDbContext context)
     {
         _config = config;
+        _context = context;
     }
 
     [HttpPost("login")]
@@ -27,30 +32,22 @@ public class AuthController : ControllerBase
             return BadRequest(new { Message = "Email và Access Key là bắt buộc." });
         }
 
-        if (request.AccessKey != "MM-ACTIVE-2026")
+        // Retrieve user from database
+        var user = _context.Users.FirstOrDefault(u => u.Email == request.Email);
+
+        if (user == null || !BCrypt.Net.BCrypt.Verify(request.AccessKey, user.PasswordHash))
         {
-            return Unauthorized(new { Message = "Access Key không hợp lệ." });
+            return Unauthorized(new { Message = "Email hoặc Access Key không chính xác." });
         }
 
-        // Determine role based on email prefix
-        string role = "Staff";
-        if (request.Email.StartsWith("admin", StringComparison.OrdinalIgnoreCase))
-        {
-            role = "Admin";
-        }
-        else if (request.Email.StartsWith("manager", StringComparison.OrdinalIgnoreCase))
-        {
-            role = "Manager";
-        }
-
-        var token = GenerateJwtToken(request.Email, role);
+        var token = GenerateJwtToken(user.Email, user.Role);
 
         return Ok(new
         {
             Token = token,
-            Email = request.Email,
-            Role = role,
-            DisplayName = role + " User"
+            Email = user.Email,
+            Role = user.Role,
+            DisplayName = user.DisplayName
         });
     }
 

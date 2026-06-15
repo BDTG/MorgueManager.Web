@@ -17,6 +17,7 @@ public class Corpse
     public string Status { get; set; } = "Tiếp nhận";
     public string? StorageUnit { get; set; }
     public string? StorageSlot { get; set; }
+    public int? StorageSlotId { get; set; }
     public double? Temp { get; set; }
     public int DaysStored { get; set; }
     public string Priority { get; set; } = "NORMAL";

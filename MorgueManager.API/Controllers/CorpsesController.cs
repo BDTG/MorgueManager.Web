@@ -68,6 +68,25 @@ public class CorpsesController : ControllerBase
             errors.Add("cccd", new[] { "Số CCCD/CMND không được để trống." });
         }
 
+        // Check and reserve slot
+        int? storageSlotId = null;
+        if (!string.IsNullOrEmpty(dto.StorageSlot))
+        {
+            var slot = _context.StorageSlots.FirstOrDefault(s => s.SlotNumber == dto.StorageSlot);
+            if (slot != null)
+            {
+                if (slot.Status != SlotStatus.Empty)
+                {
+                    errors.Add("storageSlot", new[] { $"Ngăn tủ {dto.StorageSlot} đã có người sử dụng hoặc đang bảo trì." });
+                }
+                else
+                {
+                    slot.Status = SlotStatus.Occupied;
+                    storageSlotId = slot.Id;
+                }
+            }
+        }
+
         if (errors.Any())
         {
             throw new AppValidationException("Thông tin thi thể gửi lên không hợp lệ.", errors);
@@ -92,6 +111,7 @@ public class CorpsesController : ControllerBase
             Status = dto.Status,
             StorageUnit = dto.StorageUnit,
             StorageSlot = dto.StorageSlot,
+            StorageSlotId = storageSlotId,
             Temp = dto.Temp,
             Notes = dto.Notes,
             NextOfKin = new NextOfKinInfo
@@ -131,6 +151,72 @@ public class CorpsesController : ControllerBase
             errors.Add("name", new[] { "Họ và tên không được để trống." });
         }
 
+        // Handle slot change logic
+        if (corpse.StorageSlot != dto.StorageSlot)
+        {
+            // Free the old slot
+            if (corpse.StorageSlotId != null)
+            {
+                var oldSlot = _context.StorageSlots.Find(corpse.StorageSlotId);
+                if (oldSlot != null)
+                {
+                    oldSlot.Status = SlotStatus.Empty;
+                }
+            }
+
+            // Reserve the new slot
+            if (!string.IsNullOrEmpty(dto.StorageSlot))
+            {
+                var newSlot = _context.StorageSlots.FirstOrDefault(s => s.SlotNumber == dto.StorageSlot);
+                if (newSlot != null)
+                {
+                    if (newSlot.Status != SlotStatus.Empty)
+                    {
+                        errors.Add("storageSlot", new[] { $"Ngăn tủ {dto.StorageSlot} đã có người sử dụng hoặc đang bảo trì." });
+                    }
+                    else
+                    {
+                        newSlot.Status = SlotStatus.Occupied;
+                        corpse.StorageSlotId = newSlot.Id;
+                        corpse.StorageUnit = newSlot.UnitName;
+                        corpse.StorageSlot = newSlot.SlotNumber;
+                        corpse.Temp = newSlot.CurrentTemperature;
+                    }
+                }
+                else
+                {
+                    corpse.StorageSlotId = null;
+                    corpse.StorageUnit = dto.StorageUnit;
+                    corpse.StorageSlot = dto.StorageSlot;
+                    corpse.Temp = dto.Temp;
+                }
+            }
+            else
+            {
+                corpse.StorageSlotId = null;
+                corpse.StorageUnit = null;
+                corpse.StorageSlot = null;
+                corpse.Temp = null;
+            }
+        }
+
+        // If status changes to Bàn giao (Handed over), release the slot
+        if (dto.Status == "Bàn giao" && corpse.Status != "Bàn giao")
+        {
+            if (corpse.StorageSlotId != null)
+            {
+                var slot = _context.StorageSlots.Find(corpse.StorageSlotId);
+                if (slot != null)
+                {
+                    slot.Status = SlotStatus.Empty;
+                }
+            }
+            corpse.StorageSlotId = null;
+            corpse.StorageUnit = null;
+            corpse.StorageSlot = null;
+            corpse.Temp = null;
+        }
+
         if (errors.Any())
         {
             throw new AppValidationException("Thông tin thi thể gửi lên không hợp lệ.", errors);
@@ -144,9 +230,12 @@ public class CorpsesController : ControllerBase
         corpse.CauseOfDeath = dto.CauseOfDeath;
         corpse.DateOfDeath = dto.DateOfDeath;
         corpse.Status = dto.Status;
-        corpse.StorageUnit = dto.StorageUnit;
-        corpse.StorageSlot = dto.StorageSlot;
-        corpse.Temp = dto.Temp;
+        if (dto.Status != "Bàn giao")
+        {
+            corpse.StorageUnit = dto.StorageUnit;
+            corpse.StorageSlot = dto.StorageSlot;
+            corpse.Temp = dto.Temp;
+        }
         corpse.Notes = dto.Notes;
         if (dto.NextOfKin != null)
         {
@@ -167,6 +256,16 @@ public class CorpsesController : ControllerBase
         if (corpse == null)
         {
             throw new ResourceNotFoundException($"Không tìm thấy thi thể có ID = {id} để xóa.");
+        }
+
+        // Free slot if occupied
+        if (corpse.StorageSlotId != null)
+        {
+            var slot = _context.StorageSlots.Find(corpse.StorageSlotId);
+            if (slot != null)
+            {
+                slot.Status = SlotStatus.Empty;
+            }
         }
 
         _context.Corpses.Remove(corpse);

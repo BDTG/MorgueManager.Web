@@ -3,6 +3,7 @@ using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using System.Text;
 using Microsoft.OpenApi;
+using MorgueManager.API.Services;
 using MorgueManager.API.Formatters;
 using MorgueManager.API.Handlers;
 using MorgueManager.API.Data;
@@ -63,6 +64,12 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Register HttpContextAccessor for auditing user identity
+builder.Services.AddHttpContextAccessor();
+
+// Register background simulation services
+builder.Services.AddHostedService<TemperatureSimulationWorker>();
+
 // Configure Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -108,6 +115,8 @@ if (app.Environment.IsDevelopment())
 app.UseExceptionHandler();
 
 app.UseCors("AllowBlazorClient");
+
+app.UseStaticFiles();
 
 app.UseAuthentication();
 app.UseAuthorization();
