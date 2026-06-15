@@ -13,6 +13,13 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.8" PrivateAssets="all" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="MorgueManager.API\**" />
+    <Content Remove="MorgueManager.API\**" />
+    <EmbeddedResource Remove="MorgueManager.API\**" />
+    <None Remove="MorgueManager.API\**" />
+  </ItemGroup>
+
   <Target Name="CompileTailwind" BeforeTargets="BeforeBuild">
     <Message Importance="high" Text="⚡ Đang biên dịch Tailwind CSS v4..." />
     <Exec Command="npx @tailwindcss/cli -i wwwroot/css/input.css -o wwwroot/css/app.compiled.css --minify" />

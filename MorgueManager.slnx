@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="MorgueManager.API/MorgueManager.API.csproj" />
+  <Project Path="MorgueManager.Web.csproj" />
+</Solution>
