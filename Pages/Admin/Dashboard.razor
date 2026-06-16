@@ -135,9 +135,17 @@
 
                 <div class="flex flex-col gap-6">
                     <div class="flex justify-center">
-                        <div class="w-32 h-32 rounded-full relative shadow-sm" style="background: @GetDonutGradient(); transition: all 0.5s ease;">
-                            <div class="absolute inset-0 m-[18px] rounded-full" style="background-color: var(--bg-card);"></div>
-                        </div>
+                        <svg viewBox="0 0 100 100" class="w-32 h-32 transform -rotate-90 overflow-visible drop-shadow-sm">
+                            <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--bg-elevated)" stroke-width="16" />
+                            @foreach (var slice in GetDonutSlices())
+                            {
+                                <circle cx="50" cy="50" r="40" fill="transparent" stroke="@slice.Color" stroke-width="16"
+                                        stroke-dasharray="@slice.StrokeDashArray.ToString(System.Globalization.CultureInfo.InvariantCulture) 300"
+                                        stroke-dashoffset="@slice.StrokeDashOffset.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                        class="transition-all duration-300 hover:stroke-[20] cursor-pointer donut-slice"
+                                        data-name="@slice.Name" data-occupied="@slice.Occupied" data-total="@slice.Total" style="outline: none;" />
+                            }
+                        </svg>
                     </div>
 
                     <div class="flex flex-col gap-3">
@@ -278,6 +286,32 @@
                 <span id="tooltip-releases" class="font-semibold" style="color: var(--text-primary);"></span>
             </div>
         </div>
+
+        <!-- Donut Tooltip -->
+        <div id="donut-tooltip" style="position: fixed; left: 0px; top: 0px; z-index: 9999; pointer-events: none; opacity: 0; background-color: var(--login-card-bg); border: 1px solid var(--border-primary); box-shadow: var(--shadow-lg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);"
+             class="w-48 p-3 rounded-xl transition-opacity duration-150 ease-out">
+            <div id="donut-name" class="font-ui text-sm font-semibold mb-2" style="color: var(--text-primary);"></div>
+            <div class="space-y-1.5 font-ui text-xs">
+                <div class="flex justify-between items-center">
+                    <span style="color: var(--text-secondary);">Đã sử dụng:</span>
+                    <span id="donut-occupied" class="font-medium" style="color: var(--text-primary);"></span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span style="color: var(--text-secondary);">Còn trống:</span>
+                    <span id="donut-available" class="font-medium" style="color: var(--text-primary);"></span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span style="color: var(--text-secondary);">Sức chứa:</span>
+                    <span id="donut-total" class="font-medium" style="color: var(--text-primary);"></span>
+                </div>
+                <div class="mt-2 pt-2 border-t" style="border-color: var(--border-primary);">
+                    <div class="flex justify-between items-center">
+                        <span style="color: var(--text-secondary);">Tỉ lệ sử dụng:</span>
+                        <span id="donut-util" class="font-semibold"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -306,23 +340,25 @@
         new("Khu vực khâm liệm", 20, 0, "#22c55e"),
     };
 
-    private string GetDonutGradient()
+    private IEnumerable<(string Name, int Total, int Occupied, string Color, double StrokeDashArray, double StrokeDashOffset)> GetDonutSlices()
     {
+        double r = 40;
+        double circumference = 2 * Math.PI * r;
         int totalOccupied = _storageUnits.Sum(u => u.Occupied);
-        if (totalOccupied == 0) return "transparent";
-        
-        var gradientParts = new List<string>();
-        double currentAngle = 0;
-        
+        double accumulated = 0;
+
         foreach (var unit in _storageUnits)
         {
             if (unit.Occupied == 0) continue;
-            double angle = (unit.Occupied / (double)totalOccupied) * 360;
-            gradientParts.Add($"{unit.Color} {currentAngle:0.##}deg {(currentAngle + angle):0.##}deg");
-            currentAngle += angle;
+            
+            double fraction = unit.Occupied / (double)totalOccupied;
+            double length = fraction * circumference;
+            double offset = -accumulated;
+            
+            yield return (unit.Name, unit.Total, unit.Occupied, unit.Color, length, offset);
+            
+            accumulated += length;
         }
-        
-        return $"conic-gradient({string.Join(", ", gradientParts)})";
     }
     private readonly List<(string Name, string CaseId, int Days, string Slot)> _overdueList = new()
     {

@@ -174,4 +174,42 @@ window.initDashboardTooltip = () => {
             tooltip.style.opacity = '0';
         });
     });
+
+    const donutTooltip = document.getElementById('donut-tooltip');
+    if (donutTooltip) {
+        const dName = document.getElementById('donut-name');
+        const dOcc = document.getElementById('donut-occupied');
+        const dAvail = document.getElementById('donut-available');
+        const dTot = document.getElementById('donut-total');
+        const dUtil = document.getElementById('donut-util');
+
+        document.querySelectorAll('.donut-slice').forEach(slice => {
+            slice.addEventListener('mousemove', (e) => {
+                donutTooltip.style.transform = `translate(${e.clientX + 15}px, ${e.clientY - 40}px)`;
+            });
+
+            slice.addEventListener('mouseenter', (e) => {
+                const occupied = parseInt(slice.dataset.occupied);
+                const total = parseInt(slice.dataset.total);
+                const util = Math.round((occupied / total) * 100);
+
+                donutTooltip.style.opacity = '1';
+                dName.textContent = slice.dataset.name;
+                dOcc.textContent = occupied;
+                dAvail.textContent = total - occupied;
+                dTot.textContent = total;
+                dUtil.textContent = util + '%';
+                
+                if (util > 85) dUtil.style.color = '#EF4444'; // danger
+                else if (util > 70) dUtil.style.color = '#F59E0B'; // warning
+                else dUtil.style.color = '#10B981'; // success
+
+                donutTooltip.style.transform = `translate(${e.clientX + 15}px, ${e.clientY - 40}px)`;
+            });
+
+            slice.addEventListener('mouseleave', () => {
+                donutTooltip.style.opacity = '0';
+            });
+        });
+    }
 };
