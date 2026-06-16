@@ -32,22 +32,23 @@
 
         <div class="hidden md:flex items-center gap-4">
             <ThemeToggle />
-            @if (_isLoggedIn)
-            {
-                <a href="/admin/dashboard" class="btn-warm font-ui text-xs font-semibold uppercase tracking-[0.05em] px-5 py-2.5 rounded-lg" data-cta="true" style="text-decoration: none;">
-                    Dashboard
-                </a>
-            }
-            else
-            {
-                <a href="/login" class="font-ui text-xs uppercase tracking-[0.1em] px-5 py-2.5 rounded-lg transition-all duration-300 hover:opacity-80"
-                   style="border: 1px solid rgba(148,179,210,0.15); color: var(--text-primary); text-decoration: none;">
-                    Đăng nhập
-                </a>
-                <a href="/login" class="btn-warm font-ui text-xs font-semibold uppercase tracking-[0.05em] px-5 py-2.5 rounded-lg" data-cta="true" style="text-decoration: none;">
-                    Portal Quản trị
-                </a>
-            }
+            <AuthorizeView>
+                <Authorized>
+                    <a href="/admin/dashboard" class="btn-warm font-ui text-xs font-semibold uppercase tracking-[0.05em] px-5 py-2.5 rounded-lg" data-cta="true" style="text-decoration: none;">
+                        Dashboard
+                    </a>
+                    <button @onclick="Logout" class="font-ui text-xs uppercase tracking-[0.1em] px-5 py-2.5 rounded-lg transition-all duration-300 hover:opacity-80 cursor-pointer"
+                       style="border: 1px solid rgba(148,179,210,0.15); color: var(--text-primary); background: transparent;">
+                        Đăng xuất
+                    </button>
+                </Authorized>
+                <NotAuthorized>
+                    <a href="/login" class="font-ui text-xs uppercase tracking-[0.1em] px-5 py-2.5 rounded-lg transition-all duration-300 hover:opacity-80"
+                       style="border: 1px solid rgba(148,179,210,0.15); color: var(--text-primary); text-decoration: none;">
+                        Đăng nhập
+                    </a>
+                </NotAuthorized>
+            </AuthorizeView>
         </div>
 
         <button class="md:hidden p-2" @onclick="ToggleMobile" style="color: var(--text-primary); background: none; border: none; cursor: pointer;">
@@ -79,21 +80,24 @@
             <div class="p-1 border border-[var(--border-primary)] rounded-lg">
                 <ThemeToggle />
             </div>
-            @if (_isLoggedIn)
-            {
-                <a href="/admin/dashboard" class="btn-warm font-ui text-sm font-semibold px-6 py-3 rounded-lg" style="text-decoration: none;">Dashboard</a>
-            }
-            else
-            {
-                <a href="/login" class="btn-warm font-ui text-sm font-semibold px-6 py-3 rounded-lg" style="text-decoration: none;">Portal Quản trị</a>
-            }
+            <AuthorizeView>
+                <Authorized>
+                    <a href="/admin/dashboard" class="btn-warm font-ui text-sm font-semibold px-6 py-3 rounded-lg" style="text-decoration: none;">Dashboard</a>
+                    <button @onclick="Logout" class="font-ui text-sm font-semibold px-6 py-3 rounded-lg transition-all duration-300 hover:opacity-80 cursor-pointer"
+                            style="border: 1px solid rgba(148,179,210,0.15); color: var(--text-primary); background: transparent;">
+                        Đăng xuất
+                    </button>
+                </Authorized>
+                <NotAuthorized>
+                    <a href="/login" class="btn-warm font-ui text-sm font-semibold px-6 py-3 rounded-lg" style="text-decoration: none;">Đăng nhập</a>
+                </NotAuthorized>
+            </AuthorizeView>
         </div>
     </div>
 }
 
 @code {
     private bool _mobileOpen;
-    private bool _isLoggedIn;
     [Inject] private IJSRuntime JS { get; set; } = default!;
 
     private List<(string Path, string Label)> _navLinks = new()
@@ -104,9 +108,10 @@
         ("/contact", "Liên hệ"),
     };
 
-    protected override async Task OnInitializedAsync()
+    private async Task Logout()
     {
-        _isLoggedIn = await AuthService.IsLoggedInAsync();
+        await AuthService.LogoutAsync();
+        Navigation.NavigateTo("/");
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
