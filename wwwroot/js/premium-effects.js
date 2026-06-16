@@ -159,8 +159,7 @@ window.initDashboardTooltip = () => {
 
     columns.forEach(col => {
         col.addEventListener('mousemove', (e) => {
-            tooltip.style.left = `${e.clientX + 15}px`;
-            tooltip.style.top = `${e.clientY - 40}px`;
+            tooltip.style.transform = `translate(${e.clientX + 15}px, ${e.clientY - 40}px)`;
         });
 
         col.addEventListener('mouseenter', (e) => {
@@ -168,8 +167,7 @@ window.initDashboardTooltip = () => {
             tooltipDay.textContent = col.dataset.day;
             tooltipAdmissions.textContent = col.dataset.admissions;
             tooltipReleases.textContent = col.dataset.releases;
-            tooltip.style.left = `${e.clientX + 15}px`;
-            tooltip.style.top = `${e.clientY - 40}px`;
+            tooltip.style.transform = `translate(${e.clientX + 15}px, ${e.clientY - 40}px)`;
         });
 
         col.addEventListener('mouseleave', () => {
