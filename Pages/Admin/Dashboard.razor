@@ -121,15 +121,15 @@
                 <div class="flex items-center justify-between mb-6">
                     <div>
                         <h3 class="font-ui text-sm font-semibold flex items-center gap-2" style="color: var(--text-primary);">
-                            <span>Storage Utilization</span>
+                            <span>Công suất Lưu trữ</span>
                         </h3>
-                        <p class="mt-0.5 text-xs" style="color: var(--text-muted);">Occupied slots by unit</p>
+                        <p class="mt-0.5 text-xs" style="color: var(--text-muted);">Số khoang đã sử dụng theo khu vực</p>
                     </div>
                     <div class="text-right">
                         <p class="text-2xl font-bold" style="color: var(--text-primary);">
                             @(Math.Round((double)_storageUnits.Sum(u => u.Occupied) / _storageUnits.Sum(u => u.Total) * 100))%
                         </p>
-                        <p class="text-[10px] font-medium uppercase tracking-wider" style="color: var(--text-muted);">Overall Capacity</p>
+                        <p class="text-[10px] font-medium uppercase tracking-wider" style="color: var(--text-muted);">Công suất tổng</p>
                     </div>
                 </div>
 
@@ -298,12 +298,12 @@
 
     private readonly List<(string Name, int Total, int Occupied, string Color)> _storageUnits = new()
     {
-        new("Cold Room A", 40, 38, "#3b82f6"),
-        new("Cold Room B", 40, 35, "#06b6d4"),
-        new("Cold Room C", 40, 28, "#6366f1"),
-        new("Freezer Unit 1", 30, 24, "#8b5cf6"),
-        new("Freezer Unit 2", 30, 22, "#a855f7"),
-        new("Embalming Bay", 20, 0, "#22c55e"),
+        new("Phòng lạnh A", 40, 38, "#3b82f6"),
+        new("Phòng lạnh B", 40, 35, "#06b6d4"),
+        new("Phòng lạnh C", 40, 28, "#6366f1"),
+        new("Ngăn đông 1", 30, 24, "#8b5cf6"),
+        new("Ngăn đông 2", 30, 22, "#a855f7"),
+        new("Khu vực khâm liệm", 20, 0, "#22c55e"),
     };
 
     private string GetDonutGradient()
