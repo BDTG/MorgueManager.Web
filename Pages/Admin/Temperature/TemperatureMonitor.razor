@@ -122,34 +122,76 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h3 class="font-ui" style="font-size: 14px; font-weight: 600; margin: 0; color: var(--text-primary);">📋 Chi tiết từng ngăn</h3>
             <div style="display: flex; background-color: var(--bg-elevated); border: 1px solid var(--border-primary); border-radius: 8px; overflow: hidden; padding: 2px;">
-                <button style="padding: 6px 12px; border: none; border-radius: 6px; background: #3B82F6; color: white; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <button @onclick="() => _isGridView = true" style="padding: 6px 12px; border: none; border-radius: 6px; background: @(_isGridView ? "#3B82F6" : "transparent"); color: @(_isGridView ? "white" : "var(--text-secondary)"); font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                     Grid
                 </button>
-                <button style="padding: 6px 12px; border: none; border-radius: 6px; background: transparent; color: var(--text-secondary); font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <button @onclick="() => _isGridView = false" style="padding: 6px 12px; border: none; border-radius: 6px; background: @(!_isGridView ? "#3B82F6" : "transparent"); color: @(!_isGridView ? "white" : "var(--text-secondary)"); font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"></path></svg>
                     Table
                 </button>
             </div>
         </div>
-        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px;">
-            @foreach (var kvp in GetCombinedSlotTemperatures())
-            {
-                var temp = kvp.Value;
-                var color = GetSlotColor(kvp.Key, temp);
-                
-                <div style="padding: 16px; border-radius: 12px; text-align: center; border: 1px solid rgba(255,255,255,0.05); background-color: rgba(0,0,0,0.2); display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: inset 0 0 20px rgba(0,0,0,0.1);">
-                    <div class="font-ui" style="font-weight: 700; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">@kvp.Key</div>
-                    <div class="font-mono" style="font-size: 18px; font-weight: 700; color: @color;">@temp.ToString("F1")°C</div>
+        
+        @if (_isGridView)
+        {
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px;">
+                @foreach (var kvp in GetCombinedSlotTemperatures())
+                {
+                    var temp = kvp.Value;
+                    var color = GetSlotColor(kvp.Key, temp);
+                    var style = GetSlotStyle(kvp.Key, temp);
                     
-                    <div style="margin-top: 8px; margin-bottom: 8px;">
-                        @((MarkupString)GenerateSparkline(kvp.Key, temp, color))
-                    </div>
+                    <div style="@style padding: 16px; border-radius: 12px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.2s;">
+                        <div class="font-ui" style="font-weight: 700; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">@kvp.Key</div>
+                        <div class="font-mono" style="font-size: 18px; font-weight: 700; color: @color;">@temp.ToString("F1")°C</div>
+                        
+                        <div style="margin-top: 8px; margin-bottom: 8px;">
+                            @((MarkupString)GenerateSparkline(kvp.Key, temp, color))
+                        </div>
 
-                    <div style="width: 6px; height: 6px; border-radius: 50%; background-color: @color; opacity: 0.8; box-shadow: 0 0 8px @color;"></div>
-                </div>
-            }
-        </div>
+                        <div style="width: 6px; height: 6px; border-radius: 50%; background-color: @color; opacity: 0.8; box-shadow: 0 0 8px @color;"></div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="overflow-x-auto">
+                <table class="w-full data-table">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--table-border);">
+                            <th class="px-4 py-3 font-ui text-[11px] uppercase tracking-wider text-left" style="color: var(--text-muted);">Mã Ngăn</th>
+                            <th class="px-4 py-3 font-ui text-[11px] uppercase tracking-wider text-left" style="color: var(--text-muted);">Nhiệt độ hiện tại</th>
+                            <th class="px-4 py-3 font-ui text-[11px] uppercase tracking-wider text-left" style="color: var(--text-muted);">Trạng thái</th>
+                            <th class="px-4 py-3 font-ui text-[11px] uppercase tracking-wider text-left" style="color: var(--text-muted);">Biểu đồ (30p qua)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var kvp in GetCombinedSlotTemperatures())
+                        {
+                            var temp = kvp.Value;
+                            var color = GetSlotColor(kvp.Key, temp);
+                            var statusText = color == "#EF4444" ? "Cảnh báo" : color == "#F59E0B" ? "Chú ý" : "Bình thường";
+                            var statusBg = color == "#EF4444" ? "rgba(239,68,68,0.15)" : color == "#F59E0B" ? "rgba(245,158,11,0.15)" : "rgba(16,185,129,0.15)";
+                            
+                            <tr style="border-bottom: 1px solid var(--table-border);">
+                                <td class="px-4 py-3 font-ui text-sm font-bold" style="color: var(--text-primary);">@kvp.Key</td>
+                                <td class="px-4 py-3 font-mono text-sm font-semibold" style="color: @color;">@temp.ToString("F1")°C</td>
+                                <td class="px-4 py-3">
+                                    <span class="badge-pill font-ui text-xs px-2.5 py-0.5 rounded-full font-medium" style="background-color: @statusBg; color: @color;">
+                                        @statusText
+                                    </span>
+                                </td>
+                                <td class="px-4 py-2">
+                                    @((MarkupString)GenerateSparkline(kvp.Key, temp, color))
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
     </div>
 
     <!-- History Chart -->
@@ -251,6 +293,8 @@
         { "C-05", -4.9 }
     };
 
+    private bool _isGridView = true;
+
     private void ToggleZoneA() => _expandedZone = _expandedZone == "A" ? null : "A";
     private void ToggleZoneB() => _expandedZone = _expandedZone == "B" ? null : "B";
     private void ToggleZoneC() => _expandedZone = _expandedZone == "C" ? null : "C";
@@ -313,6 +357,17 @@
         var border = active ? "var(--ice)" : "var(--border-primary)";
         var color = active ? "var(--ice)" : "var(--text-secondary)";
         return $"padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid {border}; color: {color}; background: transparent;";
+    }
+
+    private string GetSlotStyle(string key, double temp)
+    {
+        var isDeepFreeze = key.StartsWith("C");
+        var color = isDeepFreeze 
+            ? (temp > 0 ? "#EF4444" : temp > -2 ? "#F59E0B" : "#10B981")
+            : (temp > 6 ? "#EF4444" : temp > 4 ? "#F59E0B" : "#10B981");
+            
+        var rgb = color == "#EF4444" ? "239,68,68" : color == "#F59E0B" ? "245,158,11" : "16,185,129";
+        return $"border: 1px solid rgba({rgb}, 0.2); background-color: rgba({rgb}, 0.04);";
     }
 
     private string GetSlotColor(string key, double temp)
