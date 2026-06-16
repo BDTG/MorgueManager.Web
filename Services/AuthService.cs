@@ -7,6 +7,8 @@ public class AuthService
     private readonly IJSRuntime _js;
     private static string? _memoryToken;
 
+    public event Action? OnAuthStateChanged;
+
     public AuthService(IJSRuntime js)
     {
         _js = js;
@@ -39,6 +41,7 @@ public class AuthService
             await _js.InvokeVoidAsync("localStorage.setItem", "morguemanager-token", token);
         }
         catch { }
+        OnAuthStateChanged?.Invoke();
     }
 
     public async Task LogoutAsync()
@@ -49,6 +52,7 @@ public class AuthService
             await _js.InvokeVoidAsync("localStorage.removeItem", "morguemanager-token");
         }
         catch { }
+        OnAuthStateChanged?.Invoke();
     }
 
     public async Task<string?> LoginWithGoogleAsync()
