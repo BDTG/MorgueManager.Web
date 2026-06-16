@@ -2,6 +2,8 @@ using System.Collections.Generic;
 
 namespace MorgueManager.API.Models;
 
+public enum BiohazardLevel { None, Infectious, HighRisk }
+
 public class Corpse
 {
     public int Id { get; set; }
@@ -21,6 +23,7 @@ public class Corpse
     public double? Temp { get; set; }
     public int DaysStored { get; set; }
     public string Priority { get; set; } = "NORMAL";
+    public BiohazardLevel Biohazard { get; set; } = BiohazardLevel.None;
     public NextOfKinInfo NextOfKin { get; set; } = new();
     public string Notes { get; set; } = "";
     public AutopsyReport? AutopsyReport { get; set; }

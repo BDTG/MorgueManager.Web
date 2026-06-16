@@ -86,6 +86,7 @@ public class TemperatureSimulationWorker : BackgroundService
 
                         // Scan for overheating occupied slots and write warning notifications
                         var overheatingSlots = slots.Where(s => s.Status == SlotStatus.Occupied && s.CurrentTemperature > 4.5).ToList();
+                        var webhookDispatcher = scope.ServiceProvider.GetService<WebhookDispatcher>();
                         foreach (var slot in overheatingSlots)
                         {
                             var corpseName = context.Corpses.FirstOrDefault(c => c.StorageSlotId == slot.Id)?.Name ?? "Chưa rõ";
@@ -103,6 +104,11 @@ public class TemperatureSimulationWorker : BackgroundService
                                 };
                                 context.Notifications.Add(alert);
                                 _logger.LogWarning("ALERT: Slot {SlotNumber} containing corpse [{CorpseName}] is overheating at {Temp}°C!", slot.SlotNumber, corpseName, slot.CurrentTemperature);
+                                
+                                if (webhookDispatcher != null)
+                                {
+                                    await webhookDispatcher.SendWebhookAlertAsync("OVERHEATING", $"Cảnh báo quá nhiệt: Ngăn tủ {slot.SlotNumber} (đang lưu trữ thi hài [{corpseName}]) có nhiệt độ cao bất thường: {slot.CurrentTemperature}°C!");
+                                }
                             }
                         }
 

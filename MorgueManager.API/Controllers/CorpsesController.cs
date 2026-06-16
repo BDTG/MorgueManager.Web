@@ -84,6 +84,10 @@ public class CorpsesController : ControllerBase
                 {
                     errors.Add("storageSlot", new[] { $"Ngăn tủ {dto.StorageSlot} đã có người sử dụng hoặc đang bảo trì." });
                 }
+                else if (dto.Biohazard == BiohazardLevel.HighRisk && slot.UnitName != "Cold Room B")
+                {
+                    errors.Add("storageSlot", new[] { "Thi thể có mức độ cảnh báo nguy hiểm sinh học cao (HighRisk) chỉ được phép xếp vào khu vực cách ly (Cold Room B)." });
+                }
                 else
                 {
                     slot.Status = SlotStatus.Occupied;
@@ -119,6 +123,7 @@ public class CorpsesController : ControllerBase
             StorageSlotId = storageSlotId,
             Temp = dto.Temp,
             Notes = dto.Notes,
+            Biohazard = dto.Biohazard,
             NextOfKin = new NextOfKinInfo
             {
                 Name = dto.NextOfKin?.Name ?? "",
@@ -147,6 +152,19 @@ public class CorpsesController : ControllerBase
         _context.Corpses.Add(corpse);
         _context.SaveChanges();
 
+        // Automatically create a corresponding BillingRecord
+        var billing = new BillingRecord
+        {
+            CorpseId = corpse.Id,
+            StorageFeePerDay = 200000,
+            ServiceFee = 0,
+            TotalAmount = 200000, // Initial 1 day
+            IsPaid = false,
+            CreatedAt = DateTime.Now
+        };
+        _context.BillingRecords.Add(billing);
+        _context.SaveChanges();
+
         return CreatedAtAction(nameof(GetById), new { id = corpse.Id }, corpse);
     }
 
@@ -173,6 +191,16 @@ public class CorpsesController : ControllerBase
             errors.Add("name", new[] { "Họ và tên không được để trống." });
         }
 
+        // Validate biohazard level slot restriction if a slot is specified
+        if (dto.Biohazard == BiohazardLevel.HighRisk && !string.IsNullOrEmpty(dto.StorageSlot))
+        {
+            var slot = _context.StorageSlots.FirstOrDefault(s => s.SlotNumber == dto.StorageSlot);
+            if (slot != null && slot.UnitName != "Cold Room B")
+            {
+                errors.Add("storageSlot", new[] { "Thi thể có mức độ cảnh báo nguy hiểm sinh học cao (HighRisk) chỉ được phép xếp vào khu vực cách ly (Cold Room B)." });
+            }
+        }
+
         // Validate release conditions if status changes to "Bàn giao"
         if (dto.Status == "Bàn giao" && corpse.Status != "Bàn giao")
         {
@@ -188,6 +216,28 @@ public class CorpsesController : ControllerBase
             if (string.IsNullOrWhiteSpace(corpse.NextOfKin?.Name) || string.IsNullOrWhiteSpace(corpse.NextOfKin?.Phone))
             {
                 errors.Add("nextOfKin", new[] { "Không thể bàn giao: Thông tin thân nhân nhận bàn giao chưa đầy đủ." });
+            }
+
+            // Verify billing record is paid
+            var billing = _context.BillingRecords.FirstOrDefault(b => b.CorpseId == corpse.Id);
+            if (billing == null)
+            {
+                errors.Add("status", new[] { "Không thể bàn giao: Không tìm thấy hóa đơn thanh toán cho thi hài này." });
+            }
+            else if (!billing.IsPaid)
+            {
+                // Update final total amount before reporting unpaid error
+                int days = corpse.DaysStored;
+                if (DateTime.TryParse(corpse.DateAdmitted, out var admittedDate))
+                {
+                    var duration = (int)(DateTime.Today - admittedDate.Date).TotalDays;
+                    days = duration > 0 ? duration : 1;
+                    corpse.DaysStored = days;
+                }
+                billing.TotalAmount = (billing.StorageFeePerDay * days) + billing.ServiceFee;
+                _context.SaveChanges();
+
+                errors.Add("status", new[] { $"Không thể bàn giao: Hóa đơn chưa được thanh toán (Tổng số tiền: {billing.TotalAmount:N0} VND)." });
             }
         }
 
@@ -213,6 +263,10 @@ public class CorpsesController : ControllerBase
                     if (newSlot.Status != SlotStatus.Empty)
                     {
                         errors.Add("storageSlot", new[] { $"Ngăn tủ {dto.StorageSlot} đã có người sử dụng hoặc đang bảo trì." });
+                    }
+                    else if (dto.Biohazard == BiohazardLevel.HighRisk && newSlot.UnitName != "Cold Room B")
+                    {
+                        errors.Add("storageSlot", new[] { "Thi thể có mức độ cảnh báo nguy hiểm sinh học cao (HighRisk) chỉ được phép xếp vào khu vực cách ly (Cold Room B)." });
                     }
                     else
                     {
@@ -271,6 +325,7 @@ public class CorpsesController : ControllerBase
         corpse.CauseOfDeath = dto.CauseOfDeath;
         corpse.DateOfDeath = dto.DateOfDeath;
         corpse.Status = dto.Status;
+        corpse.Biohazard = dto.Biohazard;
         if (dto.Status != "Bàn giao")
         {
             corpse.StorageUnit = dto.StorageUnit;
@@ -523,6 +578,60 @@ public class CorpsesController : ControllerBase
 
         byte[] pdfBytes = document.GeneratePdf();
         return File(pdfBytes, "application/pdf", $"BaoCaoTuThi_{corpse.CaseId}.pdf");
+    }
+
+    [HttpGet("export/csv")]
+    [Authorize(Roles = "Admin,Manager,Staff")]
+    public IActionResult ExportCsv([FromQuery] string? startDate, [FromQuery] string? endDate)
+    {
+        var query = _context.Corpses
+            .Include(c => c.NextOfKin)
+            .AsQueryable();
+
+        if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, out var start))
+        {
+            query = query.AsEnumerable().Where(c => DateTime.TryParse(c.DateAdmitted, out var adm) && adm.Date >= start.Date).AsQueryable();
+        }
+        
+        if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out var end))
+        {
+            query = query.AsEnumerable().Where(c => DateTime.TryParse(c.DateAdmitted, out var adm) && adm.Date <= end.Date).AsQueryable();
+        }
+
+        var corpses = query.ToList();
+
+        var csvBuilder = new System.Text.StringBuilder();
+        // Write UTF-8 BOM for Excel compatibility
+        csvBuilder.Append("\uFEFF");
+        
+        // Write CSV Headers
+        csvBuilder.AppendLine("Mã hồ sơ,Họ và tên,CCCD,Giới tính,Ngày sinh,Tuổi,Nguyên nhân tử vong,Ngày tử vong,Ngày tiếp nhận,Số ngày lưu trữ,Khu vực,Ngăn tủ,Nhiệt độ,Mức độ cảnh báo sinh học,Bác sĩ khám nghiệm,Kết luận khám nghiệm");
+
+        foreach (var corpse in corpses)
+        {
+            var biohazardStr = corpse.Biohazard switch
+            {
+                BiohazardLevel.None => "Không",
+                BiohazardLevel.Infectious => "Lây nhiễm",
+                BiohazardLevel.HighRisk => "Nguy hiểm cao",
+                _ => "Không"
+            };
+
+            var pathologist = corpse.AutopsyReport?.PathologistName ?? "";
+            var conclusion = corpse.AutopsyReport?.ConcludingCause ?? "";
+            var tempStr = corpse.Temp.HasValue ? corpse.Temp.Value.ToString("F1") : "";
+
+            csvBuilder.AppendLine($"\"{EscapeCsv(corpse.CaseId)}\",\"{EscapeCsv(corpse.Name)}\",\"{EscapeCsv(corpse.Cccd)}\",\"{EscapeCsv(corpse.Gender)}\",\"{EscapeCsv(corpse.BirthDate)}\",{corpse.Age},\"{EscapeCsv(corpse.CauseOfDeath)}\",\"{EscapeCsv(corpse.DateOfDeath)}\",\"{EscapeCsv(corpse.DateAdmitted)}\",{corpse.DaysStored},\"{EscapeCsv(corpse.StorageUnit ?? "")}\",\"{EscapeCsv(corpse.StorageSlot ?? "")}\",{tempStr},\"{EscapeCsv(biohazardStr)}\",\"{EscapeCsv(pathologist)}\",\"{EscapeCsv(conclusion)}\"");
+        }
+
+        var bytes = System.Text.Encoding.UTF8.GetBytes(csvBuilder.ToString());
+        return File(bytes, "text/csv; charset=utf-8", $"BaoCaoPhapY_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+    }
+
+    private string EscapeCsv(string val)
+    {
+        if (string.IsNullOrEmpty(val)) return "";
+        return val.Replace("\"", "\"\"");
     }
 
     [HttpGet("test-error")]

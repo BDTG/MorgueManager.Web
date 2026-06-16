@@ -73,6 +73,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ShiftAuthorizeFilter>();
 
 // Register background simulation services
+builder.Services.AddSingleton<WebhookDispatcher>();
 builder.Services.AddHostedService<TemperatureSimulationWorker>();
 builder.Services.AddHostedService<OverdueScannerWorker>();
 builder.Services.AddHostedService<ReportSchedulerWorker>();

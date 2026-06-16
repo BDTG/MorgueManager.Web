@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MorgueManager.API.Data;
 using MorgueManager.API.Models;
+using MorgueManager.API.Services;
 using System;
 using System.Threading.Tasks;
 
@@ -12,10 +13,12 @@ namespace MorgueManager.API.Controllers;
 public class IotController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly WebhookDispatcher _webhookDispatcher;
 
-    public IotController(AppDbContext context)
+    public IotController(AppDbContext context, WebhookDispatcher webhookDispatcher)
     {
         _context = context;
+        _webhookDispatcher = webhookDispatcher;
     }
 
     [HttpPost("weight-log")]
@@ -62,6 +65,9 @@ public class IotController : ControllerBase
                     _context.AuditLogs.Add(auditLog);
 
                     await _context.SaveChangesAsync();
+
+                    // Send webhook warning
+                    await _webhookDispatcher.SendWebhookAlertAsync("SECURITY_ANOMALY", $"Báo động bảo mật: Thi hài {corpse.Name} ({corpse.CaseId}) trong hộc tủ {slot.SlotNumber} bị di dời không hợp lệ. Trọng lượng hiện tại: {dto.Weight}kg.");
                 }
             }
         }
