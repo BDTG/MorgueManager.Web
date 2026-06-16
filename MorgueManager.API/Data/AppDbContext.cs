@@ -25,6 +25,9 @@ public class AppDbContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<Shift> Shifts { get; set; }
     public DbSet<Notification> Notifications { get; set; }
+    public DbSet<BillingRecord> BillingRecords { get; set; }
+    public DbSet<TransportVehicle> TransportVehicles { get; set; }
+    public DbSet<TransportTrip> TransportTrips { get; set; }
 
     public override int SaveChanges()
     {
@@ -106,6 +109,9 @@ public class AppDbContext : DbContext
             // Map AutopsyReport as Owned Type
             entity.OwnsOne(c => c.AutopsyReport);
 
+            // Map EmbalmingInfo as Owned Type
+            entity.OwnsOne(c => c.EmbalmingInfo);
+
             // Map collections as Owned Types
             entity.OwnsMany(c => c.Belongings, b =>
             {
@@ -161,5 +167,12 @@ public class AppDbContext : DbContext
             slots.Add(new StorageSlot { Id = slotId++, SlotNumber = $"B-{i:D2}", UnitName = "Cold Room B", Status = SlotStatus.Empty, CurrentTemperature = 4.0 });
         }
         modelBuilder.Entity<StorageSlot>().HasData(slots);
+
+        // Seed default TransportVehicles
+        modelBuilder.Entity<TransportVehicle>().HasData(
+            new TransportVehicle { Id = 1, LicensePlate = "51B-12345", Model = "Ford Transit Special Ambulance", Status = VehicleStatus.Available },
+            new TransportVehicle { Id = 2, LicensePlate = "51B-67890", Model = "Mercedes-Benz Sprinter Hearse", Status = VehicleStatus.Available },
+            new TransportVehicle { Id = 3, LicensePlate = "51B-55555", Model = "Hyundai Staria Mortuary Vehicle", Status = VehicleStatus.Available }
+        );
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using MorgueManager.API.Models;
 
 namespace MorgueManager.API.Dtos;
 
@@ -23,6 +24,7 @@ public class CreateCorpseDto
     public string? StorageSlot { get; set; }
     public double? Temp { get; set; }
     public string Notes { get; set; } = "";
+    public BiohazardLevel Biohazard { get; set; } = BiohazardLevel.None;
     public NextOfKinDto NextOfKin { get; set; } = new();
 }
 
@@ -40,6 +42,7 @@ public class UpdateCorpseDto
     public string? StorageSlot { get; set; }
     public double? Temp { get; set; }
     public string Notes { get; set; } = "";
+    public BiohazardLevel Biohazard { get; set; } = BiohazardLevel.None;
     public NextOfKinDto NextOfKin { get; set; } = new();
 }
 

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MorgueManager.API.Data;
 
@@ -11,9 +12,11 @@ using MorgueManager.API.Data;
 namespace MorgueManager.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260616074031_AddEmbalmingInfo")]
+    partial class AddEmbalmingInfo
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -58,37 +61,6 @@ namespace MorgueManager.API.Migrations
                     b.ToTable("AuditLogs");
                 });
 
-            modelBuilder.Entity("MorgueManager.API.Models.BillingRecord", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CorpseId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsPaid")
-                        .HasColumnType("bit");
-
-                    b.Property<double>("ServiceFee")
-                        .HasColumnType("float");
-
-                    b.Property<double>("StorageFeePerDay")
-                        .HasColumnType("float");
-
-                    b.Property<double>("TotalAmount")
-                        .HasColumnType("float");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("BillingRecords");
-                });
-
             modelBuilder.Entity("MorgueManager.API.Models.Corpse", b =>
                 {
                     b.Property<int>("Id")
@@ -98,9 +70,6 @@ namespace MorgueManager.API.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("Age")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Biohazard")
                         .HasColumnType("int");
 
                     b.Property<string>("BirthDate")
@@ -1153,89 +1122,6 @@ namespace MorgueManager.API.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("TemperatureLogs");
-                });
-
-            modelBuilder.Entity("MorgueManager.API.Models.TransportTrip", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime?>("ArrivalTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("CorpseId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("DepartureTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Destination")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("DriverName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<int>("VehicleId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("TransportTrips");
-                });
-
-            modelBuilder.Entity("MorgueManager.API.Models.TransportVehicle", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("LicensePlate")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Model")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("TransportVehicles");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            LicensePlate = "51B-12345",
-                            Model = "Ford Transit Special Ambulance",
-                            Status = 0
-                        },
-                        new
-                        {
-                            Id = 2,
-                            LicensePlate = "51B-67890",
-                            Model = "Mercedes-Benz Sprinter Hearse",
-                            Status = 0
-                        },
-                        new
-                        {
-                            Id = 3,
-                            LicensePlate = "51B-55555",
-                            Model = "Hyundai Staria Mortuary Vehicle",
-                            Status = 0
-                        });
                 });
 
             modelBuilder.Entity("MorgueManager.API.Models.User", b =>

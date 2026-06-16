@@ -4,6 +4,7 @@ public enum SlotStatus
 {
     Empty,
     Occupied,
+    Cleaning,
     Maintenance
 }
 
