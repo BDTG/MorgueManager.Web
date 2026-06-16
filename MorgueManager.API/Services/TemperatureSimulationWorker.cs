@@ -46,8 +46,19 @@ public class TemperatureSimulationWorker : BackgroundService
                             switch (slot.Status)
                             {
                                 case SlotStatus.Occupied:
-                                    // Regulated cold temperature: 2.0 to 4.0
-                                    targetTemp = Math.Round(2.0 + (_random.NextDouble() * 2.0), 1);
+                                    // Regulated cold temperature: 2.0 to 4.0, with a 5% chance of temp anomaly (malfunction simulation)
+                                    if (_random.Next(1, 101) <= 5)
+                                    {
+                                        targetTemp = Math.Round(5.0 + (_random.NextDouble() * 2.0), 1);
+                                    }
+                                    else
+                                    {
+                                        targetTemp = Math.Round(2.0 + (_random.NextDouble() * 2.0), 1);
+                                    }
+                                    break;
+                                case SlotStatus.Cleaning:
+                                    // Room temperature during sanitation: 14.0 to 18.0
+                                    targetTemp = Math.Round(14.0 + (_random.NextDouble() * 4.0), 1);
                                     break;
                                 case SlotStatus.Maintenance:
                                     // Warmer: 10.0 to 15.0
@@ -55,7 +66,7 @@ public class TemperatureSimulationWorker : BackgroundService
                                     break;
                                 case SlotStatus.Empty:
                                 default:
-                                    // Fluctuates around 4.0 to 5.0
+                                    // Fluctuates around 3.5 to 5.5
                                     targetTemp = Math.Round(3.5 + (_random.NextDouble() * 2.0), 1);
                                     break;
                             }
@@ -72,6 +83,33 @@ public class TemperatureSimulationWorker : BackgroundService
 
                         context.TemperatureLogs.AddRange(logs);
                         await context.SaveChangesAsync(stoppingToken);
+
+                        // Scan for overheating occupied slots and write warning notifications
+                        var overheatingSlots = slots.Where(s => s.Status == SlotStatus.Occupied && s.CurrentTemperature > 4.5).ToList();
+                        foreach (var slot in overheatingSlots)
+                        {
+                            var corpseName = context.Corpses.FirstOrDefault(c => c.StorageSlotId == slot.Id)?.Name ?? "Chưa rõ";
+                            bool alreadyAlerted = context.Notifications.Any(n => 
+                                n.Content.Contains($"ngăn tủ {slot.SlotNumber}") && !n.IsRead);
+
+                            if (!alreadyAlerted)
+                            {
+                                var alert = new Notification
+                                {
+                                    Title = "Cảnh báo quá nhiệt hộc lạnh",
+                                    Content = $"Ngăn tủ {slot.SlotNumber} (đang lưu trữ thi hài [{corpseName}]) có nhiệt độ cao bất thường: {slot.CurrentTemperature}°C!",
+                                    IsRead = false,
+                                    Timestamp = DateTime.Now
+                                };
+                                context.Notifications.Add(alert);
+                                _logger.LogWarning("ALERT: Slot {SlotNumber} containing corpse [{CorpseName}] is overheating at {Temp}°C!", slot.SlotNumber, corpseName, slot.CurrentTemperature);
+                            }
+                        }
+
+                        if (context.ChangeTracker.HasChanges())
+                        {
+                            await context.SaveChangesAsync(stoppingToken);
+                        }
 
                         _logger.LogInformation("Successfully updated temperature and logged for {Count} storage slots.", slots.Count);
                     }

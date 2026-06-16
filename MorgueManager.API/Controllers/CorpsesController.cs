@@ -155,6 +155,8 @@ public class CorpsesController : ControllerBase
         var corpse = _context.Corpses
             .Include(c => c.NextOfKin)
             .Include(c => c.History)
+            .Include(c => c.Documents)
+            .Include(c => c.Belongings)
             .FirstOrDefault(c => c.Id == id);
 
         if (corpse == null)
@@ -168,8 +170,26 @@ public class CorpsesController : ControllerBase
             errors.Add("name", new[] { "Họ và tên không được để trống." });
         }
 
+        // Validate release conditions if status changes to "Bàn giao"
+        if (dto.Status == "Bàn giao" && corpse.Status != "Bàn giao")
+        {
+            var hasDeathCert = corpse.Documents.Any(d => 
+                d.Type.Equals("Death Certificate", StringComparison.OrdinalIgnoreCase) || 
+                d.Name.Contains("giay_chung_tu", StringComparison.OrdinalIgnoreCase));
+                
+            if (!hasDeathCert)
+            {
+                errors.Add("status", new[] { "Không thể bàn giao: Thiếu tệp tin Giấy chứng tử đính kèm." });
+            }
+
+            if (string.IsNullOrWhiteSpace(corpse.NextOfKin?.Name) || string.IsNullOrWhiteSpace(corpse.NextOfKin?.Phone))
+            {
+                errors.Add("nextOfKin", new[] { "Không thể bàn giao: Thông tin thân nhân nhận bàn giao chưa đầy đủ." });
+            }
+        }
+
         // Handle slot change logic
-        if (corpse.StorageSlot != dto.StorageSlot)
+        if (corpse.StorageSlot != dto.StorageSlot && !errors.Any())
         {
             // Free the old slot
             if (corpse.StorageSlotId != null)
@@ -217,15 +237,16 @@ public class CorpsesController : ControllerBase
             }
         }
 
-        // If status changes to Bàn giao (Handed over), release the slot
-        if (dto.Status == "Bàn giao" && corpse.Status != "Bàn giao")
+        // If status changes to Bàn giao (Handed over), release the slot and set to Cleaning status
+        if (dto.Status == "Bàn giao" && corpse.Status != "Bàn giao" && !errors.Any())
         {
             if (corpse.StorageSlotId != null)
             {
                 var slot = _context.StorageSlots.Find(corpse.StorageSlotId);
                 if (slot != null)
                 {
-                    slot.Status = SlotStatus.Empty;
+                    slot.Status = SlotStatus.Cleaning;
+                    slot.CurrentTemperature = 15.0; // Temp rises during cleaning
                 }
             }
             corpse.StorageSlotId = null;
@@ -256,6 +277,7 @@ public class CorpsesController : ControllerBase
         corpse.Notes = dto.Notes;
         if (dto.NextOfKin != null)
         {
+            corpse.NextOfKin ??= new NextOfKinInfo();
             corpse.NextOfKin.Name = dto.NextOfKin.Name;
             corpse.NextOfKin.Phone = dto.NextOfKin.Phone;
             corpse.NextOfKin.Relationship = dto.NextOfKin.Relationship;
