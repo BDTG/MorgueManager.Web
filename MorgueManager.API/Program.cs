@@ -69,9 +69,13 @@ builder.Services.AddCors(options =>
 // Register HttpContextAccessor for auditing user identity
 builder.Services.AddHttpContextAccessor();
 
+// Register filters
+builder.Services.AddScoped<ShiftAuthorizeFilter>();
+
 // Register background simulation services
 builder.Services.AddHostedService<TemperatureSimulationWorker>();
 builder.Services.AddHostedService<OverdueScannerWorker>();
+builder.Services.AddHostedService<ReportSchedulerWorker>();
 
 // Configure Swagger
 builder.Services.AddEndpointsApiExplorer();

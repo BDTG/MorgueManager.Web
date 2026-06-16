@@ -5,6 +5,7 @@ using MorgueManager.API.Models;
 using MorgueManager.API.Exceptions;
 using MorgueManager.API.Data;
 using MorgueManager.API.Dtos;
+using MorgueManager.API.Handlers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -59,6 +60,7 @@ public class CorpsesController : ControllerBase
 
     [HttpPost]
     [Authorize(Roles = "Admin")]
+    [ServiceFilter(typeof(ShiftAuthorizeFilter))]
     public IActionResult Create([FromBody] CreateCorpseDto dto)
     {
         var errors = new Dictionary<string, string[]>();
@@ -150,6 +152,7 @@ public class CorpsesController : ControllerBase
 
     [HttpPut("{id:int}")]
     [Authorize(Roles = "Admin,Manager")]
+    [ServiceFilter(typeof(ShiftAuthorizeFilter))]
     public IActionResult Update(int id, [FromBody] UpdateCorpseDto dto)
     {
         var corpse = _context.Corpses
@@ -302,6 +305,7 @@ public class CorpsesController : ControllerBase
 
     [HttpDelete("{id:int}")]
     [Authorize(Roles = "Admin")]
+    [ServiceFilter(typeof(ShiftAuthorizeFilter))]
     public IActionResult Delete(int id)
     {
         var corpse = _context.Corpses.FirstOrDefault(c => c.Id == id);
@@ -348,6 +352,7 @@ public class CorpsesController : ControllerBase
 
     [HttpPost("{id:int}/autopsy")]
     [Authorize(Roles = "Admin,Manager")]
+    [ServiceFilter(typeof(ShiftAuthorizeFilter))]
     public IActionResult SubmitAutopsy(int id, [FromBody] AutopsyReportDto dto)
     {
         var corpse = _context.Corpses

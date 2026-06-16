@@ -106,6 +106,9 @@ public class AppDbContext : DbContext
             // Map AutopsyReport as Owned Type
             entity.OwnsOne(c => c.AutopsyReport);
 
+            // Map EmbalmingInfo as Owned Type
+            entity.OwnsOne(c => c.EmbalmingInfo);
+
             // Map collections as Owned Types
             entity.OwnsMany(c => c.Belongings, b =>
             {
