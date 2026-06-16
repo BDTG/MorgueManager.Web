@@ -710,38 +710,41 @@ body {
 }
 
 /* Blazor framework UI */
-.loading-progress {
+/* Blazor framework UI */
+.premium-loader {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 80px;
-    height: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
 }
-.loading-progress circle {
-    fill: none;
-    stroke: var(--border-primary);
-    stroke-width: 4;
-    transform-origin: 50% 50%;
+.premium-loader-spinner {
+    width: 56px;
+    height: 56px;
+    border: 3px solid var(--border-primary);
+    border-top-color: var(--ice);
+    border-right-color: var(--ice);
+    border-radius: 50%;
+    animation: premium-spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    will-change: transform;
 }
-.loading-progress circle:last-child {
-    stroke: var(--ice);
-    stroke-dasharray: 251;
-    stroke-dashoffset: 251;
-    animation: loading-progress 1.5s linear infinite;
+@keyframes premium-spin {
+    to { transform: rotate(360deg); }
 }
-@keyframes loading-progress {
-    0% { stroke-dashoffset: 251; transform: rotate(0deg); }
-    100% { stroke-dashoffset: 0; transform: rotate(360deg); }
-}
-.loading-progress-text {
-    position: absolute;
-    top: calc(50% + 50px);
-    left: 50%;
-    transform: translateX(-50%);
+.premium-loader-text {
     font-family: 'Inter', sans-serif;
     font-size: 13px;
     color: var(--text-muted);
+    letter-spacing: 0.05em;
+    animation: premium-pulse 2s ease-in-out infinite;
+    will-change: opacity;
+}
+@keyframes premium-pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
 }
 
 #blazor-error-ui {
