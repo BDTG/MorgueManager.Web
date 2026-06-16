@@ -146,6 +146,13 @@
                 <p class="text-center font-ui text-xs mt-4" style="color: var(--text-muted);">
                     Liên hệ quản trị viên hoặc đăng ký liên hệ để được cấp khóa truy cập.
                 </p>
+
+                <!-- Dev Bypass Button -->
+                <div class="mt-4 flex justify-center">
+                    <button @onclick="BypassLogin" type="button" class="text-[10px] uppercase tracking-wider font-semibold opacity-30 hover:opacity-100 transition-opacity duration-300" style="color: var(--ice); background: none; border: none; cursor: pointer;">
+                        [Bypass Login]
+                    </button>
+                </div>
             </div>
         }
         else if (_step == 2)
@@ -543,6 +550,13 @@
             _otpError = "Mã OTP không đúng";
             await ShowToast("Mã OTP không chính xác", "error");
         }
+    }
+
+    private async Task BypassLogin()
+    {
+        var token = "mock-jwt-token-bypass-" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        await AuthService.LoginAsync(token);
+        Navigation.NavigateTo("/admin/dashboard");
     }
 
     private void GoBack()
