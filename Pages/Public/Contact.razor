@@ -1,6 +1,7 @@
 @page "/contact"
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
+@inject IContactService ContactService
 
 <main>
     <!-- HERO -->
@@ -29,46 +30,104 @@
                         Chúng tôi sẽ phản hồi trong vòng 24 giờ.
                     </p>
 
-                    <form @submit:preventDefault="HandleSubmit" class="space-y-8">
-                        @foreach (var field in _inputFields)
-                        {
-                            <div class="relative">
-                                <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-2 transition-all duration-300"
-                                       style="color: @(GetFocusedColor(field.Name, field.Value)); transform: @(GetFocusedTransform(field.Name, field.Value));">
-                                    @field.Label
-                                </label>
-                                <input type="@field.Type"
-                                       @bind="field.Value"
-                                       @onfocus="() => HandleFocus(field.Name)"
-                                       @onblur="HandleBlur"
-                                       class="cold-input"
-                                       required="@(field.Name != "phone")" />
-                                <div class="h-px w-full transition-all duration-500"
-                                     style="background: @(_focusedField == field.Name ? "linear-gradient(90deg, var(--ice-deep), var(--ice))" : "var(--input-border)");
-                                            transform: @(_focusedField == field.Name ? "scaleX(1)" : "scaleX(0)");
-                                            transform-origin: left;"></div>
-                            </div>
-                        }
+                    <EditForm Model="@_contactModel" OnValidSubmit="HandleSubmit" class="space-y-8">
+                        <DataAnnotationsValidator />
 
+                        <!-- Họ tên -->
                         <div class="relative">
                             <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-2 transition-all duration-300"
-                                   style="color: @(GetFocusedColor("message", _message));">
+                                   style="color: @(GetFocusedColor("name", _contactModel.Name)); transform: @(GetFocusedTransform("name", _contactModel.Name));">
+                                Họ tên
+                            </label>
+                            <InputText @bind-Value="_contactModel.Name"
+                                       @onfocus='() => HandleFocus("name")'
+                                       @onblur="HandleBlur"
+                                       class="cold-input" />
+                            <div class="h-px w-full transition-all duration-500"
+                                 style="background: @(_focusedField == "name" ? "linear-gradient(90deg, var(--ice-deep), var(--ice))" : "var(--input-border)");
+                                        transform: @(_focusedField == "name" ? "scaleX(1)" : "scaleX(0)");
+                                        transform-origin: left;"></div>
+                            <ValidationMessage For="@(() => _contactModel.Name)" class="text-xs mt-1 block text-left" style="color: var(--danger);" />
+                        </div>
+
+                        <!-- Email -->
+                        <div class="relative">
+                            <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-2 transition-all duration-300"
+                                   style="color: @(GetFocusedColor("email", _contactModel.Email)); transform: @(GetFocusedTransform("email", _contactModel.Email));">
+                                Email
+                            </label>
+                            <InputText @bind-Value="_contactModel.Email"
+                                       type="email"
+                                       @onfocus='() => HandleFocus("email")'
+                                       @onblur="HandleBlur"
+                                       class="cold-input" />
+                            <div class="h-px w-full transition-all duration-500"
+                                 style="background: @(_focusedField == "email" ? "linear-gradient(90deg, var(--ice-deep), var(--ice))" : "var(--input-border)");
+                                        transform: @(_focusedField == "email" ? "scaleX(1)" : "scaleX(0)");
+                                        transform-origin: left;"></div>
+                            <ValidationMessage For="@(() => _contactModel.Email)" class="text-xs mt-1 block text-left" style="color: var(--danger);" />
+                        </div>
+
+                        <!-- Số điện thoại -->
+                        <div class="relative">
+                            <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-2 transition-all duration-300"
+                                   style="color: @(GetFocusedColor("phone", _contactModel.Phone)); transform: @(GetFocusedTransform("phone", _contactModel.Phone));">
+                                Số điện thoại
+                            </label>
+                            <InputText @bind-Value="_contactModel.Phone"
+                                       type="tel"
+                                       @onfocus='() => HandleFocus("phone")'
+                                       @onblur="HandleBlur"
+                                       class="cold-input" />
+                            <div class="h-px w-full transition-all duration-500"
+                                 style="background: @(_focusedField == "phone" ? "linear-gradient(90deg, var(--ice-deep), var(--ice))" : "var(--input-border)");
+                                        transform: @(_focusedField == "phone" ? "scaleX(1)" : "scaleX(0)");
+                                        transform-origin: left;"></div>
+                            <ValidationMessage For="@(() => _contactModel.Phone)" class="text-xs mt-1 block text-left" style="color: var(--danger);" />
+                        </div>
+
+                        <!-- Chủ đề -->
+                        <div class="relative">
+                            <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-2 transition-all duration-300"
+                                   style="color: @(GetFocusedColor("subject", _contactModel.Subject)); transform: @(GetFocusedTransform("subject", _contactModel.Subject));">
+                                Chủ đề
+                            </label>
+                            <InputText @bind-Value="_contactModel.Subject"
+                                       @onfocus='() => HandleFocus("subject")'
+                                       @onblur="HandleBlur"
+                                       class="cold-input" />
+                            <div class="h-px w-full transition-all duration-500"
+                                 style="background: @(_focusedField == "subject" ? "linear-gradient(90deg, var(--ice-deep), var(--ice))" : "var(--input-border)");
+                                        transform: @(_focusedField == "subject" ? "scaleX(1)" : "scaleX(0)");
+                                        transform-origin: left;"></div>
+                            <ValidationMessage For="@(() => _contactModel.Subject)" class="text-xs mt-1 block text-left" style="color: var(--danger);" />
+                        </div>
+
+                        <!-- Nội dung -->
+                        <div class="relative">
+                            <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-2 transition-all duration-300"
+                                   style="color: @(GetFocusedColor("message", _contactModel.Message));">
                                 Nội dung
                             </label>
-                            <textarea @bind="_message"
-                                      @onfocus='() => HandleFocus("message")'
-                                      @onblur="HandleBlur"
-                                      rows="5"
-                                      class="cold-input resize-none"
-                                      required></textarea>
+                            <InputTextArea @bind-Value="_contactModel.Message"
+                                           @onfocus='() => HandleFocus("message")'
+                                           @onblur="HandleBlur"
+                                           rows="5"
+                                           class="cold-input resize-none" />
                             <div class="h-px w-full transition-all duration-500"
                                  style="background: @(_focusedField == "message" ? "linear-gradient(90deg, var(--ice-deep), var(--ice))" : "var(--input-border)");
                                         transform: @(_focusedField == "message" ? "scaleX(1)" : "scaleX(0)");
                                         transform-origin: left;"></div>
+                            <ValidationMessage For="@(() => _contactModel.Message)" class="text-xs mt-1 block text-left" style="color: var(--danger);" />
                         </div>
 
-                        <button type="submit" class="btn-warm w-full font-ui text-sm font-semibold py-4 rounded-lg flex items-center justify-center gap-2" data-cta="true">
-                            @if (_submitted)
+                        <button type="submit" disabled="@_isSubmitting" class="btn-warm w-full font-ui text-sm font-semibold py-4 rounded-lg flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed" data-cta="true">
+                            @if (_isSubmitting)
+                            {
+                                <LucideIcon Name="loader" Class="w-4 h-4 animate-spin" />
+                                <span>Đang gửi...</span>
+                            }
+                            else if (_submitted)
                             {
                                 <LucideIcon Name="check" Class="w-[18px] h-[18px]" />
                                 <span>Đã gửi thành công</span>
@@ -79,7 +138,7 @@
                                 <LucideIcon Name="arrow-right" Class="w-4 h-4" />
                             }
                         </button>
-                    </form>
+                    </EditForm>
                 </div>
 
                 <!-- RIGHT: Info -->
@@ -201,22 +260,15 @@
 }
 
 @code {
+    private ContactModel _contactModel = new();
     private string? _focusedField = null;
-    private string _message = "";
+    private bool _isSubmitting = false;
     private bool _submitted = false;
     private bool _showAccessKeyModal = false;
     private bool _copied = false;
 
     private void HandleFocus(string fieldName) => _focusedField = fieldName;
     private void HandleBlur() => _focusedField = null;
-
-    private List<InputField> _inputFields = new()
-    {
-        new() { Name = "name", Label = "Họ tên", Type = "text", Value = "" },
-        new() { Name = "email", Label = "Email", Type = "email", Value = "" },
-        new() { Name = "phone", Label = "Số điện thoại", Type = "tel", Value = "" },
-        new() { Name = "subject", Label = "Chủ đề", Type = "text", Value = "" }
-    };
 
     private readonly List<ContactCard> _contactCards = new()
     {
@@ -226,28 +278,32 @@
         new() { Icon = "clock", Title = "Giờ làm việc", Content = "24/7 — Giám sát liên tục", Href = null }
     };
 
-    private string GetFocusedColor(string fieldName, string value)
+    private string GetFocusedColor(string fieldName, string? value)
     {
         return _focusedField == fieldName || !string.IsNullOrEmpty(value) ? "var(--ice)" : "var(--text-muted)";
     }
 
-    private string GetFocusedTransform(string fieldName, string value)
+    private string GetFocusedTransform(string fieldName, string? value)
     {
         return _focusedField == fieldName || !string.IsNullOrEmpty(value) ? "translateY(-2px)" : "translateY(0)";
     }
 
     private async Task HandleSubmit()
     {
-        _message = "";
-        foreach (var field in _inputFields)
-        {
-            field.Value = "";
-        }
-        
-        _copied = false;
-        _showAccessKeyModal = true;
+        _isSubmitting = true;
         StateHasChanged();
-        await Task.CompletedTask;
+
+        var success = await ContactService.SubmitContactAsync(_contactModel);
+
+        _isSubmitting = false;
+        if (success)
+        {
+            _submitted = true;
+            _contactModel = new ContactModel(); // Reset form
+            _copied = false;
+            _showAccessKeyModal = true;
+        }
+        StateHasChanged();
     }
 
     private async Task CopyAccessKey()
@@ -288,14 +344,6 @@
                 // Ignored
             }
         }
-    }
-
-    private class InputField
-    {
-        public string Name { get; set; } = "";
-        public string Label { get; set; } = "";
-        public string Type { get; set; } = "";
-        public string Value { get; set; } = "";
     }
 
     private class ContactCard
