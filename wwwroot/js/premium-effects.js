@@ -146,3 +146,34 @@ window.initLucide = () => {
         window.lucide.createIcons();
     }
 };
+
+window.initDashboardTooltip = () => {
+    const tooltip = document.getElementById('dashboard-tooltip');
+    if (!tooltip) return;
+
+    const tooltipDay = document.getElementById('tooltip-day');
+    const tooltipAdmissions = document.getElementById('tooltip-admissions');
+    const tooltipReleases = document.getElementById('tooltip-releases');
+
+    const columns = document.querySelectorAll('.chart-column');
+
+    columns.forEach(col => {
+        col.addEventListener('mousemove', (e) => {
+            tooltip.style.left = `${e.clientX + 15}px`;
+            tooltip.style.top = `${e.clientY - 40}px`;
+        });
+
+        col.addEventListener('mouseenter', (e) => {
+            tooltip.style.opacity = '1';
+            tooltipDay.textContent = col.dataset.day;
+            tooltipAdmissions.textContent = col.dataset.admissions;
+            tooltipReleases.textContent = col.dataset.releases;
+            tooltip.style.left = `${e.clientX + 15}px`;
+            tooltip.style.top = `${e.clientY - 40}px`;
+        });
+
+        col.addEventListener('mouseleave', () => {
+            tooltip.style.opacity = '0';
+        });
+    });
+};

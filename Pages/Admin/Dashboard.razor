@@ -2,6 +2,7 @@
 @layout Components.Layout.AdminLayout
 @inject NavigationManager Navigation
 @inject TemperatureSimulatorService TempService
+@inject IJSRuntime JS
 @implements IDisposable
 
 <div class="min-h-screen pt-4 pb-12">
@@ -74,14 +75,14 @@
                     </div>
 
                     <!-- Bars -->
-                    <div class="absolute inset-0 pl-6 flex items-end justify-between px-2 pb-[1px]" @onmouseleave="OnMouseLeave">
+                    <div class="absolute inset-0 pl-6 flex items-end justify-between px-2 pb-[1px]">
                         @foreach (var day in _weeklyData)
                         {
                             var h1 = (day.Admissions / 20.0) * 100;
                             var h2 = (day.Releases / 20.0) * 100;
 
-                            <div class="relative group flex items-end justify-center w-full h-[110%] rounded-lg transition-colors duration-200 cursor-pointer hover:bg-[rgba(148,179,210,0.1)] pb-[1px]"
-                                 @onmousemove="@(e => OnMouseMove(e, day.Day, day.Admissions, day.Releases))">
+                            <div class="chart-column relative group flex items-end justify-center w-full h-[110%] rounded-lg transition-colors duration-200 cursor-pointer hover:bg-[rgba(148,179,210,0.1)] pb-[1px]"
+                                 data-day="@day.Day" data-admissions="@day.Admissions" data-releases="@day.Releases">
                                 
                                 <!-- Bars for the day -->
                                 <div class="flex items-end gap-[3px] w-[50%] h-[90.9%] justify-center pointer-events-none">
@@ -210,28 +211,25 @@
                 </table>
             </div>
         </div>
-        <!-- Dynamic Tooltip -->
-        @if (!string.IsNullOrEmpty(_activeDay))
-        {
-            <div style="position: fixed; left: @(_mouseX + 15)px; top: @(_mouseY - 40)px; z-index: 9999; pointer-events: none; background-color: var(--login-card-bg); border: 1px solid var(--border-primary); box-shadow: var(--shadow-lg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);"
-                 class="w-36 p-3 rounded-xl transition-all duration-75 ease-out">
-                <div class="font-ui text-xs font-semibold mb-2" style="color: var(--text-primary);">@_activeDay</div>
-                <div class="flex justify-between items-center text-xs mb-1.5">
-                    <div class="flex items-center gap-1.5">
-                        <span class="w-2 h-2 rounded-full" style="background-color: #C8D6E5;"></span>
-                        <span style="color: var(--text-secondary);">Tiếp nhận:</span>
-                    </div>
-                    <span class="font-semibold" style="color: var(--text-primary);">@_activeAdmissions</span>
+        <!-- Dynamic JS Tooltip -->
+        <div id="dashboard-tooltip" style="position: fixed; left: 0px; top: 0px; z-index: 9999; pointer-events: none; opacity: 0; background-color: var(--login-card-bg); border: 1px solid var(--border-primary); box-shadow: var(--shadow-lg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);"
+             class="w-36 p-3 rounded-xl transition-opacity duration-150 ease-out">
+            <div id="tooltip-day" class="font-ui text-xs font-semibold mb-2" style="color: var(--text-primary);"></div>
+            <div class="flex justify-between items-center text-xs mb-1.5">
+                <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full" style="background-color: #C8D6E5;"></span>
+                    <span style="color: var(--text-secondary);">Tiếp nhận:</span>
                 </div>
-                <div class="flex justify-between items-center text-xs">
-                    <div class="flex items-center gap-1.5">
-                        <span class="w-2 h-2 rounded-full" style="background-color: #6B85A0;"></span>
-                        <span style="color: var(--text-secondary);">Bàn giao:</span>
-                    </div>
-                    <span class="font-semibold" style="color: var(--text-primary);">@_activeReleases</span>
-                </div>
+                <span id="tooltip-admissions" class="font-semibold" style="color: var(--text-primary);"></span>
             </div>
-        }
+            <div class="flex justify-between items-center text-xs">
+                <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full" style="background-color: #6B85A0;"></span>
+                    <span style="color: var(--text-secondary);">Bàn giao:</span>
+                </div>
+                <span id="tooltip-releases" class="font-semibold" style="color: var(--text-primary);"></span>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -250,25 +248,6 @@
         new("Sun", 11, 10)
     };
 
-    private double _mouseX = -1000;
-    private double _mouseY = -1000;
-    private string _activeDay = "";
-    private int _activeAdmissions;
-    private int _activeReleases;
-
-    private void OnMouseMove(MouseEventArgs e, string day, int admissions, int releases)
-    {
-        _mouseX = e.ClientX;
-        _mouseY = e.ClientY;
-        _activeDay = day;
-        _activeAdmissions = admissions;
-        _activeReleases = releases;
-    }
-
-    private void OnMouseLeave()
-    {
-        _activeDay = "";
-    }
 
     private readonly List<(string Name, string CaseId, int Days, string Slot)> _overdueList = new()
     {
@@ -300,6 +279,14 @@
     {
         // Khởi tạo timer cập nhật đồng hồ mỗi giây
         _timer = new System.Threading.Timer(Callback, null, 0, 1000);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("initDashboardTooltip");
+        }
     }
 
     private bool _isDisposed = false;
