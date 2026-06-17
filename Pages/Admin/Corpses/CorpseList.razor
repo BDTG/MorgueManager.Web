@@ -1,6 +1,7 @@
 @page "/admin/corpses"
 @layout Components.Layout.AdminLayout
 @inject NavigationManager Navigation
+@inject Supabase.Client Supabase
 
 <div>
     <!-- Top Bar -->
@@ -216,19 +217,23 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
             <div>
                 <label class="font-ui" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: block; margin-bottom: 6px;">Họ và tên *</label>
-                <input class="filter-input" style="width: 100%;" />
+                <input class="filter-input" style="width: 100%;" @bind="_newName" />
             </div>
             <div>
                 <label class="font-ui" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: block; margin-bottom: 6px;">Giới tính</label>
-                <select class="filter-select" style="width: 100%;"><option>Nam</option><option>Nữ</option><option>Không xác định</option></select>
+                <select class="filter-select" style="width: 100%;" @bind="_newGender">
+                    <option value="Nam">Nam</option>
+                    <option value="Nữ">Nữ</option>
+                    <option value="Không xác định">Không xác định</option>
+                </select>
             </div>
             <div>
                 <label class="font-ui" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: block; margin-bottom: 6px;">Ngày sinh</label>
-                <input type="date" class="filter-input" style="width: 100%;" />
+                <input type="date" class="filter-input" style="width: 100%;" @bind="_newBirthDate" />
             </div>
             <div>
                 <label class="font-ui" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: block; margin-bottom: 6px;">CCCD/CMND</label>
-                <input class="filter-input" style="width: 100%;" placeholder="079201012345" />
+                <input class="filter-input" style="width: 100%;" placeholder="079201012345" @bind="_newCccd" />
             </div>
             <div style="grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; margin: 8px 0 4px;">
                 <input type="checkbox" id="isNonIntact" @bind="_newIsNonIntact" @bind:after="OnNonIntactChanged" style="width: 16px; height: 16px; cursor: pointer;" />
@@ -238,19 +243,19 @@
             </div>
             <div>
                 <label class="font-ui" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: block; margin-bottom: 6px;">SĐT thân nhân</label>
-                <input class="filter-input" style="width: 100%;" placeholder="+84 912 345 678" />
+                <input class="filter-input" style="width: 100%;" placeholder="+84 912 345 678" @bind="_newNokPhone" />
             </div>
             <div>
                 <label class="font-ui" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: block; margin-bottom: 6px;">Nguyên nhân tử vong</label>
-                <textarea class="filter-input" style="width: 100%; min-height: 60px;"></textarea>
+                <textarea class="filter-input" style="width: 100%; min-height: 60px;" @bind="_newCause"></textarea>
             </div>
             <div>
                 <label class="font-ui" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: block; margin-bottom: 6px;">Ngày tử vong</label>
-                <input type="date" class="filter-input" style="width: 100%;" />
+                <input type="date" class="filter-input" style="width: 100%;" @bind="_newDateOfDeath" />
             </div>
             <div>
                 <label class="font-ui" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: block; margin-bottom: 6px;">Ngày tiếp nhận</label>
-                <input type="date" class="filter-input" style="width: 100%;" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                <input type="date" class="filter-input" style="width: 100%;" @bind="_newDateAdmitted" />
             </div>
             <div>
                 <label class="font-ui" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: block; margin-bottom: 6px;">Ngăn tủ</label>
@@ -269,8 +274,8 @@
         </div>
         <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
             <button @onclick="() => _showCreateModal = false" class="font-ui" style="padding: 10px 20px; border: 1px solid var(--border-primary); border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 13px;">Hủy</button>
-            <button class="font-ui" style="padding: 10px 20px; border: 1px solid var(--input-focus); border-radius: 8px; background: transparent; color: var(--input-focus); cursor: pointer; font-size: 13px;">Lưu & Tiếp tục</button>
-            <button class="font-ui" style="padding: 10px 20px; border: none; border-radius: 8px; background: linear-gradient(135deg, #3B82F6, #2563EB); color: white; cursor: pointer; font-size: 13px; font-weight: 600;">Lưu</button>
+            <button @onclick="SaveNewCorpse" class="font-ui" style="padding: 10px 20px; border: 1px solid var(--input-focus); border-radius: 8px; background: transparent; color: var(--input-focus); cursor: pointer; font-size: 13px;">Lưu & Tiếp tục</button>
+            <button @onclick="SaveNewCorpse" class="font-ui" style="padding: 10px 20px; border: none; border-radius: 8px; background: linear-gradient(135deg, #3B82F6, #2563EB); color: white; cursor: pointer; font-size: 13px; font-weight: 600;">Lưu</button>
         </div>
     </Modal>
 }
@@ -289,6 +294,15 @@
     private int _page = 1;
     private int _pageSize = 10;
     private int _totalPages = 1;
+
+    private string _newName = "";
+    private string _newGender = "Nam";
+    private DateTime _newBirthDate = DateTime.Now.AddYears(-50);
+    private string _newCccd = "";
+    private string _newNokPhone = "";
+    private string _newCause = "";
+    private DateTime _newDateOfDeath = DateTime.Now;
+    private DateTime _newDateAdmitted = DateTime.Now;
 
     private readonly string[] _names = [
         "Nguyễn Văn An", "Trần Thị Bích", "Lê Hoàng Nam", "Phạm Minh Tuấn", "Hoàng Thị Lan",
@@ -319,7 +333,41 @@
 
     private bool HasFilters => !string.IsNullOrEmpty(_search) || !string.IsNullOrEmpty(_statusFilter) || !string.IsNullOrEmpty(_genderFilter) || !string.IsNullOrEmpty(_dateFrom) || !string.IsNullOrEmpty(_dateTo);
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCorpsesAsync();
+    }
+
+    private async Task LoadCorpsesAsync()
+    {
+        try
+        {
+            var response = await Supabase.From<Models.Corpse>().Get();
+            _allCorpses = response.Models ?? new List<Models.Corpse>();
+
+            if (_allCorpses.Count == 0)
+            {
+                SeedCorpses();
+                if (_allCorpses != null && _allCorpses.Count > 0)
+                {
+                    await Supabase.From<Models.Corpse>().Insert(_allCorpses);
+                }
+                var seedResponse = await Supabase.From<Models.Corpse>().Get();
+                _allCorpses = seedResponse.Models ?? new List<Models.Corpse>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error loading from Supabase: " + ex.Message);
+            if (_allCorpses == null || _allCorpses.Count == 0)
+            {
+                SeedCorpses();
+            }
+        }
+        ApplyFilters();
+    }
+
+    private void SeedCorpses()
     {
         var rng = new Random(42);
         var now = new DateTime(2026, 6, 25);
@@ -391,8 +439,6 @@
                 Notes = notes
             };
         }).ToList();
-
-        ApplyFilters();
     }
 
     private static DateTime RandomDateTime(DateTime start, DateTime end, Random rng)
@@ -493,9 +539,94 @@
     private void ToggleExpand(int id) => _expandedRow = _expandedRow == id ? null : id;
     private void OpenCorpseDetail(int id) => Navigation.NavigateTo($"/admin/corpses/{id}");
     private void NavToStorages() => Navigation.NavigateTo("/admin/storages");
-    private void EditCorpse(Models.Corpse c) { }
-    private void DeleteCorpse(Models.Corpse c) { }
-    private void HandoverCorpse(Models.Corpse c) { }
+
+    private async Task EditCorpse(Models.Corpse c)
+    {
+        try
+        {
+            c.DaysStored += 1;
+            await Supabase.From<Models.Corpse>().Update(c);
+            await LoadCorpsesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+    private async Task DeleteCorpse(Models.Corpse c)
+    {
+        try
+        {
+            await Supabase.From<Models.Corpse>().Delete(c);
+            await LoadCorpsesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+    private async Task HandoverCorpse(Models.Corpse c)
+    {
+        try
+        {
+            c.Status = "Bàn giao";
+            c.StorageSlot = null;
+            c.StorageUnit = null;
+            c.Temp = null;
+            await Supabase.From<Models.Corpse>().Update(c);
+            await LoadCorpsesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+    private async Task SaveNewCorpse()
+    {
+        if (string.IsNullOrWhiteSpace(_newName)) return;
+
+        var newCorpse = new Models.Corpse
+        {
+            CaseId = $"MC-{DateTime.Now.Year}-{(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() % 10000):D4}",
+            Name = _newName,
+            Gender = _newGender,
+            BirthDate = _newBirthDate.ToString("yyyy-MM-dd"),
+            Cccd = _newCccd,
+            CauseOfDeath = _newCause,
+            DateOfDeath = _newDateOfDeath.ToString("yyyy-MM-dd"),
+            DateAdmitted = _newDateAdmitted.ToString("yyyy-MM-dd"),
+            Status = string.IsNullOrEmpty(_newSlot) ? "Tiếp nhận" : "Lưu kho",
+            StorageSlot = string.IsNullOrEmpty(_newSlot) ? null : _newSlot,
+            StorageUnit = string.IsNullOrEmpty(_newSlot) ? null : (_newSlot.StartsWith("A") ? "Cold Room A" : _newSlot.StartsWith("B") ? "Cold Room B" : "Cold Room C"),
+            Temp = string.IsNullOrEmpty(_newSlot) ? null : (_newSlot.StartsWith("C") ? -5.5 : 2.5),
+            DaysStored = 1,
+            Priority = "NORMAL",
+            NextOfKin = new NextOfKinInfo
+            {
+                Name = "Thân nhân " + _newName,
+                Phone = _newNokPhone,
+                Relationship = "Người thân"
+            },
+            Notes = _newNotes
+        };
+
+        try
+        {
+            await Supabase.From<Models.Corpse>().Insert(newCorpse);
+            _showCreateModal = false;
+            await LoadCorpsesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            _allCorpses.Add(newCorpse);
+            _showCreateModal = false;
+            ApplyFilters();
+        }
+    }
 
     private string GetSortIcon(string col)
     {
@@ -521,6 +652,14 @@
 
     private void OpenCreateModal()
     {
+        _newName = "";
+        _newGender = "Nam";
+        _newBirthDate = DateTime.Now.AddYears(-50);
+        _newCccd = "";
+        _newNokPhone = "";
+        _newCause = "";
+        _newDateOfDeath = DateTime.Now;
+        _newDateAdmitted = DateTime.Now;
         _newIsNonIntact = false;
         _newNotes = "";
         _newSlot = "";

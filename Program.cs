@@ -14,30 +14,20 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://
 builder.Services.AddScoped<ApiService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddSingleton<TemperatureSimulatorService>();
+
+var supabaseSection = builder.Configuration.GetSection("Supabase");
+var supabaseUrl = supabaseSection["Url"] ?? "";
+var supabaseKey = supabaseSection["Key"] ?? "";
+builder.Services.AddSingleton(sp => new Supabase.Client(supabaseUrl, supabaseKey, new Supabase.SupabaseOptions
+{
+    AutoRefreshToken = true,
+    AutoConnectRealtime = true
+}));
+
 builder.Services.AddAuthorizationCore();
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
 builder.Services.AddScoped<IContactService, ContactService>();
 
 var host = builder.Build();
-
-// Khởi tạo Firebase từ cấu hình trong appsettings.json
-var js = host.Services.GetRequiredService<IJSRuntime>();
-var firebaseSection = builder.Configuration.GetSection("Firebase");
-var firebaseConfig = new Dictionary<string, string?>
-{
-    { "apiKey", firebaseSection["ApiKey"] },
-    { "authDomain", firebaseSection["AuthDomain"] },
-    { "projectId", firebaseSection["ProjectId"] },
-    { "storageBucket", firebaseSection["StorageBucket"] },
-    { "messagingSenderId", firebaseSection["MessagingSenderId"] },
-    { "appId", firebaseSection["AppId"] },
-    { "measurementId", firebaseSection["MeasurementId"] }
-};
-
-try
-{
-    await js.InvokeVoidAsync("initializeFirebase", firebaseConfig);
-}
-catch { }
 
 await host.RunAsync();

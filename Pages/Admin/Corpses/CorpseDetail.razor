@@ -1,6 +1,7 @@
 @page "/admin/corpses/{Id:int}"
 @layout Components.Layout.AdminLayout
 @inject NavigationManager Navigation
+@inject Supabase.Client Supabase
 
 <div>
     <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px;">
@@ -19,116 +20,190 @@
         </div>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 2.5fr; gap: 24px;">
-        <!-- Profile Card -->
-        <div style="padding: 24px; border-radius: 12px; background-color: var(--bg-card); border: 1px solid var(--border-primary); text-align: center;">
-            <div style="width: 80px; height: 80px; border-radius: 50%; background-color: var(--bg-elevated); margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 36px;">👤</div>
-            <h2 class="font-ui" style="font-size: 18px; font-weight: 600; margin: 0 0 4px; color: var(--text-primary);">Nguyễn Văn An</h2>
-            <StatusBadge Status="Lưu kho" />
-            <div style="margin: 16px 0;">
-                <div class="font-ui" style="font-size: 12px; color: var(--text-muted);">Mã thi thể</div>
-                <div class="font-ui" style="font-family: monospace; font-size: 14px; color: var(--text-primary);">MC-2026-0127</div>
-            </div>
-            <div style="margin: 16px 0;">
-                <div class="font-ui" style="font-size: 12px; color: var(--text-muted);">Ngăn tủ</div>
-                <a href="/admin/storages" style="font-family: 'Inter', sans-serif; font-size: 14px; color: var(--ice); text-decoration: none;">A-03</a>
-            </div>
-            <div style="margin: 16px 0;">
-                <div class="font-ui" style="font-size: 12px; color: var(--text-muted);">Nhiệt độ ngăn</div>
-                <div class="font-ui" style="font-size: 20px; font-weight: 600; color: var(--success);">2.1°C ✅</div>
-            </div>
-            <div style="margin: 24px auto; width: 120px; height: 120px; background-color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #333;">[QR Code]</div>
-            <button class="font-ui" style="width: 100%; padding: 8px; border: 1px solid var(--border-primary); border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 12px; margin-bottom: 8px;">📥 Tải QR Code</button>
-            <button class="font-ui" style="width: 100%; padding: 8px; border: 1px solid var(--border-primary); border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 12px;">🔗 Sao chép link</button>
+    @if (_loading)
+    {
+        <div class="font-ui" style="padding: 40px; text-align: center; color: var(--text-muted);">
+            Đang tải thông tin hồ sơ...
         </div>
-
-        <!-- Tabs -->
-        <div>
-            <div class="tab-bar">
-                <button class="tab-item @(_activeTab == "info" ? "active" : "")" @onclick="SetTabInfo">Thông tin</button>
-                <button class="tab-item @(_activeTab == "belongings" ? "active" : "")" @onclick="SetTabBelongings">Tư trang</button>
-                <button class="tab-item @(_activeTab == "history" ? "active" : "")" @onclick="SetTabHistory">Lịch sử</button>
-                <button class="tab-item @(_activeTab == "documents" ? "active" : "")" @onclick="SetTabDocuments">Tài liệu</button>
+    }
+    else if (_corpse == null)
+    {
+        <div class="font-ui" style="padding: 40px; text-align: center; color: var(--danger);">
+            Không tìm thấy hồ sơ thi thể #@Id.
+        </div>
+    }
+    else
+    {
+        <div style="display: grid; grid-template-columns: 1fr 2.5fr; gap: 24px;">
+            <!-- Profile Card -->
+            <div style="padding: 24px; border-radius: 12px; background-color: var(--bg-card); border: 1px solid var(--border-primary); text-align: center;">
+                <div style="width: 80px; height: 80px; border-radius: 50%; background-color: var(--bg-elevated); margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 36px;">👤</div>
+                <h2 class="font-ui" style="font-size: 18px; font-weight: 600; margin: 0 0 4px; color: var(--text-primary);">@_corpse.Name</h2>
+                <StatusBadge Status="@_corpse.Status" />
+                <div style="margin: 16px 0;">
+                    <div class="font-ui" style="font-size: 12px; color: var(--text-muted);">Mã thi thể</div>
+                    <div class="font-ui" style="font-family: monospace; font-size: 14px; color: var(--text-primary);">@_corpse.CaseId</div>
+                </div>
+                <div style="margin: 16px 0;">
+                    <div class="font-ui" style="font-size: 12px; color: var(--text-muted);">Ngăn tủ</div>
+                    <a href="/admin/storages" style="font-family: 'Inter', sans-serif; font-size: 14px; color: var(--ice); text-decoration: none;">@(_corpse.StorageSlot ?? "—")</a>
+                </div>
+                <div style="margin: 16px 0;">
+                    <div class="font-ui" style="font-size: 12px; color: var(--text-muted);">Nhiệt độ ngăn</div>
+                    <div class="font-ui" style="font-size: 20px; font-weight: 600; color: var(--success);">@(_corpse.Temp?.ToString("0.0") ?? "—")°C ✅</div>
+                </div>
+                <div style="margin: 24px auto; width: 120px; height: 120px; background-color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #333;">[QR Code]</div>
+                <button class="font-ui" style="width: 100%; padding: 8px; border: 1px solid var(--border-primary); border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 12px; margin-bottom: 8px;">📥 Tải QR Code</button>
+                <button class="font-ui" style="width: 100%; padding: 8px; border: 1px solid var(--border-primary); border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 12px;">🔗 Sao chép link</button>
             </div>
 
-            @if (_activeTab == "info")
-            {
-                <div style="padding: 24px; border-radius: 12px; background-color: var(--bg-card); border: 1px solid var(--border-primary);">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Họ tên</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">Nguyễn Văn An</div></div>
-                        <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Giới tính</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">Nam</div></div>
-                        <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Ngày sinh</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">15/03/1959</div></div>
-                        <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">CCCD</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">079201012345</div></div>
-                        <div style="grid-column: 1/-1;"><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Nguyên nhân tử vong</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">Nhồi máu cơ tim</div></div>
-                        <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Ngày tử vong</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">01/06/2026</div></div>
-                        <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Ngày tiếp nhận</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">02/06/2026</div></div>
-                        <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Thân nhân</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">Nguyễn Thị B</div></div>
-                        <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">SĐT thân nhân</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">+84 912 345 678</div></div>
-                        <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Quan hệ</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">Vợ</div></div>
-                    </div>
+            <!-- Tabs -->
+            <div>
+                <div class="tab-bar">
+                    <button class="tab-item @(_activeTab == "info" ? "active" : "")" @onclick="SetTabInfo">Thông tin</button>
+                    <button class="tab-item @(_activeTab == "belongings" ? "active" : "")" @onclick="SetTabBelongings">Tư trang</button>
+                    <button class="tab-item @(_activeTab == "history" ? "active" : "")" @onclick="SetTabHistory">Lịch sử</button>
+                    <button class="tab-item @(_activeTab == "documents" ? "active" : "")" @onclick="SetTabDocuments">Tài liệu</button>
                 </div>
-            }
 
-            @if (_activeTab == "belongings")
-            {
-                <div style="padding: 24px; border-radius: 12px; background-color: var(--bg-card); border: 1px solid var(--border-primary);">
-                    <table class="data-table">
-                        <thead><tr><th>#</th><th>Tên vật phẩm</th><th>Mô tả</th><th>Tình trạng</th><th>Hành động</th></tr></thead>
-                        <tbody>
-                            <tr>
-                                <td>1</td><td>Đồng hồ đeo tay</td><td>Casio màu đen</td><td>Tốt</td><td><button style="background:none;border:none;cursor:pointer;">🗑️</button></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <button class="font-ui" style="margin-top: 16px; padding: 8px 16px; border: 1px solid var(--border-primary); border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 12px;">➕ Thêm tư trang</button>
-                </div>
-            }
+                @if (_activeTab == "info")
+                {
+                    <div style="padding: 24px; border-radius: 12px; background-color: var(--bg-card); border: 1px solid var(--border-primary);">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Họ tên</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">@_corpse.Name</div></div>
+                            <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Giới tính</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">@_corpse.Gender</div></div>
+                            <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Ngày sinh</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">@_corpse.BirthDate</div></div>
+                            <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">CCCD</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">@_corpse.Cccd</div></div>
+                            <div style="grid-column: 1/-1;"><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Nguyên nhân tử vong</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">@_corpse.CauseOfDeath</div></div>
+                            <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Ngày tử vong</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">@_corpse.DateOfDeath</div></div>
+                            <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Ngày tiếp nhận</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">@_corpse.DateAdmitted</div></div>
+                            <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Thân nhân</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">@_corpse.NextOfKin.Name</div></div>
+                            <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">SĐT thân nhân</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">@_corpse.NextOfKin.Phone</div></div>
+                            <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Quan hệ</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">@_corpse.NextOfKin.Relationship</div></div>
+                        </div>
+                    </div>
+                }
 
-            @if (_activeTab == "history")
-            {
-                <div style="padding: 24px; border-radius: 12px; background-color: var(--bg-card); border: 1px solid var(--border-primary);">
-                    <div style="position: relative; padding-left: 24px;">
-                        <div style="position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background-color: var(--border-primary);"></div>
-                        <div style="margin-bottom: 24px; position: relative;">
-                            <div style="position: absolute; left: -20px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background-color: var(--success);"></div>
-                            <div class="font-ui" style="font-weight: 500; color: var(--text-primary);">✅ Tiếp nhận</div>
-                            <div class="font-ui" style="font-size: 12px; color: var(--text-muted);">01/06/2026 10:30 — Nguyễn Thị B</div>
-                        </div>
-                        <div style="margin-bottom: 24px; position: relative;">
-                            <div style="position: absolute; left: -20px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background-color: var(--ice);"></div>
-                            <div class="font-ui" style="font-weight: 500; color: var(--text-primary);">🔵 Lưu kho — Ngăn A-03</div>
-                            <div class="font-ui" style="font-size: 12px; color: var(--text-muted);">01/06/2026 11:00 — Trần Văn C</div>
-                        </div>
+                @if (_activeTab == "belongings")
+                {
+                    <div style="padding: 24px; border-radius: 12px; background-color: var(--bg-card); border: 1px solid var(--border-primary);">
+                        <table class="data-table">
+                            <thead><tr><th>#</th><th>Tên vật phẩm</th><th>Mô tả</th><th>Tình trạng</th></tr></thead>
+                            <tbody>
+                                @if (_corpse.Belongings != null && _corpse.Belongings.Count > 0)
+                                {
+                                    @foreach (var b in _corpse.Belongings)
+                                    {
+                                        <tr>
+                                            <td>@b.Id</td><td>@b.Name</td><td>@b.Desc</td><td>@b.Condition</td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 12px;">Không có tư trang nào</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
                     </div>
-                </div>
-            }
+                }
 
-            @if (_activeTab == "documents")
-            {
-                <div style="padding: 24px; border-radius: 12px; background-color: var(--bg-card); border: 1px solid var(--border-primary);">
-                    <div style="padding: 20px; border: 2px dashed var(--border-primary); border-radius: 12px; text-align: center; margin-bottom: 16px;">
-                        <div class="font-ui" style="font-size: 12px; color: var(--text-muted);">Kéo thả file hoặc nhấp để tải lên</div>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--border-primary); border-radius: 8px;">
-                        <span style="font-size: 24px;">📄</span>
-                        <div>
-                            <div class="font-ui" style="font-size: 13px; color: var(--text-primary);">Giấy chứng tử.pdf</div>
-                            <div class="font-ui" style="font-size: 11px; color: var(--text-muted);">245 KB</div>
+                @if (_activeTab == "history")
+                {
+                    <div style="padding: 24px; border-radius: 12px; background-color: var(--bg-card); border: 1px solid var(--border-primary);">
+                        <div style="position: relative; padding-left: 24px;">
+                            <div style="position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background-color: var(--border-primary);"></div>
+                            @if (_corpse.History != null && _corpse.History.Count > 0)
+                            {
+                                @foreach (var h in _corpse.History)
+                                {
+                                    <div style="margin-bottom: 24px; position: relative;">
+                                        <div style="position: absolute; left: -20px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background-color: var(--ice);"></div>
+                                        <div class="font-ui" style="font-weight: 500; color: var(--text-primary);">@h.Status — @h.Detail</div>
+                                        <div class="font-ui" style="font-size: 12px; color: var(--text-muted);">@h.Timestamp — @h.By</div>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div style="margin-bottom: 24px; position: relative;">
+                                    <div style="position: absolute; left: -20px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background-color: var(--success);"></div>
+                                    <div class="font-ui" style="font-weight: 500; color: var(--text-primary);">✅ Tiếp nhận</div>
+                                    <div class="font-ui" style="font-size: 12px; color: var(--text-muted);">@_corpse.DateAdmitted — Hệ thống</div>
+                                </div>
+                            }
                         </div>
-                        <div style="margin-left: auto; display: flex; gap: 8px;">
-                            <button class="font-ui" style="background: none; border: none; color: var(--ice); cursor: pointer; font-size: 12px;">📥</button>
-                            <button class="font-ui" style="background: none; border: none; color: var(--danger); cursor: pointer; font-size: 12px;">🗑️</button>
-                        </div>
                     </div>
-                </div>
-            }
+                }
+
+                @if (_activeTab == "documents")
+                {
+                    <div style="padding: 24px; border-radius: 12px; background-color: var(--bg-card); border: 1px solid var(--border-primary);">
+                        <div style="padding: 20px; border: 2px dashed var(--border-primary); border-radius: 12px; text-align: center; margin-bottom: 16px;">
+                            <div class="font-ui" style="font-size: 12px; color: var(--text-muted);">Kéo thả file hoặc nhấp để tải lên</div>
+                        </div>
+                        @if (_corpse.Documents != null && _corpse.Documents.Count > 0)
+                        {
+                            @foreach (var d in _corpse.Documents)
+                            {
+                                <div style="display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--border-primary); border-radius: 8px; margin-bottom: 8px;">
+                                    <span style="font-size: 24px;">📄</span>
+                                    <div>
+                                        <div class="font-ui" style="font-size: 13px; color: var(--text-primary);">@d.Name</div>
+                                        <div class="font-ui" style="font-size: 11px; color: var(--text-muted);">@d.Size</div>
+                                    </div>
+                                    <div style="margin-left: auto; display: flex; gap: 8px;">
+                                        <button class="font-ui" style="background: none; border: none; color: var(--ice); cursor: pointer; font-size: 12px;">📥</button>
+                                        <button class="font-ui" style="background: none; border: none; color: var(--danger); cursor: pointer; font-size: 12px;">🗑️</button>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div style="display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--border-primary); border-radius: 8px;">
+                                <span style="font-size: 24px;">📄</span>
+                                <div>
+                                    <div class="font-ui" style="font-size: 13px; color: var(--text-primary);">Giấy chứng tử.pdf</div>
+                                    <div class="font-ui" style="font-size: 11px; color: var(--text-muted);">245 KB</div>
+                                </div>
+                                <div style="margin-left: auto; display: flex; gap: 8px;">
+                                    <button class="font-ui" style="background: none; border: none; color: var(--ice); cursor: pointer; font-size: 12px;">📥</button>
+                                    <button class="font-ui" style="background: none; border: none; color: var(--danger); cursor: pointer; font-size: 12px;">🗑️</button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
         </div>
-    </div>
+    }
 </div>
 
 @code {
     [Parameter] public int Id { get; set; }
     private string _activeTab = "info";
+    private Models.Corpse? _corpse;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _corpse = await Supabase.From<Models.Corpse>().Where(x => x.Id == Id).Single();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error loading corpse details: " + ex.Message);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
     private void SetTabInfo() { _activeTab = "info"; }
     private void SetTabBelongings() { _activeTab = "belongings"; }
     private void SetTabHistory() { _activeTab = "history"; }

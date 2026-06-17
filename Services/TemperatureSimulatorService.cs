@@ -1,5 +1,11 @@
 using Microsoft.JSInterop;
 using System.Text.Json;
+using Postgrest.Attributes;
+using Postgrest.Models;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MorgueManager.Web.Services;
 
@@ -8,6 +14,7 @@ public class TemperatureSimulatorService : IDisposable
     private Timer? _timer;
     private const int UpdateIntervalMs = 30000;
     private readonly IJSInProcessRuntime? _js;
+    private readonly Supabase.Client _supabase;
 
     public event Action? OnTemperatureChanged;
 
@@ -36,9 +43,10 @@ public class TemperatureSimulatorService : IDisposable
 
     public List<TemperatureHistoryLog> History { get; private set; } = new();
 
-    public TemperatureSimulatorService(IJSRuntime js)
+    public TemperatureSimulatorService(IJSRuntime js, Supabase.Client supabase)
     {
         _js = js as IJSInProcessRuntime;
+        _supabase = supabase;
         LoadFromLocalStorage();
         InitializeSlots();
         _timer = new Timer(_ => Tick(), null, UpdateIntervalMs, UpdateIntervalMs);
@@ -92,6 +100,27 @@ public class TemperatureSimulatorService : IDisposable
             catch { }
         }
 
+        // Write simulated temperature logs to Supabase database with error fallback
+        var log = new TemperatureLog
+        {
+            CreatedAt = DateTime.UtcNow,
+            ZoneACurrent = ZoneACurrent,
+            ZoneBCurrent = ZoneBCurrent,
+            SlotTemperatures = new Dictionary<string, double>(SlotTemperatures)
+        };
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await _supabase.From<TemperatureLog>().Insert(log);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to write temperature log to Supabase: " + ex.Message);
+            }
+        });
+
         OnTemperatureChanged?.Invoke();
     }
 
@@ -125,4 +154,23 @@ public class TemperatureSimulatorService : IDisposable
     {
         _timer?.Dispose();
     }
+}
+
+[Table("temperature_logs")]
+public class TemperatureLog : BaseModel
+{
+    [PrimaryKey("id", false)]
+    public int Id { get; set; }
+
+    [Column("created_at")]
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    [Column("zone_a_current")]
+    public double ZoneACurrent { get; set; }
+
+    [Column("zone_b_current")]
+    public double ZoneBCurrent { get; set; }
+
+    [Column("slot_temperatures")]
+    public Dictionary<string, double> SlotTemperatures { get; set; } = new();
 }

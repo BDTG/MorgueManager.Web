@@ -464,14 +464,21 @@
         _loading = true;
         StateHasChanged();
 
-        await Task.Delay(1200);
+        var success = await AuthService.SendOtpAsync(_email);
 
         _loading = false;
-        _step = 2;
-        _otpText = "";
-        _otpError = "";
-        StartCountdown();
-        await ShowToast("Đã gửi mã OTP thành công!", "success");
+        if (success)
+        {
+            _step = 2;
+            _otpText = "";
+            _otpError = "";
+            StartCountdown();
+            await ShowToast("Đã gửi mã OTP thành công!", "success");
+        }
+        else
+        {
+            await ShowToast("Không thể gửi mã OTP. Vui lòng thử lại.", "error");
+        }
     }
 
     private async Task LoginWithGoogle()
@@ -479,20 +486,20 @@
         _loading = true;
         StateHasChanged();
 
-        var errorMsg = await AuthService.LoginWithGoogleAsync();
+        var result = await AuthService.LoginWithGoogleAsync();
         
         _loading = false;
-        if (errorMsg == null)
+        if (result == null)
         {
-            // Success
-            await ShowToast("Đăng nhập Google thành công!", "success");
-            await Task.Delay(800);
-            Navigation.NavigateTo("/admin/dashboard");
+            await ShowToast("Không thể khởi tạo đăng nhập Google", "error");
+        }
+        else if (result.StartsWith("http://") || result.StartsWith("https://"))
+        {
+            Navigation.NavigateTo(result);
         }
         else
         {
-            // Fail
-            await ShowToast(errorMsg, "error");
+            await ShowToast(result, "error");
         }
         StateHasChanged();
     }
@@ -505,13 +512,20 @@
         _loading = true;
         StateHasChanged();
 
-        await Task.Delay(1200);
+        var success = await AuthService.SendOtpAsync(_email);
 
         _loading = false;
-        _otpText = "";
-        _otpError = "";
-        StartCountdown();
-        await ShowToast("Đã gửi lại mã OTP mới!", "success");
+        if (success)
+        {
+            _otpText = "";
+            _otpError = "";
+            StartCountdown();
+            await ShowToast("Đã gửi lại mã OTP mới!", "success");
+        }
+        else
+        {
+            await ShowToast("Không thể gửi lại mã OTP. Vui lòng thử lại.", "error");
+        }
     }
 
     private async Task VerifyOtp()
@@ -526,28 +540,18 @@
         _loading = true;
         StateHasChanged();
 
-        await Task.Delay(1500);
+        var success = await AuthService.VerifyOtpAsync(_email, _otpText);
 
         _loading = false;
-        if (_otpText == "123456" || _otpText.Length == 6)
+        if (success)
         {
-            try
-            {
-                var token = "mock-jwt-token-" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                await AuthService.LoginAsync(token);
-                await ShowToast("Đăng nhập thành công!", "success");
-                await Task.Delay(800);
-                Navigation.NavigateTo("/admin/dashboard");
-            }
-            catch (Exception ex)
-            {
-                _otpError = "Lỗi: " + ex.Message;
-                await ShowToast("Lỗi hệ thống", "error");
-            }
+            await ShowToast("Đăng nhập thành công!", "success");
+            await Task.Delay(800);
+            Navigation.NavigateTo("/admin/dashboard");
         }
         else
         {
-            _otpError = "Mã OTP không đúng";
+            _otpError = "Mã OTP không đúng hoặc đã hết hạn";
             await ShowToast("Mã OTP không chính xác", "error");
         }
     }
