@@ -138,12 +138,15 @@
     --topbar-height: 64px;
 }
 
-*, *::before, *::after { box-sizing: border-box; }
+*, *::before, *::after { 
+    box-sizing: border-box; 
+    /* Smooth theme transitions restricted to colors to prevent layout lag */
+    transition: background-color 0.3s ease-out, color 0.3s ease-out, border-color 0.3s ease-out, fill 0.3s ease-out, stroke 0.3s ease-out;
+}
 
 body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
-    transition: background-color 0.5s ease, color 0.5s ease;
     font-family: 'Inter', sans-serif;
     overflow-x: hidden;
     margin: 0;
