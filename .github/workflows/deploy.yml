@@ -34,7 +34,9 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Publish project
-        run: dotnet publish MorgueManager.Web.csproj -c Release -o publish
+        run: |
+          dotnet publish MorgueManager.Web.csproj -c Release -o publish
+          mv publish/wwwroot/_framework/blazor.webassembly.*.js publish/wwwroot/_framework/blazor.webassembly.js || true
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
