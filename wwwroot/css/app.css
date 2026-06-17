@@ -36,7 +36,7 @@
     --noise-opacity: 0.02;
     --marble-opacity: 0.02;
     --fog-opacity: 0.12;
-    --particle-opacity: 0.10;
+    --particle-opacity: 0.40;
     --login-bg-from: #05090F;
     --login-bg-to: #0A1018;
     --login-card-bg: rgba(10, 16, 24, 0.75);
@@ -49,7 +49,7 @@
     --login-btn-blue-to: #48DBFB;
     --login-btn-green-from: #10B981;
     --login-btn-green-to: #059669;
-    --login-particle-opacity: 0.08;
+    --login-particle-opacity: 0.30;
     --table-header-bg: rgba(15, 23, 42, 0.5);
     --table-row-hover: rgba(30, 41, 59, 0.6);
     --table-border: rgba(148, 179, 210, 0.08);
@@ -103,8 +103,8 @@
     --input-bg-solid: #FFFFFF;
     --noise-opacity: 0.01;
     --marble-opacity: 0.01;
-    --fog-opacity: 0.04;
-    --particle-opacity: 0.04;
+    --fog-opacity: 0.08;
+    --particle-opacity: 0.50;
     --login-bg-from: #F8FAFC;
     --login-bg-to: #F1F5F9;
     --login-card-bg: rgba(255, 255, 255, 0.85);
@@ -117,7 +117,7 @@
     --login-btn-blue-to: #0EA5E9;
     --login-btn-green-from: #10B981;
     --login-btn-green-to: #059669;
-    --login-particle-opacity: 0.02;
+    --login-particle-opacity: 0.30;
     --table-header-bg: #F8FAFC;
     --table-row-hover: #F1F5F9;
     --table-border: #E2E8F0;
