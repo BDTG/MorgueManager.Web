@@ -10,11 +10,61 @@
 
     <div class="flex items-center gap-3">
         <ThemeToggle />
-        <button class="relative p-2.5 rounded-xl transition-all hover:opacity-80 cursor-pointer flex items-center justify-center"
-                style="background-color: var(--bg-card); border: 1px solid var(--border-primary); color: var(--text-secondary);">
-            <LucideIcon Name="bell" Class="w-[18px] h-[18px]" />
-            <span class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">3</span>
-        </button>
+        <div class="relative">
+            <button @onclick="ToggleNotifications" class="relative p-2.5 rounded-xl transition-all hover:opacity-80 cursor-pointer flex items-center justify-center"
+                    style="background-color: @(_showNotifications ? "var(--bg-elevated)" : "var(--bg-card)"); border: 1px solid var(--border-primary); color: var(--text-secondary);">
+                <LucideIcon Name="bell" Class="w-[18px] h-[18px]" />
+                <span class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">3</span>
+            </button>
+            
+            @if (_showNotifications)
+            {
+                <div class="fixed inset-0 z-40" @onclick="CloseNotifications"></div>
+                
+                <div class="absolute right-0 mt-2 w-80 rounded-xl shadow-lg z-50 overflow-hidden" 
+                     style="background-color: var(--bg-card); border: 1px solid var(--border-primary); box-shadow: var(--shadow-xl);">
+                    <div class="p-4 border-b flex justify-between items-center" style="border-color: var(--border-primary);">
+                        <h3 class="font-ui text-sm font-semibold" style="color: var(--text-primary);">Thông báo (3)</h3>
+                        <button class="text-xs hover:underline" style="color: var(--text-muted); background: none; border: none; cursor: pointer;">Đánh dấu đã đọc</button>
+                    </div>
+                    <div class="max-h-80 overflow-y-auto">
+                        <div class="p-4 border-b flex gap-3 hover:bg-[var(--bg-elevated)] transition-colors cursor-pointer" style="border-color: var(--border-primary);">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style="background-color: rgba(239, 68, 68, 0.1); color: var(--danger);">
+                                <LucideIcon Name="alert-triangle" Class="w-4 h-4" />
+                            </div>
+                            <div>
+                                <p class="font-ui text-sm font-medium mb-1" style="color: var(--text-primary);">Cảnh báo nhiệt độ</p>
+                                <p class="font-ui text-xs mb-1 leading-snug" style="color: var(--text-muted);">Ngăn lạnh A-02 có nhiệt độ vượt ngưỡng (4.5°C).</p>
+                                <p class="font-ui text-[10px]" style="color: var(--text-muted);">5 phút trước</p>
+                            </div>
+                        </div>
+                        <div class="p-4 border-b flex gap-3 hover:bg-[var(--bg-elevated)] transition-colors cursor-pointer" style="border-color: var(--border-primary);">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style="background-color: rgba(16, 185, 129, 0.1); color: var(--success);">
+                                <LucideIcon Name="check-circle" Class="w-4 h-4" />
+                            </div>
+                            <div>
+                                <p class="font-ui text-sm font-medium mb-1" style="color: var(--text-primary);">Hồ sơ mới</p>
+                                <p class="font-ui text-xs mb-1 leading-snug" style="color: var(--text-muted);">Đã tiếp nhận hồ sơ thi thể #10245.</p>
+                                <p class="font-ui text-[10px]" style="color: var(--text-muted);">1 giờ trước</p>
+                            </div>
+                        </div>
+                        <div class="p-4 flex gap-3 hover:bg-[var(--bg-elevated)] transition-colors cursor-pointer">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style="background-color: rgba(59, 130, 246, 0.1); color: var(--ice);">
+                                <LucideIcon Name="info" Class="w-4 h-4" />
+                            </div>
+                            <div>
+                                <p class="font-ui text-sm font-medium mb-1" style="color: var(--text-primary);">Đổi ca trực</p>
+                                <p class="font-ui text-xs mb-1 leading-snug" style="color: var(--text-muted);">BS. Hoàng yêu cầu đổi ca trực ngày 20/06.</p>
+                                <p class="font-ui text-[10px]" style="color: var(--text-muted);">3 giờ trước</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-3 border-t text-center hover:bg-[var(--bg-elevated)] transition-colors cursor-pointer" style="border-color: var(--border-primary);">
+                        <a href="#" class="font-ui text-xs font-medium" style="color: var(--ice); text-decoration: none;">Xem tất cả thông báo</a>
+                    </div>
+                </div>
+            }
+        </div>
         <button @onclick="Logout" class="px-4 py-2.5 rounded-xl font-ui text-xs font-medium flex items-center gap-1.5 transition-opacity hover:opacity-80 cursor-pointer"
                 style="background-color: var(--bg-card); border: 1px solid var(--border-primary); color: var(--danger);">
             <LucideIcon Name="log-out" Class="w-3.5 h-3.5" />
@@ -26,6 +76,18 @@
 @code {
     [Parameter] public bool IsCollapsed { get; set; }
     [Parameter] public EventCallback OnToggleSidebar { get; set; }
+
+    private bool _showNotifications;
+
+    private void ToggleNotifications()
+    {
+        _showNotifications = !_showNotifications;
+    }
+
+    private void CloseNotifications()
+    {
+        _showNotifications = false;
+    }
 
     private string GetCurrentPageTitle()
     {
