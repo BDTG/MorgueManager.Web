@@ -34,7 +34,7 @@
                             @service.Overline
                         </span>
                         <div class="font-display text-7xl md:text-[100px] font-bold mb-4 leading-none select-none"
-                             style="color: var(--text-primary); opacity: 0.05;">
+                             style="color: var(--text-primary); opacity: 0.15;">
                             @service.Num
                         </div>
                         <h2 class="font-display text-2xl md:text-[28px] font-semibold mb-5" style="color: var(--text-primary);">
@@ -72,12 +72,53 @@
                                     <rect width="100%" height="100%" fill="url(#svc-grid-@index)" />
                                 </svg>
                             </div>
-                            <div class="relative z-10 text-center">
+                            
+                            <!-- Abstract Mock UI Background -->
+                            <div class="absolute inset-0 pointer-events-none overflow-hidden opacity-30">
+                                @if (service.Icon == "snowflake")
+                                {
+                                    <div class="grid grid-cols-4 gap-3 p-6 h-full">
+                                        @for(int j=0; j<16; j++) {
+                                            <div class="rounded-lg" style="background-color: @(j%5==0 ? "var(--danger)" : j%3==0 ? "var(--ice)" : "var(--bg-elevated)"); border: 1px solid var(--border-primary); opacity: @(j%5==0||j%3==0 ? "0.6" : "0.3");"></div>
+                                        }
+                                    </div>
+                                }
+                                else if (service.Icon == "file-text")
+                                {
+                                    <div class="flex flex-col gap-4 p-6 h-full justify-center">
+                                        @for(int j=0; j<4; j++) {
+                                            <div class="h-12 rounded-xl flex items-center px-4" style="background-color: var(--bg-elevated); border: 1px solid var(--border-primary);">
+                                                <div class="w-8 h-8 rounded-full mr-4" style="background-color: var(--ice); opacity: 0.4;"></div>
+                                                <div class="flex-1 h-2 rounded-full" style="background-color: var(--text-muted); opacity: 0.3;"></div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                else if (service.Icon == "calendar")
+                                {
+                                    <div class="grid grid-cols-7 gap-2 p-6 h-full content-center">
+                                        @for(int j=0; j<28; j++) {
+                                            <div class="aspect-square rounded-md" style="background-color: @(j==12||j==13||j==18 ? "var(--ice)" : "var(--bg-elevated)"); border: 1px solid var(--border-primary); opacity: @(j==12||j==13||j==18 ? "0.6" : "0.3");"></div>
+                                        }
+                                    </div>
+                                }
+                                else if (service.Icon == "bar-chart-3")
+                                {
+                                    <div class="flex items-end justify-between h-full p-8 pt-20 gap-4">
+                                        @for(int j=0; j<7; j++) {
+                                            var h = new[] { 40, 70, 45, 90, 60, 80, 50 }[j];
+                                            <div class="w-full rounded-t-md" style="height: @h%; background: linear-gradient(180deg, var(--ice) 0%, transparent 100%); opacity: 0.5;"></div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="relative z-10 text-center py-6 px-8 rounded-2xl" style="background-color: var(--bg-card); border: 1px solid var(--border-primary); box-shadow: var(--shadow-lg);">
                                 <div class="w-20 h-20 rounded-2xl mx-auto mb-4 flex items-center justify-center"
                                      style="background-color: rgba(72,219,251,0.06); border: 1px solid rgba(72,219,251,0.15);">
                                     <LucideIcon Name="@service.Icon" Class="w-9 h-9" Style="color: var(--ice);" />
                                 </div>
-                                <span class="font-display text-lg" style="color: var(--text-secondary);">
+                                <span class="font-display text-lg" style="color: var(--text-primary); font-weight: 600;">
                                     @service.Title
                                 </span>
                             </div>
