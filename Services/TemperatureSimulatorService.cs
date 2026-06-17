@@ -1,9 +1,13 @@
+using Microsoft.JSInterop;
+using System.Text.Json;
+
 namespace MorgueManager.Web.Services;
 
 public class TemperatureSimulatorService : IDisposable
 {
     private Timer? _timer;
     private const int UpdateIntervalMs = 30000;
+    private readonly IJSInProcessRuntime? _js;
 
     public event Action? OnTemperatureChanged;
 
@@ -22,8 +26,19 @@ public class TemperatureSimulatorService : IDisposable
         "A-01","A-02","A-03","A-06","A-07","A-08","B-01","B-02","B-03","B-06"
     ];
 
-    public TemperatureSimulatorService()
+    public class TemperatureHistoryLog
     {
+        public DateTime Timestamp { get; set; }
+        public double ZoneACurrent { get; set; }
+        public double ZoneBCurrent { get; set; }
+        public Dictionary<string, double> SlotTemperatures { get; set; } = new();
+    }
+
+    public List<TemperatureHistoryLog> History { get; private set; } = new();
+
+    public TemperatureSimulatorService(IJSRuntime js)
+    {
+        _js = js as IJSInProcessRuntime;
         LoadFromLocalStorage();
         InitializeSlots();
         _timer = new Timer(_ => Tick(), null, UpdateIntervalMs, UpdateIntervalMs);
@@ -55,6 +70,28 @@ public class TemperatureSimulatorService : IDisposable
             SlotTemperatures[id] = Math.Round(zone + (rng.NextDouble() * 0.6 - 0.3) + occupied, 1);
         }
 
+        History.Add(new TemperatureHistoryLog
+        {
+            Timestamp = DateTime.Now,
+            ZoneACurrent = ZoneACurrent,
+            ZoneBCurrent = ZoneBCurrent,
+            SlotTemperatures = new Dictionary<string, double>(SlotTemperatures)
+        });
+
+        if (History.Count > 1000)
+        {
+            History.RemoveAt(0);
+        }
+
+        if (_js != null)
+        {
+            try
+            {
+                _js.InvokeVoid("localStorage.setItem", "temperatureHistory", JsonSerializer.Serialize(History));
+            }
+            catch { }
+        }
+
         OnTemperatureChanged?.Invoke();
     }
 
@@ -66,6 +103,22 @@ public class TemperatureSimulatorService : IDisposable
 
     private void LoadFromLocalStorage()
     {
+        if (_js != null)
+        {
+            try
+            {
+                var json = _js.Invoke<string>("localStorage.getItem", "temperatureHistory");
+                if (!string.IsNullOrEmpty(json))
+                {
+                    var loaded = JsonSerializer.Deserialize<List<TemperatureHistoryLog>>(json);
+                    if (loaded != null)
+                    {
+                        History = loaded;
+                    }
+                }
+            }
+            catch { }
+        }
     }
 
     public void Dispose()
