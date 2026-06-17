@@ -21,7 +21,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: package-lock.json
 
@@ -43,4 +43,5 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: morgue-manager-pages
           directory: publish/wwwroot
+          wranglerVersion: '3'
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
