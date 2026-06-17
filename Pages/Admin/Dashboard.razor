@@ -136,10 +136,10 @@
                 <div class="flex flex-col gap-6">
                     <div class="flex justify-center">
                         <svg viewBox="0 0 100 100" class="w-32 h-32 transform -rotate-90 overflow-visible drop-shadow-sm">
-                            <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--bg-elevated)" stroke-width="16" />
+                            <circle cx="50" cy="50" r="40" fill="none" pointer-events="none" stroke="var(--bg-elevated)" stroke-width="16" />
                             @foreach (var slice in GetDonutSlices())
                             {
-                                <circle cx="50" cy="50" r="40" fill="transparent" stroke="@slice.Color" stroke-width="16"
+                                <circle cx="50" cy="50" r="40" fill="none" pointer-events="stroke" stroke="@slice.Color" stroke-width="16"
                                         stroke-dasharray="@slice.StrokeDashArray.ToString(System.Globalization.CultureInfo.InvariantCulture) 300"
                                         stroke-dashoffset="@slice.StrokeDashOffset.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                                         class="transition-all duration-300 hover:stroke-[20] cursor-pointer donut-slice"
