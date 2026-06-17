@@ -38,6 +38,6 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: morgue-manager
+          projectName: morgue-manager-pages
           directory: publish/wwwroot
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
