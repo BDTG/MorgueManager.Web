@@ -20,11 +20,10 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: MorgueManager.Web/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install npm packages
         run: npm ci
-        working-directory: MorgueManager.Web
 
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
@@ -33,7 +32,6 @@ jobs:
 
       - name: Publish project
         run: dotnet publish MorgueManager.Web.csproj -c Release -o publish
-        working-directory: MorgueManager.Web
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
@@ -41,5 +39,5 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: morgue-manager
-          directory: MorgueManager.Web/publish/wwwroot
+          directory: publish/wwwroot
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
