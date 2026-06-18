@@ -269,20 +269,20 @@
 
     private readonly List<FeatureItem> _features = new()
     {
-        new() { Icon = "snowflake", Title = "Ngăn Lưu trữ Trực quan", Desc = "Sơ đồ ngăn tủ real-time, trạng thái từng ngăn lạnh." },
-        new() { Icon = "thermometer", Title = "Giám sát Nhiệt độ 24/7", Desc = "Cảnh báo tự động khi vượt ngưỡng an toàn." },
-        new() { Icon = "file-text", Title = "Hồ sơ Thi thể Toàn diện", Desc = "Tiếp nhận → Lưu kho → Bàn giao. QR code, timeline." },
-        new() { Icon = "calendar", Title = "Phân ca Trực Thông minh", Desc = "Ca trực phân lịch trực tuyến, thông báo tự động." },
-        new() { Icon = "bar-chart-3", Title = "Báo cáo & Phân tích", Desc = "PDF/Excel, biểu đồ xu hướng, KPI dashboard." },
-        new() { Icon = "shield", Title = "Bảo mật & Kiểm toán", Desc = "Xác thực hai lớp OTP, phân quyền chặt chẽ, lịch sử log." }
+        new() { Icon = "snowflake", Title = "Bảo quản Đông sâu", Desc = "Nhiệt độ -10°C đến -16°C, bảo quản pháp y & vô danh lâu dài." },
+        new() { Icon = "wind", Title = "Kiểm soát Nhiễm khuẩn", Desc = "Thông gió áp lực âm một chiều, lọc khí chống lây nhiễm." },
+        new() { Icon = "shield-alert", Title = "Cách ly Truyền nhiễm", Desc = "Khu vực lưu trữ riêng biệt (bệnh nhóm A), giới hạn quàn < 24h." },
+        new() { Icon = "file-text", Title = "Hồ sơ Pháp lý", Desc = "Quản lý Giấy chứng tử, thẻ định danh, biên bản giao nhận." },
+        new() { Icon = "zap", Title = "Hệ thống Dự phòng", Desc = "Máy phát điện công suất lớn, duy trì làm lạnh liên tục 24/7." },
+        new() { Icon = "calendar", Title = "Quản lý Trực Tuyến", Desc = "Sơ đồ ngăn tủ real-time, phân ca thông minh, QR code." }
     };
 
     private readonly List<(string Value, string Label)> _counters = new()
     {
         ("500+", "THI THỂ ĐÃ QUẢN LÝ"),
-        ("20", "NGĂN LƯU TRỮ"),
-        ("2-4°C", "NHIỆT ĐỘ BẢO QUẢN"),
-        ("24/7", "GIÁM SÁT LIÊN TỤC")
+        ("20", "NGĂN ĐÔNG SÂU"),
+        ("-16°C", "NHIỆT ĐỘ ĐÓNG BĂNG"),
+        ("24/7", "ĐIỆN DỰ PHÒNG")
     };
 
     private readonly List<ShowcaseItem> _showcaseItems = new()

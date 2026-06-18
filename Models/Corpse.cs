@@ -61,6 +61,21 @@ public class Corpse : BaseModel
     [Column("notes")]
     public string Notes { get; set; } = "";
 
+    [Column("is_unidentified")]
+    public bool IsUnidentified { get; set; }
+
+    [Column("is_infectious")]
+    public bool IsInfectious { get; set; }
+
+    [Column("infectious_group")]
+    public string InfectiousGroup { get; set; } = "";
+
+    [Column("death_certificate_id")]
+    public string DeathCertificateId { get; set; } = "";
+
+    [Column("requires_deep_freeze")]
+    public bool RequiresDeepFreeze { get; set; }
+
     [Column("belongings")]
     public List<Belonging> Belongings { get; set; } = new();
 
