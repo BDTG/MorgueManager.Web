@@ -40,6 +40,14 @@
                 <div style="width: 80px; height: 80px; border-radius: 50%; background-color: var(--bg-elevated); margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 36px;">👤</div>
                 <h2 class="font-ui" style="font-size: 18px; font-weight: 600; margin: 0 0 4px; color: var(--text-primary);">@_corpse.Name</h2>
                 <StatusBadge Status="@_corpse.Status" />
+
+                @if (!string.IsNullOrEmpty(GetRetentionWarning()))
+                {
+                    <div style="margin-top: 12px; padding: 8px; border-radius: 6px; background-color: rgba(0,0,0,0.2); border: 1px solid @GetRetentionWarningColor(); color: @GetRetentionWarningColor(); font-size: 11px; font-weight: 600;">
+                        @GetRetentionWarning()
+                    </div>
+                }
+
                 <div style="margin: 16px 0;">
                     <div class="font-ui" style="font-size: 12px; color: var(--text-muted);">Mã thi thể</div>
                     <div class="font-ui" style="font-family: monospace; font-size: 14px; color: var(--text-primary);">@_corpse.CaseId</div>
@@ -73,7 +81,10 @@
                             <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Họ tên</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">@_corpse.Name</div></div>
                             <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Giới tính</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">@_corpse.Gender</div></div>
                             <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Ngày sinh</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">@_corpse.BirthDate</div></div>
-                            <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">CCCD</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">@_corpse.Cccd</div></div>
+                            <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Nhóm bệnh truyền nhiễm</div><div class="font-ui" style="font-size: 14px; color: @(_corpse.IsInfectious ? "var(--danger)" : "var(--text-primary)"); font-weight: @(_corpse.IsInfectious ? "bold" : "normal");">@(_corpse.IsInfectious ? _corpse.InfectiousGroup : "Không")</div></div>
+                            <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Chế độ lưu trữ</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">@(_corpse.RequiresDeepFreeze ? "Đông sâu (-16°C)" : "Lạnh thường (2-4°C)")</div></div>
+                            <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Số Giấy chứng tử</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">@(_corpse.DeathCertificateId == "" ? "Chưa cập nhật" : _corpse.DeathCertificateId)</div></div>
+                            <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Pháp lý</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">@(_corpse.IsUnidentified ? "Vô danh" : "Đã định danh")</div></div>
                             <div style="grid-column: 1/-1;"><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Nguyên nhân tử vong</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">@_corpse.CauseOfDeath</div></div>
                             <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Ngày tử vong</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">@_corpse.DateOfDeath</div></div>
                             <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Ngày tiếp nhận</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">@_corpse.DateAdmitted</div></div>
@@ -209,4 +220,44 @@
     private void SetTabHistory() { _activeTab = "history"; }
     private void SetTabDocuments() { _activeTab = "documents"; }
     private void NavBack() => Navigation.NavigateTo("/admin/corpses");
+
+    private string GetRetentionWarning()
+    {
+        if (_corpse == null || string.IsNullOrEmpty(_corpse.DateAdmitted)) return "";
+        if (!DateTime.TryParseExact(_corpse.DateAdmitted, new[] { "dd-MM-yyyy", "yyyy-MM-dd", "dd/MM/yyyy", "MM/dd/yyyy" }, null, System.Globalization.DateTimeStyles.None, out var admitDate)) return "";
+
+        var elapsedHours = (DateTime.Now - admitDate).TotalHours;
+        var elapsedDays = (DateTime.Now - admitDate).TotalDays;
+
+        if (_corpse.IsInfectious)
+        {
+            var remainingHours = 24 - elapsedHours;
+            if (remainingHours < 0) return "⚠️ QUÁ HẠN LÂY NHIỄM (> 24H)!";
+            return $"⚠️ Lây nhiễm: Còn {Math.Max(0, remainingHours):F1}h lưu giữ.";
+        }
+
+        if (_corpse.IsUnidentified)
+        {
+            var remainingDays = 30 - elapsedDays;
+            if (remainingDays < 0) return "⚠️ QUÁ HẠN VÔ DANH (> 30 NGÀY)!";
+            return $"ℹ️ Vô danh: Còn {Math.Max(0, remainingDays):F0} ngày tìm thân nhân.";
+        }
+
+        if (_corpse.RequiresDeepFreeze)
+        {
+            return "❄️ Lưu đông sâu: Chờ thủ tục pháp y.";
+        }
+
+        var normRemaining = 7 - elapsedDays;
+        if (normRemaining < 0) return "⚠️ QUÁ HẠN THÔNG THƯỜNG (> 7 NGÀY)!";
+        return $"ℹ️ Lưu trữ thông thường: Còn {Math.Max(0, normRemaining):F0} ngày.";
+    }
+
+    private string GetRetentionWarningColor()
+    {
+        var text = GetRetentionWarning();
+        if (text.Contains("QUÁ HẠN") || text.Contains("Lây nhiễm")) return "var(--danger)";
+        if (text.Contains("Vô danh")) return "orange";
+        return "var(--ice)";
+    }
 }
