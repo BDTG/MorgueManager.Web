@@ -1,0 +1,143 @@
+@implements IDisposable
+@inject MorgueManager.Web.Services.TourService TourService
+@inject IJSRuntime JS
+
+@if (TourService.IsSelectionModalVisible)
+{
+    <div style="position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 10005; background-color: rgba(3, 6, 8, 0.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
+        <div style="width: 500px; max-width: 90%; border-radius: 16px; padding: 24px; box-shadow: var(--shadow-2xl); position: relative; background-color: var(--bg-card); border: 1px solid var(--border-primary);" class="font-ui">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="font-size: 18px; font-weight: 700; margin: 0; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                    <span style="color: var(--ice);">💡</span> Lựa chọn phân hệ hướng dẫn
+                </h3>
+                <button @onclick="() => TourService.HideSelectionModal()" style="background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; padding: 4px;">✕</button>
+            </div>
+            
+            <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin: 0 0 20px 0;">
+                Vui lòng chọn một trong các phân hệ dưới đây để bắt đầu chương trình hướng dẫn tương tác từng bước của hệ thống.
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button @onclick='() => TourService.StartTour("Dashboard")' style="width: 100%; text-align: left; border-radius: 12px; padding: 12px 16px; transition: all 0.2s; border: 1px solid var(--border-primary); display: flex; align-items: center; gap: 16px; background-color: transparent; cursor: pointer;" onmouseover="this.style.backgroundColor='var(--bg-elevated)'; this.style.borderColor='var(--ice)';" onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='var(--border-primary)';">
+                    <div style="width: 38px; height: 38px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background-color: rgba(59, 130, 246, 0.12);">
+                        <span style="color: #3B82F6; font-size: 18px;">📊</span>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 14px; color: var(--text-primary);">Tổng quan (Dashboard)</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Các chỉ số thống kê, biểu đồ tiếp nhận & bàn giao, hoạt động gần đây</div>
+                    </div>
+                </button>
+
+                <button @onclick='() => TourService.StartTour("Corpses")' style="width: 100%; text-align: left; border-radius: 12px; padding: 12px 16px; transition: all 0.2s; border: 1px solid var(--border-primary); display: flex; align-items: center; gap: 16px; background-color: transparent; cursor: pointer;" onmouseover="this.style.backgroundColor='var(--bg-elevated)'; this.style.borderColor='var(--ice)';" onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='var(--border-primary)';">
+                    <div style="width: 38px; height: 38px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background-color: rgba(14, 165, 233, 0.12);">
+                        <span style="color: #0EA5E9; font-size: 18px;">📋</span>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 14px; color: var(--text-primary);">Quản lý Thi thể</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Thêm mới thi thể, tìm kiếm lọc, xem chi tiết hồ sơ</div>
+                    </div>
+                </button>
+
+                <button @onclick='() => TourService.StartTour("Storages")' style="width: 100%; text-align: left; border-radius: 12px; padding: 12px 16px; transition: all 0.2s; border: 1px solid var(--border-primary); display: flex; align-items: center; gap: 16px; background-color: transparent; cursor: pointer;" onmouseover="this.style.backgroundColor='var(--bg-elevated)'; this.style.borderColor='var(--ice)';" onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='var(--border-primary)';">
+                    <div style="width: 38px; height: 38px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background-color: rgba(99, 102, 241, 0.12);">
+                        <span style="color: #6366f1; font-size: 18px;">🗄️</span>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 14px; color: var(--text-primary);">Sơ đồ Ngăn tủ</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Chú thích trạng thái, sơ đồ ngăn trực quan, tìm kiếm nhanh ngăn tủ</div>
+                    </div>
+                </button>
+
+                <button @onclick='() => TourService.StartTour("Temperature")' style="width: 100%; text-align: left; border-radius: 12px; padding: 12px 16px; transition: all 0.2s; border: 1px solid var(--border-primary); display: flex; align-items: center; gap: 16px; background-color: transparent; cursor: pointer;" onmouseover="this.style.backgroundColor='var(--bg-elevated)'; this.style.borderColor='var(--ice)';" onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='var(--border-primary)';">
+                    <div style="width: 38px; height: 38px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background-color: rgba(16, 185, 129, 0.12);">
+                        <span style="color: #10B981; font-size: 18px;">🌡️</span>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 14px; color: var(--text-primary);">Giám sát Nhiệt độ</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Đồng hồ đo, bảng điều khiển thiết lập nhiệt độ và đồ thị lịch sử</div>
+                    </div>
+                </button>
+
+                <button @onclick='() => TourService.StartTour("Shifts")' style="width: 100%; text-align: left; border-radius: 12px; padding: 12px 16px; transition: all 0.2s; border: 1px solid var(--border-primary); display: flex; align-items: center; gap: 16px; background-color: transparent; cursor: pointer;" onmouseover="this.style.backgroundColor='var(--bg-elevated)'; this.style.borderColor='var(--ice)';" onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='var(--border-primary)';">
+                    <div style="width: 38px; height: 38px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background-color: rgba(245, 158, 11, 0.12);">
+                        <span style="color: #F59E0B; font-size: 18px;">📅</span>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 14px; color: var(--text-primary);">Ca trực</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Xem lịch phân ca trực của nhân viên theo tháng và phân ca trực mới</div>
+                    </div>
+                </button>
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; margin-top: 24px;">
+                <button @onclick="() => TourService.HideSelectionModal()" style="padding: 8px 16px; border: 1px solid var(--border-primary); border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 13px;" onmouseover="this.style.borderColor='var(--text-secondary)';" onmouseout="this.style.borderColor='var(--border-primary)';">Đóng</button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (TourService.IsActive && TourService.Steps.Count > 0 && TourService.CurrentStepIndex >= 0)
+{
+    var currentStep = TourService.Steps[TourService.CurrentStepIndex];
+    <div class="tour-backdrop" @onclick="() => TourService.EndTour()"></div>
+    <div id="tour-tooltip" class="tour-tooltip-container">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+            <h4 style="font-weight: 700; font-size: 15px; margin: 0; color: var(--text-primary);">@currentStep.Title</h4>
+            <span style="font-size: 11px; font-weight: 600; color: var(--ice); background: rgba(72, 219, 251, 0.15); padding: 2px 6px; border-radius: 6px;">
+                @(TourService.CurrentStepIndex + 1) / @TourService.Steps.Count
+            </span>
+        </div>
+        <p style="font-size: 13px; line-height: 1.5; color: var(--text-secondary); margin: 0 0 16px 0;">@currentStep.Content</p>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <button @onclick="() => TourService.EndTour()" style="background: none; border: none; font-size: 12px; color: var(--text-muted); cursor: pointer;" onmouseover="this.style.color='var(--danger)';" onmouseout="this.style.color='var(--text-muted)';">Bỏ qua</button>
+            <div style="display: flex; gap: 8px;">
+                @if (TourService.CurrentStepIndex > 0)
+                {
+                    <button @onclick="() => TourService.PrevStep()" style="padding: 6px 12px; font-size: 12px; border: 1px solid var(--border-primary); border-radius: 6px; background: transparent; color: var(--text-primary); cursor: pointer;" onmouseover="this.style.borderColor='var(--text-secondary)';" onmouseout="this.style.borderColor='var(--border-primary)';">Quay lại</button>
+                }
+                <button @onclick="() => TourService.NextStep()" style="padding: 6px 12px; font-size: 12px; border: none; border-radius: 6px; background: linear-gradient(135deg, #3B82F6, #2563EB); color: white; font-weight: 600; cursor: pointer;" onmouseover="this.style.opacity='0.95';" onmouseout="this.style.opacity='1';">
+                    @(TourService.CurrentStepIndex == TourService.Steps.Count - 1 ? "Hoàn tất" : "Tiếp tục")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        TourService.OnTourStateChanged += HandleTourStateChanged;
+    }
+
+    private void HandleTourStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (TourService.IsActive && TourService.Steps.Count > 0 && TourService.CurrentStepIndex >= 0)
+        {
+            var currentStep = TourService.Steps[TourService.CurrentStepIndex];
+            
+            // Wait a tiny bit for the page DOM elements to be resolved/rendered
+            await Task.Delay(150);
+            
+            // Highlight the active element
+            await JS.InvokeVoidAsync("tourHelper.highlightElement", currentStep.Selector);
+            
+            // Position the tooltip relative to highlighted element
+            await JS.InvokeVoidAsync("tourHelper.positionTooltip", "#tour-tooltip", currentStep.Selector, currentStep.Position);
+        }
+        else
+        {
+            // Remove highlight if tour is no longer active
+            await JS.InvokeVoidAsync("tourHelper.removeHighlight");
+        }
+    }
+
+    public void Dispose()
+    {
+        TourService.OnTourStateChanged -= HandleTourStateChanged;
+    }
+}

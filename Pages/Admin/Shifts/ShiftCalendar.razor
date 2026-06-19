@@ -2,6 +2,7 @@
 @layout Components.Layout.AdminLayout
 @inject NavigationManager Navigation
 @inject MorgueManager.Web.Services.ApiService Api
+@inject MorgueManager.Web.Services.TourService TourService
 @using System.Text.Json
 
 <div>
@@ -11,7 +12,7 @@
             <h1 class="font-ui" style="font-size: 22px; font-weight: 700; margin: 0; color: var(--text-primary);">📅 Quản lý Ca trực</h1>
         </div>
         <div style="display: flex; gap: 8px;">
-            <button @onclick="() => _showAssignModal = true" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; background: linear-gradient(135deg, #3B82F6, #2563EB); color: white;">➕ Phân ca mới</button>
+            <button @onclick="() => _showAssignModal = true" id="tour-btn-add-shift" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; background: linear-gradient(135deg, #3B82F6, #2563EB); color: white;">➕ Phân ca mới</button>
             <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--success); color: var(--success); background: transparent;">📥 Xuất lịch</button>
         </div>
     </div>
@@ -34,7 +35,7 @@
 
     @if (_view == "month")
     {
-        <div style="border-radius: 12px; border: 1px solid var(--border-primary); overflow: hidden; background-color: var(--bg-card);">
+        <div id="tour-calendar" style="border-radius: 12px; border: 1px solid var(--border-primary); overflow: hidden; background-color: var(--bg-card);">
             <div class="calendar-grid" style="padding: 8px;">
                 @foreach (var day in _dayHeaders)
                 {
@@ -203,6 +204,14 @@
 
     private List<ShiftEvent> _monthShifts = new();
     private ShiftEvent? _originalEditingShift;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            TourService.TriggerStateChangeFromPage();
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {

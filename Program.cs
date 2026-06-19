@@ -18,6 +18,7 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(apiBaseU
 builder.Services.AddScoped<ApiService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ExportService>();
+builder.Services.AddScoped<TourService>();
 builder.Services.AddSingleton<TemperatureSimulatorService>();
 
 var supabaseSection = builder.Configuration.GetSection("Supabase");
