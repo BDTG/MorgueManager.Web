@@ -24,7 +24,7 @@
 
   <Target Name="CompileTailwind" BeforeTargets="BeforeBuild">
     <Message Importance="high" Text="⚡ Đang biên dịch Tailwind CSS v4..." />
-    <Exec Command="npx @tailwindcss/cli -i wwwroot/css/input.css -o wwwroot/css/app.compiled.css --minify" />
+    <Exec Command="npx @tailwindcss/cli -i wwwroot/css/input.css -o wwwroot/css/app.compiled.css --minify" ContinueOnError="true" />
   </Target>
 
 </Project>
