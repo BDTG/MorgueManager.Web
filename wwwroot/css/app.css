@@ -771,6 +771,15 @@ body {
     color: var(--text-primary);
 }
 
+/* Custom Dropdown Items */
+.custom-dropdown-item {
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+.custom-dropdown-item:hover {
+    background-color: var(--table-row-hover);
+    color: var(--ice);
+}
+
 /* Temperature gauge */
 .temp-gauge {
     width: 180px; height: 180px; position: relative;

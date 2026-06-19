@@ -149,15 +149,24 @@
                     <label class="font-ui" style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;"><input type="radio" name="shift" checked="@(_viewShiftType == "night")" @onchange="@(() => _viewShiftType = "night")" /> 🌙 Tối</label>
                 </div>
             </div>
-            <div style="margin-bottom: 16px;">
+            <div style="margin-bottom: 16px; position: relative;">
                 <label class="font-ui" style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Nhân viên</label>
-                <select class="filter-select" style="width: 100%; min-height: 40px;" @bind="_viewStaff">
-                    <option value="" disabled>-- Chọn nhân viên --</option>
-                    <option value="Nguyễn Văn A">Nguyễn Văn A — Staff</option>
-                    <option value="Trần Thị B">Trần Thị B — Staff</option>
-                    <option value="Lê Văn C">Lê Văn C — Manager</option>
-                    <option value="Phạm Thị D">Phạm Thị D — Staff</option>
-                </select>
+                <div class="filter-input" style="width: 100%; cursor: pointer; display: flex; justify-content: space-between; align-items: center;" @onclick="() => _isDropdownOpen = !_isDropdownOpen">
+                    <span style="color: @(string.IsNullOrEmpty(_viewStaff) ? "var(--text-muted)" : "var(--text-primary)")">@(string.IsNullOrEmpty(_viewStaff) ? "-- Chọn nhân viên --" : _viewStaff)</span>
+                    <span style="font-size: 10px; color: var(--text-muted);">▼</span>
+                </div>
+                
+                @if (_isDropdownOpen)
+                {
+                    <div style="position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; background-color: var(--bg-elevated); border: 1px solid var(--border-primary); border-radius: 8px; box-shadow: var(--shadow-md); z-index: 100; overflow: hidden;">
+                        @foreach(var opt in new[] { "Nguyễn Văn A — Staff", "Trần Thị B — Staff", "Lê Văn C — Manager", "Phạm Thị D — Staff" })
+                        {
+                            <div style="padding: 10px 16px; cursor: pointer; font-size: 13px; color: var(--text-primary);" class="custom-dropdown-item" @onclick="() => { _viewStaff = opt.Split('—')[0].Trim(); _isDropdownOpen = false; }">
+                                @opt
+                            </div>
+                        }
+                    </div>
+                }
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 12px;">
                 <button @onclick="() => { if (_isEditing) _isViewMode = true; else _showAssignModal = false; }" class="font-ui" style="padding: 10px 20px; border: 1px solid var(--border-primary); border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 13px;">Hủy</button>
@@ -170,6 +179,7 @@
 @code {
     private string _view = "month";
     private bool _showAssignModal;
+    private bool _isDropdownOpen;
     private bool _isEditing;
     private bool _isViewMode;
     private DateTime _selectedAssignDate = DateTime.Now;
@@ -206,6 +216,7 @@
         _isViewMode = false;
         _viewShiftType = "morning";
         _viewStaff = "Nguyễn Văn A";
+        _isDropdownOpen = false;
         _showAssignModal = true;
     }
 
@@ -219,6 +230,7 @@
         _viewShiftType = shiftType;
         _viewStaff = staff;
         _viewPhone = _originalEditingShift?.Phone ?? "+84 999 888 777";
+        _isDropdownOpen = false;
         _showAssignModal = true;
     }
 
