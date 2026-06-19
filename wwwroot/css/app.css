@@ -609,6 +609,9 @@ body {
     background-color: var(--bg-card);
     border: 1px solid var(--border-primary);
 }
+.modal-visible-overflow {
+    overflow: visible !important;
+}
 
 /* Drawer */
 .drawer-overlay {

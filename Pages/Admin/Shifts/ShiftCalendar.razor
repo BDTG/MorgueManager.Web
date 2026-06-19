@@ -94,7 +94,7 @@
 
 @if (_showAssignModal)
 {
-    <Modal OnClose="() => _showAssignModal = false">
+    <Modal OnClose="() => _showAssignModal = false" CssClass="modal-visible-overflow">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
             <h2 class="font-ui" style="font-size: 18px; font-weight: 700; margin: 0; color: var(--text-primary);">
                 @if (_isViewMode) { <text>📋 Chi tiết ca trực</text> }
