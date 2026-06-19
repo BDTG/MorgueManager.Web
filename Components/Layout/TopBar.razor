@@ -1,9 +1,9 @@
 @inject NavigationManager Navigation
 
 <div class="admin-topbar @(IsCollapsed ? "collapsed" : "") flex items-center justify-between px-6 bg-[var(--bg-secondary)] border-b border-[var(--border-primary)]" style="height: var(--topbar-height);">
-    <div class="flex items-center gap-4">
-        <button @onclick="() => OnToggleSidebar.InvokeAsync()" class="p-1 background-none border-none text-[var(--text-secondary)] cursor-pointer flex items-center justify-center hover:opacity-80">
-            <LucideIcon Name="menu" Class="w-5 h-5" />
+    <div class="flex items-center gap-2 sm:gap-4">
+        <button @onclick="() => OnToggleSidebar.InvokeAsync()" class="p-1 cursor-pointer flex items-center justify-center hover:opacity-80" style="background: transparent; border: none; color: var(--text-secondary);">
+            <LucideIcon Name="menu" Class="w-6 h-6" />
         </button>
         <span class="font-ui text-xs" style="color: var(--text-muted);">@GetCurrentPageTitle()</span>
     </div>
@@ -24,8 +24,8 @@
             {
                 <div class="fixed inset-0 z-40" @onclick="CloseNotifications"></div>
                 
-                <div class="absolute right-0 mt-2 w-80 rounded-xl shadow-lg z-50 overflow-hidden" 
-                     style="background-color: var(--bg-card); border: 1px solid var(--border-primary); box-shadow: var(--shadow-xl);">
+                <div class="absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-xs sm:max-w-none sm:w-80 rounded-xl shadow-lg z-50 overflow-hidden" 
+                     style="background-color: var(--bg-card); border: 1px solid var(--border-primary); box-shadow: var(--shadow-xl); transform: translateX(10px);">
                     <div class="p-4 border-b flex justify-between items-center" style="border-color: var(--border-primary);">
                         <h3 class="font-ui text-sm font-semibold" style="color: var(--text-primary);">Thông báo (@_unreadCount)</h3>
                         @if (_unreadCount > 0)
