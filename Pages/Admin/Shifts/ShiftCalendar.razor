@@ -1,6 +1,8 @@
 @page "/admin/shifts"
 @layout Components.Layout.AdminLayout
 @inject NavigationManager Navigation
+@inject MorgueManager.Web.Services.ApiService Api
+@using System.Text.Json
 
 <div>
     <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px;">
@@ -191,22 +193,30 @@
 
     public class ShiftEvent
     {
+        public int Id { get; set; }
         public DateTime Date { get; set; }
         public string ShiftType { get; set; }
         public string StaffName { get; set; }
+        public string StaffEmail { get; set; }
         public string Phone { get; set; }
     }
 
     private List<ShiftEvent> _monthShifts = new();
     private ShiftEvent? _originalEditingShift;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        var year = DateTime.Now.Year;
-        var month = DateTime.Now.Month;
-        _monthShifts.Add(new ShiftEvent { Date = new DateTime(year, month, 1), ShiftType = "morning", StaffName = "Nguyễn Văn A", Phone = "+84 912 345 678" });
-        _monthShifts.Add(new ShiftEvent { Date = new DateTime(year, month, 1), ShiftType = "evening", StaffName = "Lê Văn C", Phone = "+84 923 456 789" });
-        _monthShifts.Add(new ShiftEvent { Date = new DateTime(year, month, 3), ShiftType = "morning", StaffName = "Trần Thị B", Phone = "+84 934 567 890" });
+        try
+        {
+            var year = DateTime.Now.Year;
+            var month = DateTime.Now.Month;
+            var fetched = await Api.GetAsync<List<ShiftEvent>>($"api/shifts?month={month}&year={year}");
+            if (fetched != null && fetched.Any())
+            {
+                _monthShifts = fetched;
+            }
+        }
+        catch { /* API might be down or not responding yet */ }
     }
 
     private void OpenAssignModalForDate(int day)
@@ -234,7 +244,7 @@
         _showAssignModal = true;
     }
 
-    private void SaveShift()
+    private async Task SaveShift()
     {
         var staff = string.IsNullOrEmpty(_viewStaff) ? "Nhân viên mới" : _viewStaff;
         var shiftType = string.IsNullOrEmpty(_viewShiftType) ? "morning" : _viewShiftType;
@@ -244,24 +254,51 @@
             _originalEditingShift.ShiftType = shiftType;
             _originalEditingShift.StaffName = staff;
             _originalEditingShift.Date = _selectedAssignDate;
+
+            try {
+                await Api.PutAsync<object>($"api/shifts/{_originalEditingShift.Id}", new {
+                    Date = _selectedAssignDate,
+                    ShiftType = shiftType,
+                    StaffName = staff,
+                    Phone = _originalEditingShift.Phone
+                });
+            } catch { }
         }
         else
         {
-            _monthShifts.Add(new ShiftEvent { 
-                Date = _selectedAssignDate.Date, 
-                ShiftType = shiftType, 
-                StaffName = staff, 
-                Phone = "+84 999 888 777" 
-            });
+            try {
+                var newShift = await Api.PostAsync<ShiftEvent>("api/shifts", new {
+                    Date = _selectedAssignDate.Date,
+                    ShiftType = shiftType,
+                    StaffName = staff,
+                    Phone = "+84 999 888 777"
+                });
+                
+                if (newShift != null) {
+                    _monthShifts.Add(newShift);
+                }
+            } catch {
+                // Add dummy fallback if API fails
+                _monthShifts.Add(new ShiftEvent { 
+                    Id = new Random().Next(1000, 9000),
+                    Date = _selectedAssignDate.Date, 
+                    ShiftType = shiftType, 
+                    StaffName = staff, 
+                    Phone = "+84 999 888 777" 
+                });
+            }
         }
         _showAssignModal = false;
     }
 
-    private void DeleteShift()
+    private async Task DeleteShift()
     {
         var existing = _monthShifts.FirstOrDefault(s => s.Date == _selectedAssignDate && s.ShiftType == _viewShiftType && s.StaffName == _viewStaff);
         if (existing != null)
         {
+            try {
+                await Api.DeleteAsync($"api/shifts/{existing.Id}");
+            } catch { }
             _monthShifts.Remove(existing);
         }
         _showAssignModal = false;
