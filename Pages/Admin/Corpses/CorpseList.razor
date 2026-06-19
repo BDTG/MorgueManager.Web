@@ -17,9 +17,12 @@
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--success); color: var(--success); background: transparent; display: flex; align-items: center; gap: 4px;">📊 Xuất Excel</button>
             <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--danger); color: var(--danger); background: transparent; display: flex; align-items: center; gap: 4px;">📄 Xuất PDF</button>
-            <button @onclick="OpenCreateModal" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; background: linear-gradient(135deg, #3B82F6, #2563EB); color: white; display: flex; align-items: center; gap: 4px;">
-                <span>➕</span> Thêm thi thể mới
-            </button>
+            @if (_userRole == "Admin")
+            {
+                <button @onclick="OpenCreateModal" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; background: linear-gradient(135deg, #3B82F6, #2563EB); color: white; display: flex; align-items: center; gap: 4px;">
+                    <span>➕</span> Thêm thi thể mới
+                </button>
+            }
         </div>
     </div>
 
@@ -108,9 +111,15 @@
                             <td>
                                 <div style="display: flex; align-items: center; gap: 2px;">
                                     <button @onclick="() => OpenCorpseDetail(c.Id)" @onclick:stopPropagation="true" class="action-btn" style="color: var(--ice);" title="Xem chi tiết">👁</button>
-                                    <button @onclick="() => EditCorpse(c)" @onclick:stopPropagation="true" class="action-btn" style="color: var(--candle);" title="Sửa">✏</button>
-                                    <button @onclick="() => DeleteCorpse(c)" @onclick:stopPropagation="true" class="action-btn" style="color: var(--danger);" title="Xóa">🗑</button>
-                                    @if (c.Status == "Lưu kho")
+                                    @if (_userRole == "Admin" || _userRole == "Manager")
+                                    {
+                                        <button @onclick="() => EditCorpse(c)" @onclick:stopPropagation="true" class="action-btn" style="color: var(--candle);" title="Sửa">✏</button>
+                                    }
+                                    @if (_userRole == "Admin")
+                                    {
+                                        <button @onclick="() => DeleteCorpse(c)" @onclick:stopPropagation="true" class="action-btn" style="color: var(--danger);" title="Xóa">🗑</button>
+                                    }
+                                    @if ((_userRole == "Admin" || _userRole == "Manager") && c.Status == "Lưu kho")
                                     {
                                         <button @onclick="() => HandoverCorpse(c)" @onclick:stopPropagation="true" class="action-btn" style="color: var(--success);" title="Bàn giao">📋</button>
                                     }
@@ -162,7 +171,7 @@
                                     <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-primary);">
                                         <button @onclick="() => OpenCorpseDetail(c.Id)" class="font-ui" style="font-size: 12px; font-weight: 500; color: var(--ice); background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 4px;">👁 Xem hồ sơ đầy đủ</button>
                                         <a href="tel:@c.NextOfKin.Phone" class="font-ui" style="font-size: 12px; font-weight: 500; color: var(--success); text-decoration: none; display: flex; align-items: center; gap: 4px;">📞 Liên hệ thân nhân</a>
-                                        @if (c.Status == "Lưu kho")
+                                        @if ((_userRole == "Admin" || _userRole == "Manager") && c.Status == "Lưu kho")
                                         {
                                             <button @onclick="() => HandoverCorpse(c)" class="font-ui" style="font-size: 12px; font-weight: 500; color: var(--success); background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 4px;">📋 Bàn giao</button>
                                         }
@@ -335,6 +344,9 @@
 
     private bool HasFilters => !string.IsNullOrEmpty(_search) || !string.IsNullOrEmpty(_statusFilter) || !string.IsNullOrEmpty(_genderFilter) || !string.IsNullOrEmpty(_dateFrom) || !string.IsNullOrEmpty(_dateTo);
 
+    private string _userRole = "None";
+    private string _userEmail = "";
+
     private async Task EnsureAuthorizedAsync()
     {
         try
@@ -353,6 +365,15 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _userRole = await AdminAuthHelper.GetUserRoleAsync(JS);
+        _userEmail = await AdminAuthHelper.GetUserEmailAsync(JS);
+
+        if (_userRole == "None")
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
         await LoadCorpsesAsync();
     }
 
@@ -583,6 +604,7 @@
 
     private async Task EditCorpse(Models.Corpse c)
     {
+        if (_userRole != "Admin" && _userRole != "Manager") return;
         try
         {
             await EnsureAuthorizedAsync();
@@ -619,6 +641,7 @@
 
     private async Task DeleteCorpse(Models.Corpse c)
     {
+        if (_userRole != "Admin") return;
         try
         {
             await EnsureAuthorizedAsync();
@@ -633,6 +656,7 @@
 
     private async Task HandoverCorpse(Models.Corpse c)
     {
+        if (_userRole != "Admin" && _userRole != "Manager") return;
         try
         {
             await EnsureAuthorizedAsync();
@@ -669,6 +693,7 @@
 
     private async Task SaveNewCorpse()
     {
+        if (_userRole != "Admin") return;
         if (string.IsNullOrWhiteSpace(_newName)) return;
 
         var dto = new CreateCorpseDto
