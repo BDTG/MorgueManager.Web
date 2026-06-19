@@ -1,6 +1,8 @@
 @page "/admin/shifts"
 @layout Components.Layout.AdminLayout
 @inject NavigationManager Navigation
+@inject MorgueManager.Web.Services.ApiService Api
+@using System.Text.Json
 
 <div>
     <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px;">
@@ -46,11 +48,15 @@
                 {
                     var isToday = day == DateTime.Now.Day;
                     var currentDay = day; // capture variable for lambda
+                    var dayShifts = _monthShifts.Where(s => s.Date.Day == currentDay).ToList();
                     <div class="calendar-cell @(isToday ? "today" : "")" @onclick="() => OpenAssignModalForDate(currentDay)">
                         <div class="calendar-date @(isToday ? "today" : "")">@day</div>
-                        <div class="shift-bar shift-morning" @onclick:stopPropagation="true" @onclick="@(() => OpenEditModalForShift(currentDay, "morning", "Nguyễn A"))">🌅 Nguyễn A</div>
-                        <div class="shift-bar shift-evening" @onclick:stopPropagation="true" @onclick="@(() => OpenEditModalForShift(currentDay, "evening", "Lê C"))">🌆 Lê C</div>
-                        @if (day % 3 == 0)
+                        @foreach (var shift in dayShifts)
+                        {
+                            var shiftIcon = shift.ShiftType == "morning" ? "🌅" : shift.ShiftType == "evening" ? "🌆" : "🌙";
+                            <div class="shift-bar shift-@shift.ShiftType" @onclick:stopPropagation="true" @onclick="@(() => OpenEditModalForShift(currentDay, shift.ShiftType, shift.StaffName))">@shiftIcon @shift.StaffName</div>
+                        }
+                        @if (day % 3 == 0 && !dayShifts.Any())
                         {
                             <div class="shift-bar shift-missing" @onclick:stopPropagation="true" @onclick="@(() => OpenAssignModalForDate(currentDay))">⚠️ Thiếu nhân viên</div>
                         }
@@ -90,57 +96,212 @@
 
 @if (_showAssignModal)
 {
-    <Modal OnClose="() => _showAssignModal = false">
+    <Modal OnClose="() => _showAssignModal = false" CssClass="modal-visible-overflow">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-            <h2 class="font-ui" style="font-size: 18px; font-weight: 700; margin: 0; color: var(--text-primary);">@(_isEditing ? "✏️ Chỉnh sửa ca trực" : "➕ Phân ca trực mới")</h2>
+            <h2 class="font-ui" style="font-size: 18px; font-weight: 700; margin: 0; color: var(--text-primary);">
+                @if (_isViewMode) { <text>📋 Chi tiết ca trực</text> }
+                else if (_isEditing) { <text>✏️ Chỉnh sửa ca trực</text> }
+                else { <text>➕ Phân ca trực mới</text> }
+            </h2>
             <button @onclick="() => _showAssignModal = false" style="background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer;">✕</button>
         </div>
-        <div style="margin-bottom: 16px;">
-            <label class="font-ui" style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Chọn ngày</label>
-            <input type="date" class="filter-input" style="width: 100%;" @bind="_selectedAssignDate" @bind:format="yyyy-MM-dd" />
-        </div>
-        <div style="margin-bottom: 16px;">
-            <label class="font-ui" style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Ca trực</label>
-            <div style="display: flex; gap: 12px;">
-                <label class="font-ui" style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;"><input type="radio" name="shift" checked /> 🌅 Sáng (6h-14h)</label>
-                <label class="font-ui" style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;"><input type="radio" name="shift" /> 🌆 Chiều (14h-22h)</label>
-                <label class="font-ui" style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;"><input type="radio" name="shift" /> 🌙 Tối (22h-6h)</label>
+        
+        @if (_isViewMode)
+        {
+            <div style="margin-bottom: 20px; padding: 16px; border-radius: 8px; background-color: var(--bg-elevated); border: 1px solid var(--border-primary);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <span style="color: var(--text-muted); font-size: 12px;">Ngày trực</span>
+                    <span style="color: var(--text-primary); font-weight: 600; font-size: 14px;">@_selectedAssignDate.ToString("dd/MM/yyyy")</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <span style="color: var(--text-muted); font-size: 12px;">Ca trực</span>
+                    <span style="color: var(--text-primary); font-weight: 600; font-size: 14px;">
+                        @(_viewShiftType == "morning" ? "🌅 Sáng (6h-14h)" : _viewShiftType == "evening" ? "🌆 Chiều (14h-22h)" : "🌙 Tối (22h-6h)")
+                    </span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <span style="color: var(--text-muted); font-size: 12px;">Nhân viên</span>
+                    <span style="color: var(--text-primary); font-weight: 600; font-size: 14px;">@_viewStaff</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <span style="color: var(--text-muted); font-size: 12px;">Số điện thoại</span>
+                    <span style="color: var(--text-primary); font-weight: 600; font-size: 14px; font-family: monospace;">@_viewPhone</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted); font-size: 12px;">Trạng thái</span>
+                    <span class="badge-pill" style="background-color: rgba(16,185,129,0.15); color: var(--success);">Đã xác nhận</span>
+                </div>
             </div>
-        </div>
-        <div style="margin-bottom: 16px;">
-            <label class="font-ui" style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Nhân viên</label>
-            <select multiple class="filter-select" style="width: 100%; min-height: 100px;">
-                <option>Nguyễn Văn A — Staff</option>
-                <option>Trần Thị B — Staff</option>
-                <option>Lê Văn C — Manager</option>
-                <option>Phạm Thị D — Staff</option>
-            </select>
-        </div>
-        <div style="display: flex; justify-content: flex-end; gap: 12px;">
-            <button @onclick="() => _showAssignModal = false" class="font-ui" style="padding: 10px 20px; border: 1px solid var(--border-primary); border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 13px;">Hủy</button>
-            <button class="font-ui" style="padding: 10px 20px; border: none; border-radius: 8px; background: var(--ice); color: white; cursor: pointer; font-size: 13px; font-weight: 600;">💾 Lưu</button>
-        </div>
+            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                <button @onclick="() => { _isViewMode = false; _isEditing = true; }" class="font-ui" style="padding: 10px 20px; border: 1px solid var(--ice); border-radius: 8px; background: transparent; color: var(--ice); cursor: pointer; font-size: 13px;">✏️ Chỉnh sửa</button>
+                <button @onclick="DeleteShift" class="font-ui" style="padding: 10px 20px; border: none; border-radius: 8px; background: rgba(239, 68, 68, 0.15); color: var(--danger); cursor: pointer; font-size: 13px; font-weight: 600;">🗑️ Hủy ca</button>
+            </div>
+        }
+        else
+        {
+            <div style="margin-bottom: 16px;">
+                <label class="font-ui" style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Chọn ngày</label>
+                <input type="date" class="filter-input" style="width: 100%;" @bind="_selectedAssignDate" @bind:format="yyyy-MM-dd" />
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label class="font-ui" style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Ca trực</label>
+                <div style="display: flex; gap: 12px;">
+                    <label class="font-ui" style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;"><input type="radio" name="shift" checked="@(_viewShiftType == "morning" || string.IsNullOrEmpty(_viewShiftType))" @onchange="@(() => _viewShiftType = "morning")" /> 🌅 Sáng</label>
+                    <label class="font-ui" style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;"><input type="radio" name="shift" checked="@(_viewShiftType == "evening")" @onchange="@(() => _viewShiftType = "evening")" /> 🌆 Chiều</label>
+                    <label class="font-ui" style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;"><input type="radio" name="shift" checked="@(_viewShiftType == "night")" @onchange="@(() => _viewShiftType = "night")" /> 🌙 Tối</label>
+                </div>
+            </div>
+            <div style="margin-bottom: 16px; position: relative;">
+                <label class="font-ui" style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Nhân viên</label>
+                <div class="filter-input" style="width: 100%; cursor: pointer; display: flex; justify-content: space-between; align-items: center;" @onclick="() => _isDropdownOpen = !_isDropdownOpen">
+                    <span style="color: @(string.IsNullOrEmpty(_viewStaff) ? "var(--text-muted)" : "var(--text-primary)")">@(string.IsNullOrEmpty(_viewStaff) ? "-- Chọn nhân viên --" : _viewStaff)</span>
+                    <span style="font-size: 10px; color: var(--text-muted);">▼</span>
+                </div>
+                
+                @if (_isDropdownOpen)
+                {
+                    <div style="position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; background-color: var(--bg-elevated); border: 1px solid var(--border-primary); border-radius: 8px; box-shadow: var(--shadow-md); z-index: 100; overflow: hidden;">
+                        @foreach(var opt in new[] { "Nguyễn Văn A — Staff", "Trần Thị B — Staff", "Lê Văn C — Manager", "Phạm Thị D — Staff" })
+                        {
+                            <div style="padding: 10px 16px; cursor: pointer; font-size: 13px; color: var(--text-primary);" class="custom-dropdown-item" @onclick="() => { _viewStaff = opt.Split('—')[0].Trim(); _isDropdownOpen = false; }">
+                                @opt
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                <button @onclick="() => { if (_isEditing) _isViewMode = true; else _showAssignModal = false; }" class="font-ui" style="padding: 10px 20px; border: 1px solid var(--border-primary); border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 13px;">Hủy</button>
+                <button @onclick="SaveShift" class="font-ui" style="padding: 10px 20px; border: none; border-radius: 8px; background: var(--ice); color: white; cursor: pointer; font-size: 13px; font-weight: 600;">💾 Lưu</button>
+            </div>
+        }
     </Modal>
 }
 
 @code {
     private string _view = "month";
     private bool _showAssignModal;
+    private bool _isDropdownOpen;
     private bool _isEditing;
+    private bool _isViewMode;
     private DateTime _selectedAssignDate = DateTime.Now;
+    
+    // View/Edit state
+    private string _viewShiftType = "";
+    private string _viewStaff = "";
+    private string _viewPhone = "";
+
+    public class ShiftEvent
+    {
+        public int Id { get; set; }
+        public DateTime Date { get; set; }
+        public string ShiftType { get; set; }
+        public string StaffName { get; set; }
+        public string StaffEmail { get; set; }
+        public string Phone { get; set; }
+    }
+
+    private List<ShiftEvent> _monthShifts = new();
+    private ShiftEvent? _originalEditingShift;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var year = DateTime.Now.Year;
+            var month = DateTime.Now.Month;
+            var fetched = await Api.GetAsync<List<ShiftEvent>>($"api/shifts?month={month}&year={year}");
+            if (fetched != null && fetched.Any())
+            {
+                _monthShifts = fetched;
+            }
+        }
+        catch { /* API might be down or not responding yet */ }
+    }
 
     private void OpenAssignModalForDate(int day)
     {
         _selectedAssignDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, day);
         _isEditing = false;
+        _isViewMode = false;
+        _viewShiftType = "morning";
+        _viewStaff = "Nguyễn Văn A";
+        _isDropdownOpen = false;
         _showAssignModal = true;
     }
 
     private void OpenEditModalForShift(int day, string shiftType, string staff)
     {
         _selectedAssignDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, day);
-        _isEditing = true;
+        _originalEditingShift = _monthShifts.FirstOrDefault(s => s.Date == _selectedAssignDate && s.ShiftType == shiftType && s.StaffName == staff);
+        
+        _isEditing = false;
+        _isViewMode = true;
+        _viewShiftType = shiftType;
+        _viewStaff = staff;
+        _viewPhone = _originalEditingShift?.Phone ?? "+84 999 888 777";
+        _isDropdownOpen = false;
         _showAssignModal = true;
+    }
+
+    private async Task SaveShift()
+    {
+        var staff = string.IsNullOrEmpty(_viewStaff) ? "Nhân viên mới" : _viewStaff;
+        var shiftType = string.IsNullOrEmpty(_viewShiftType) ? "morning" : _viewShiftType;
+        
+        if (_isEditing && _originalEditingShift != null)
+        {
+            _originalEditingShift.ShiftType = shiftType;
+            _originalEditingShift.StaffName = staff;
+            _originalEditingShift.Date = _selectedAssignDate;
+
+            try {
+                await Api.PutAsync<object>($"api/shifts/{_originalEditingShift.Id}", new {
+                    Date = _selectedAssignDate,
+                    ShiftType = shiftType,
+                    StaffName = staff,
+                    Phone = _originalEditingShift.Phone
+                });
+            } catch { }
+        }
+        else
+        {
+            try {
+                var newShift = await Api.PostAsync<ShiftEvent>("api/shifts", new {
+                    Date = _selectedAssignDate.Date,
+                    ShiftType = shiftType,
+                    StaffName = staff,
+                    Phone = "+84 999 888 777"
+                });
+                
+                if (newShift != null) {
+                    _monthShifts.Add(newShift);
+                }
+            } catch {
+                // Add dummy fallback if API fails
+                _monthShifts.Add(new ShiftEvent { 
+                    Id = new Random().Next(1000, 9000),
+                    Date = _selectedAssignDate.Date, 
+                    ShiftType = shiftType, 
+                    StaffName = staff, 
+                    Phone = "+84 999 888 777" 
+                });
+            }
+        }
+        _showAssignModal = false;
+    }
+
+    private async Task DeleteShift()
+    {
+        var existing = _monthShifts.FirstOrDefault(s => s.Date == _selectedAssignDate && s.ShiftType == _viewShiftType && s.StaffName == _viewStaff);
+        if (existing != null)
+        {
+            try {
+                await Api.DeleteAsync($"api/shifts/{existing.Id}");
+            } catch { }
+            _monthShifts.Remove(existing);
+        }
+        _showAssignModal = false;
     }
 
     private readonly string[] _dayHeaders = { "CN", "T2", "T3", "T4", "T5", "T6", "T7" };

@@ -623,6 +623,9 @@ select option {
     background-color: var(--bg-card);
     border: 1px solid var(--border-primary);
 }
+.modal-visible-overflow {
+    overflow: visible !important;
+}
 
 /* Drawer */
 .drawer-overlay {
@@ -783,6 +786,15 @@ select option {
     background-color: var(--input-bg-solid);
     border: 1px solid var(--input-border);
     color: var(--text-primary);
+}
+
+/* Custom Dropdown Items */
+.custom-dropdown-item {
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+.custom-dropdown-item:hover {
+    background-color: var(--table-row-hover);
+    color: var(--ice);
 }
 
 /* Temperature gauge */
