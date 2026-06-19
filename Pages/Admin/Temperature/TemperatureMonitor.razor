@@ -1,6 +1,8 @@
 @page "/admin/temperature"
 @layout Components.Layout.AdminLayout
 @inject TemperatureSimulatorService TempService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
 @implements IDisposable
 
 <div>
@@ -11,7 +13,10 @@
         </div>
         <div style="display: flex; gap: 8px;">
             <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--success); color: var(--success); background: transparent;">📊 Xuất báo cáo</button>
-            <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--candle); color: var(--candle); background: transparent;">⚙️ Cài đặt ngưỡng</button>
+            @if (_userRole == "Admin" || _userRole == "Manager")
+            {
+                <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--candle); color: var(--candle); background: transparent;">⚙️ Cài đặt ngưỡng</button>
+            }
             <button @onclick="Refresh" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--border-primary); color: var(--text-secondary); background: transparent;">🔄 Làm mới</button>
         </div>
     </div>
@@ -26,9 +31,12 @@
                 <span class="badge-pill" style="background-color: rgba(16,185,129,0.15); color: var(--success);">✅ Bình thường</span>
             </div>
             <div class="font-ui" style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Min: 1.8°C | Max: 3.1°C</div>
-            <button @onclick="ToggleZoneA" class="font-ui" style="margin-top: 16px; padding: 10px 20px; border: 1px solid var(--ice); border-radius: 8px; background: transparent; color: var(--ice); cursor: pointer; font-size: 13px;">
-                🎛️ @GetZoneALabel() nhiệt độ Khu A
-            </button>
+            @if (_userRole == "Admin" || _userRole == "Manager")
+            {
+                <button @onclick="ToggleZoneA" class="font-ui" style="margin-top: 16px; padding: 10px 20px; border: 1px solid var(--ice); border-radius: 8px; background: transparent; color: var(--ice); cursor: pointer; font-size: 13px;">
+                    🎛️ @GetZoneALabel() nhiệt độ Khu A
+                </button>
+            }
         </div>
 
         <!-- Zone B Gauge -->
@@ -39,9 +47,12 @@
                 <span class="badge-pill" style="background-color: rgba(245,158,11,0.15); color: var(--candle);">⚠️ Cảnh báo</span>
             </div>
             <div class="font-ui" style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Min: 2.5°C | Max: 5.2°C</div>
-            <button @onclick="ToggleZoneB" class="font-ui" style="margin-top: 16px; padding: 10px 20px; border: 1px solid var(--candle); border-radius: 8px; background: transparent; color: var(--candle); cursor: pointer; font-size: 13px;">
-                🎛️ @GetZoneBLabel() nhiệt độ Khu B
-            </button>
+            @if (_userRole == "Admin" || _userRole == "Manager")
+            {
+                <button @onclick="ToggleZoneB" class="font-ui" style="margin-top: 16px; padding: 10px 20px; border: 1px solid var(--candle); border-radius: 8px; background: transparent; color: var(--candle); cursor: pointer; font-size: 13px;">
+                    🎛️ @GetZoneBLabel() nhiệt độ Khu B
+                </button>
+            }
         </div>
 
         <!-- Zone C Gauge -->
@@ -52,14 +63,17 @@
                 <span class="badge-pill" style="background-color: rgba(59,130,246,0.15); color: var(--ice);">✅ Lạnh sâu</span>
             </div>
             <div class="font-ui" style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Min: -6.0°C | Max: -4.0°C</div>
-            <button @onclick="ToggleZoneC" class="font-ui" style="margin-top: 16px; padding: 10px 20px; border: 1px solid var(--ice); border-radius: 8px; background: transparent; color: var(--ice); cursor: pointer; font-size: 13px;">
-                🎛️ @GetZoneCLabel() nhiệt độ Khu C
-            </button>
+            @if (_userRole == "Admin" || _userRole == "Manager")
+            {
+                <button @onclick="ToggleZoneC" class="font-ui" style="margin-top: 16px; padding: 10px 20px; border: 1px solid var(--ice); border-radius: 8px; background: transparent; color: var(--ice); cursor: pointer; font-size: 13px;">
+                    🎛️ @GetZoneCLabel() nhiệt độ Khu C
+                </button>
+            }
         </div>
     </div>
 
     <!-- Control Panel -->
-    @if (_expandedZone is not null)
+    @if (_expandedZone is not null && (_userRole == "Admin" || _userRole == "Manager"))
     {
         var zone = _expandedZone;
         var currentTarget = zone == "A" ? TempService.ZoneATarget : zone == "B" ? TempService.ZoneBTarget : _zoneCTarget;
@@ -327,8 +341,20 @@
         );
     }).ToList();
 
-    protected override void OnInitialized()
+    private string _userRole = "None";
+    private string _userEmail = "";
+
+    protected override async Task OnInitializedAsync()
     {
+        _userRole = await AdminAuthHelper.GetUserRoleAsync(JS);
+        _userEmail = await AdminAuthHelper.GetUserEmailAsync(JS);
+
+        if (_userRole == "None")
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
         TempService.OnTemperatureChanged += Refresh;
         UpdateZoneCTemp();
     }
