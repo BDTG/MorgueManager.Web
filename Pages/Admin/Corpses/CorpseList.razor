@@ -2,6 +2,7 @@
 @layout Components.Layout.AdminLayout
 @inject NavigationManager Navigation
 @inject Supabase.Client Supabase
+@inject MorgueManager.Web.Services.ExportService ExportService
 
 <div>
     <!-- Top Bar -->
@@ -13,8 +14,8 @@
             </h1>
         </div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--success); color: var(--success); background: transparent; display: flex; align-items: center; gap: 4px;">📊 Xuất Excel</button>
-            <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--danger); color: var(--danger); background: transparent; display: flex; align-items: center; gap: 4px;">📄 Xuất PDF</button>
+            <button @onclick="ExportToExcel" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--success); color: var(--success); background: transparent; display: flex; align-items: center; gap: 4px;">📊 Xuất Excel</button>
+            <button @onclick="ExportToPdf" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--danger); color: var(--danger); background: transparent; display: flex; align-items: center; gap: 4px;">📄 Xuất PDF</button>
             <button @onclick="OpenCreateModal" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; background: linear-gradient(135deg, #3B82F6, #2563EB); color: white; display: flex; align-items: center; gap: 4px;">
                 <span>➕</span> Thêm thi thể mới
             </button>
@@ -281,6 +282,30 @@
 }
 
 @code {
+    private async Task ExportToExcel()
+    {
+        try
+        {
+            await ExportService.ExportToExcelAsync(_filteredCorpses);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Lỗi xuất Excel: " + ex.Message);
+        }
+    }
+
+    private async Task ExportToPdf()
+    {
+        try
+        {
+            await ExportService.ExportToPdfAsync(_filteredCorpses);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Lỗi xuất PDF: " + ex.Message);
+        }
+    }
+
     private string _search = "";
     private string _statusFilter = "";
     private string _genderFilter = "";
