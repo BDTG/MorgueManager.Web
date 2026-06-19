@@ -1,5 +1,8 @@
 @page "/admin/reports"
 @layout Components.Layout.AdminLayout
+@inject Supabase.Client Supabase
+@inject MorgueManager.Web.Services.ExportService ExportService
+@inject IJSRuntime JSRuntime
 
 <div>
     <div style="margin-bottom: 24px;">
@@ -12,31 +15,35 @@
         <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end;">
             <div style="flex: 1; min-width: 180px;">
                 <label class="font-ui" style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Loại báo cáo</label>
-                <select class="filter-select" style="width: 100%;">
-                    <option>📋 Thi thể theo tháng</option>
-                    <option>🗄️ Ngăn tủ & Nhiệt độ</option>
-                    <option>📅 Ca trực</option>
-                    <option>📊 Tổng hợp</option>
+                <select class="filter-select" style="width: 100%;" @bind="_selectedReportType">
+                    <option value="📋 Thi thể theo tháng">📋 Thi thể theo tháng</option>
+                    <option value="🗄️ Ngăn tủ & Nhiệt độ">🗄️ Ngăn tủ & Nhiệt độ</option>
+                    <option value="📅 Ca trực">📅 Ca trực</option>
+                    <option value="📊 Tổng hợp">📊 Tổng hợp</option>
                 </select>
             </div>
             <div>
                 <label class="font-ui" style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Từ ngày</label>
-                <input type="date" class="filter-input" />
+                <input type="date" class="filter-input" value="@_fromDate" @onchange="OnFromDateChanged" />
             </div>
             <div>
                 <label class="font-ui" style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Đến ngày</label>
-                <input type="date" class="filter-input" />
+                <input type="date" class="filter-input" value="@_toDate" @onchange="OnToDateChanged" />
             </div>
             <div>
                 <label class="font-ui" style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Định dạng</label>
-                <div style="display: flex; gap: 12px;">
-                    <label class="font-ui" style="font-size: 13px; color: var(--text-secondary);"><input type="radio" name="format" checked /> 📄 PDF</label>
-                    <label class="font-ui" style="font-size: 13px; color: var(--text-secondary);"><input type="radio" name="format" /> 📊 Excel</label>
+                <div style="display: flex; gap: 12px; height: 36px; align-items: center;">
+                    <label class="font-ui" style="font-size: 13px; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                        <input type="radio" name="format" checked="@(_selectedFormat == "PDF")" @onclick='() => _selectedFormat = "PDF"' /> 📄 PDF
+                    </label>
+                    <label class="font-ui" style="font-size: 13px; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                        <input type="radio" name="format" checked="@(_selectedFormat == "Excel")" @onclick='() => _selectedFormat = "Excel"' /> 📊 Excel
+                    </label>
                 </div>
             </div>
             <div style="display: flex; gap: 8px;">
-                <button class="font-ui" style="padding: 8px 20px; border: none; border-radius: 8px; background: var(--success); color: white; cursor: pointer; font-size: 13px; font-weight: 600;">📥 Tạo & Tải</button>
-                <button class="font-ui" style="padding: 8px 20px; border: 1px solid var(--ice); border-radius: 8px; background: transparent; color: var(--ice); cursor: pointer; font-size: 13px;">👁️ Xem trước</button>
+                <button @onclick="CreateAndDownloadReport" class="font-ui" style="padding: 8px 20px; border: none; border-radius: 8px; background: var(--success); color: white; cursor: pointer; font-size: 13px; font-weight: 600;">📥 Tạo & Tải</button>
+                <button @onclick="PreviewReport" class="font-ui" style="padding: 8px 20px; border: 1px solid var(--ice); border-radius: 8px; background: transparent; color: var(--ice); cursor: pointer; font-size: 13px;">👁️ Xem trước</button>
             </div>
         </div>
     </div>
@@ -46,19 +53,648 @@
         <table class="data-table">
             <thead><tr><th>#</th><th>Loại</th><th>Khoảng thời gian</th><th>Định dạng</th><th>Ngày tạo</th><th>Hành động</th></tr></thead>
             <tbody>
-                <tr>
-                    <td>1</td><td>📋 Thi thể</td><td>01/06 - 25/06</td><td>📄 PDF</td><td>25/06/2026</td>
-                    <td><div style="display: flex; gap: 4px;"><button class="font-ui" style="background: none; border: none; cursor: pointer; font-size: 14px;">📥</button><button class="font-ui" style="background: none; border: none; cursor: pointer; font-size: 14px;">🗑️</button></div></td>
-                </tr>
-                <tr>
-                    <td>2</td><td>🗄️ Ngăn tủ & Nhiệt độ</td><td>01/06 - 25/06</td><td>📊 Excel</td><td>24/06/2026</td>
-                    <td><div style="display: flex; gap: 4px;"><button class="font-ui" style="background: none; border: none; cursor: pointer; font-size: 14px;">📥</button><button class="font-ui" style="background: none; border: none; cursor: pointer; font-size: 14px;">🗑️</button></div></td>
-                </tr>
-                <tr>
-                    <td>3</td><td>📅 Ca trực</td><td>01/06 - 25/06</td><td>📄 PDF</td><td>23/06/2026</td>
-                    <td><div style="display: flex; gap: 4px;"><button class="font-ui" style="background: none; border: none; cursor: pointer; font-size: 14px;">📥</button><button class="font-ui" style="background: none; border: none; cursor: pointer; font-size: 14px;">🗑️</button></div></td>
-                </tr>
+                @if (_reports == null || _reports.Count == 0)
+                {
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 20px; color: var(--text-muted);">Chưa có báo cáo nào được tạo.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var r in _reports)
+                    {
+                        <tr>
+                            <td>@r.Id</td>
+                            <td>@r.Type</td>
+                            <td>@r.DateRange</td>
+                            <td>@(r.Format == "PDF" ? "📄 PDF" : "📊 Excel")</td>
+                            <td>@r.CreatedAt</td>
+                            <td>
+                                <div style="display: flex; gap: 4px;">
+                                    <button @onclick="() => DownloadReport(r)" class="font-ui" style="background: none; border: none; cursor: pointer; font-size: 14px;" title="Tải xuống">📥</button>
+                                    <button @onclick="() => DeleteReport(r)" class="font-ui" style="background: none; border: none; cursor: pointer; font-size: 14px;" title="Xóa">🗑️</button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
             </tbody>
         </table>
     </div>
 </div>
+
+<!-- Modal xem trước báo cáo -->
+@if (_showPreviewModal)
+{
+    <Modal OnClose="() => _showPreviewModal = false">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h2 class="font-ui" style="font-size: 18px; font-weight: 700; margin: 0; color: var(--text-primary);">👁️ Xem trước: @_selectedReportType</h2>
+            <button @onclick="() => _showPreviewModal = false" style="background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer;">✕</button>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+            <div class="font-ui" style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">
+                Khoảng thời gian: <strong>@FormatDateString(_fromDate)</strong> đến <strong>@FormatDateString(_toDate)</strong> | Định dạng xuất: <strong>@_selectedFormat</strong>
+            </div>
+            
+            @if (_selectedReportType == "📋 Thi thể theo tháng")
+            {
+                var corpses = GetFilteredCorpses();
+                var avgAge = corpses.Count > 0 ? Math.Round(corpses.Average(c => c.Age), 1) : 0;
+                var identified = corpses.Count(c => !c.IsUnidentified);
+                var unidentified = corpses.Count(c => c.IsUnidentified);
+                
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px;">
+                    <div style="padding: 12px; border-radius: 8px; border: 1px solid var(--border-primary); background: var(--bg-elevated);">
+                        <div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Tổng số thi thể</div>
+                        <div class="font-ui" style="font-size: 18px; font-weight: 700; color: var(--text-primary);">@corpses.Count</div>
+                    </div>
+                    <div style="padding: 12px; border-radius: 8px; border: 1px solid var(--border-primary); background: var(--bg-elevated);">
+                        <div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Độ tuổi trung bình</div>
+                        <div class="font-ui" style="font-size: 18px; font-weight: 700; color: var(--text-primary);">@avgAge</div>
+                    </div>
+                    <div style="padding: 12px; border-radius: 8px; border: 1px solid var(--border-primary); background: var(--bg-elevated);">
+                        <div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Có danh tính</div>
+                        <div class="font-ui" style="font-size: 18px; font-weight: 700; color: var(--success);">@identified</div>
+                    </div>
+                    <div style="padding: 12px; border-radius: 8px; border: 1px solid var(--border-primary); background: var(--bg-elevated);">
+                        <div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Vô danh</div>
+                        <div class="font-ui" style="font-size: 18px; font-weight: 700; color: var(--danger);">@unidentified</div>
+                    </div>
+                </div>
+                
+                <h4 class="font-ui" style="font-size: 13px; font-weight: 600; color: var(--text-primary); margin: 0 0 10px;">Dòng dữ liệu xem trước (Tối đa 5 dòng):</h4>
+                <div style="overflow-x: auto; max-height: 250px; border: 1px solid var(--border-primary); border-radius: 8px;">
+                    <table class="data-table" style="font-size: 12px;">
+                        <thead><tr><th>Mã Ca</th><th>Họ Tên</th><th>Giới tính</th><th>Tuổi</th><th>Nguyên nhân</th><th>Trạng thái</th></tr></thead>
+                        <tbody>
+                            @foreach (var c in corpses.Take(5))
+                            {
+                                <tr>
+                                    <td style="font-family: monospace;">@c.CaseId</td>
+                                    <td>@c.Name</td>
+                                    <td>@c.Gender</td>
+                                    <td>@c.Age</td>
+                                    <td>@c.CauseOfDeath</td>
+                                    <td>@c.Status</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else if (_selectedReportType == "🗄️ Ngăn tủ & Nhiệt độ")
+            {
+                var slots = GetStorageSlots();
+                var occupied = slots.Count(s => s.Status == SlotStatus.Occupied);
+                var empty = slots.Count(s => s.Status == SlotStatus.Empty);
+                var cleaning = slots.Count(s => s.Status == SlotStatus.Cleaning);
+                var occupancy = slots.Count > 0 ? Math.Round((double)occupied / slots.Count * 100, 1) : 0;
+                
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px;">
+                    <div style="padding: 12px; border-radius: 8px; border: 1px solid var(--border-primary); background: var(--bg-elevated);">
+                        <div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Tỷ lệ lấp đầy</div>
+                        <div class="font-ui" style="font-size: 18px; font-weight: 700; color: var(--ice);">@occupancy%</div>
+                    </div>
+                    <div style="padding: 12px; border-radius: 8px; border: 1px solid var(--border-primary); background: var(--bg-elevated);">
+                        <div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Đang sử dụng</div>
+                        <div class="font-ui" style="font-size: 18px; font-weight: 700; color: var(--danger);">@occupied / @slots.Count</div>
+                    </div>
+                    <div style="padding: 12px; border-radius: 8px; border: 1px solid var(--border-primary); background: var(--bg-elevated);">
+                        <div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Còn trống</div>
+                        <div class="font-ui" style="font-size: 18px; font-weight: 700; color: var(--success);">@empty</div>
+                    </div>
+                    <div style="padding: 12px; border-radius: 8px; border: 1px solid var(--border-primary); background: var(--bg-elevated);">
+                        <div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Đang vệ sinh</div>
+                        <div class="font-ui" style="font-size: 18px; font-weight: 700; color: var(--candle);">@cleaning</div>
+                    </div>
+                </div>
+                
+                <h4 class="font-ui" style="font-size: 13px; font-weight: 600; color: var(--text-primary); margin: 0 0 10px;">Dòng dữ liệu xem trước (Tối đa 5 dòng):</h4>
+                <div style="overflow-x: auto; max-height: 250px; border: 1px solid var(--border-primary); border-radius: 8px;">
+                    <table class="data-table" style="font-size: 12px;">
+                        <thead><tr><th>Mã Ngăn</th><th>Khu</th><th>Trạng thái</th><th>Nhiệt độ</th><th>Thi thể đang lưu</th><th>Thời gian lưu</th></tr></thead>
+                        <tbody>
+                            @foreach (var s in slots.Take(5))
+                            {
+                                <tr>
+                                    <td style="font-family: monospace;">@s.Id</td>
+                                    <td>@s.Zone</td>
+                                    <td>@s.Status</td>
+                                    <td>@s.Temp.ToString("F1")°C</td>
+                                    <td>@(s.CorpseName ?? "—")</td>
+                                    <td>@s.DaysStored ngày</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else if (_selectedReportType == "📅 Ca trực")
+            {
+                var shifts = GetShifts();
+                var confirmed = shifts.Count(s => s.Status == ShiftStatus.Confirmed);
+                var pending = shifts.Count(s => s.Status == ShiftStatus.Pending);
+                
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px;">
+                    <div style="padding: 12px; border-radius: 8px; border: 1px solid var(--border-primary); background: var(--bg-elevated);">
+                        <div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Tổng số ca trực</div>
+                        <div class="font-ui" style="font-size: 18px; font-weight: 700; color: var(--text-primary);">@shifts.Count</div>
+                    </div>
+                    <div style="padding: 12px; border-radius: 8px; border: 1px solid var(--border-primary); background: var(--bg-elevated);">
+                        <div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Đã xác nhận</div>
+                        <div class="font-ui" style="font-size: 18px; font-weight: 700; color: var(--success);">@confirmed</div>
+                    </div>
+                    <div style="padding: 12px; border-radius: 8px; border: 1px solid var(--border-primary); background: var(--bg-elevated);">
+                        <div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Chờ xác nhận</div>
+                        <div class="font-ui" style="font-size: 18px; font-weight: 700; color: var(--candle);">@pending</div>
+                    </div>
+                </div>
+                
+                <h4 class="font-ui" style="font-size: 13px; font-weight: 600; color: var(--text-primary); margin: 0 0 10px;">Dòng dữ liệu xem trước (Tối đa 5 dòng):</h4>
+                <div style="overflow-x: auto; max-height: 250px; border: 1px solid var(--border-primary); border-radius: 8px;">
+                    <table class="data-table" style="font-size: 12px;">
+                        <thead><tr><th>Ngày</th><th>Ca trực</th><th>Nhân viên trực</th><th>SĐT liên hệ</th><th>Trạng thái</th></tr></thead>
+                        <tbody>
+                            @foreach (var sh in shifts.Take(5))
+                            {
+                                <tr>
+                                    <td>@sh.Date</td>
+                                    <td>@(sh.Type == ShiftType.Morning ? "🌅 Sáng" : sh.Type == ShiftType.Afternoon ? "🌆 Chiều" : "🌙 Tối")</td>
+                                    <td>@string.Join(", ", sh.Staff.Select(st => st.Name))</td>
+                                    <td>@string.Join(", ", sh.Staff.Select(st => st.Phone))</td>
+                                    <td>@sh.Status</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else if (_selectedReportType == "📊 Tổng hợp")
+            {
+                var corpses = GetFilteredCorpses();
+                var slots = GetStorageSlots();
+                var shifts = GetShifts();
+                var occupied = slots.Count(s => s.Status == SlotStatus.Occupied);
+                var occupancy = slots.Count > 0 ? Math.Round((double)occupied / slots.Count * 100, 1) : 0;
+                
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px;">
+                    <div style="padding: 12px; border-radius: 8px; border: 1px solid var(--border-primary); background: var(--bg-elevated);">
+                        <div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Tổng thi thể trong kỳ</div>
+                        <div class="font-ui" style="font-size: 18px; font-weight: 700; color: var(--text-primary);">@corpses.Count</div>
+                    </div>
+                    <div style="padding: 12px; border-radius: 8px; border: 1px solid var(--border-primary); background: var(--bg-elevated);">
+                        <div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Tỷ lệ trống ngăn lạnh</div>
+                        <div class="font-ui" style="font-size: 18px; font-weight: 700; color: var(--success);">@(100 - occupancy)%</div>
+                    </div>
+                    <div style="padding: 12px; border-radius: 8px; border: 1px solid var(--border-primary); background: var(--bg-elevated);">
+                        <div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Tổng số ca trực</div>
+                        <div class="font-ui" style="font-size: 18px; font-weight: 700; color: var(--text-primary);">@shifts.Count</div>
+                    </div>
+                </div>
+                
+                <div style="padding: 16px; border-radius: 8px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); font-size: 13px; margin-top: 10px;" class="font-ui">
+                    📌 <strong>Lưu ý:</strong> Báo cáo tổng hợp sẽ gộp tất cả thông tin thống kê chung, danh sách thi hài đang lưu trữ thực tế, trạng thái hiệu suất hoạt động hộc lạnh và tóm tắt nhân sự ca trực vào 1 file xuất bản cực kỳ chi tiết.
+                </div>
+            }
+        </div>
+        
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+            <button @onclick="() => _showPreviewModal = false" class="font-ui" style="padding: 10px 20px; border: 1px solid var(--border-primary); border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 13px;">Đóng</button>
+            <button @onclick="async () => { _showPreviewModal = false; await CreateAndDownloadReport(); }" class="font-ui" style="padding: 10px 20px; border: none; border-radius: 8px; background: var(--success); color: white; cursor: pointer; font-size: 13px; font-weight: 600;">📥 Tải xuống ngay</button>
+        </div>
+    </Modal>
+}
+
+@code {
+    public class ReportItem
+    {
+        public int Id { get; set; }
+        public string Type { get; set; } = "";
+        public string DateRange { get; set; } = "";
+        public string Format { get; set; } = "";
+        public string CreatedAt { get; set; } = "";
+    }
+
+    private string _selectedReportType = "📋 Thi thể theo tháng";
+    private string _fromDate = "2026-06-01";
+    private string _toDate = "2026-06-25";
+    private string _selectedFormat = "PDF";
+
+    private List<Models.Corpse> _allCorpses = new();
+    private List<ReportItem> _reports = new();
+    private bool _showPreviewModal = false;
+
+    private readonly string[] _names = [
+        "Nguyễn Văn An", "Trần Thị Bích", "Lê Hoàng Nam", "Phạm Minh Tuấn", "Hoàng Thị Lan",
+        "Vũ Đức Thịnh", "Đặng Thị Hoa", "Bùi Văn Hùng", "Đỗ Thị Mai", "Ngô Văn Phúc",
+        "Lý Thị Hồng", "Dương Văn Tài", "Mai Thị Sen", "Phan Văn Long", "Trịnh Thị Dao",
+        "Lâm Văn Khoa", "Tô Thị Nga", "Chu Văn Hải", "Hồ Thị Liên", "Võ Văn Minh"
+    ];
+    private readonly string[] _causes = [
+        "Nhồi máu cơ tim", "Tai nạn giao thông", "Đột quỵ", "Ung thư phổi", "Suy đa tạng",
+        "Viêm phổi nặng", "Ngộ độc thực phẩm", "Tự tử", "Bệnh gan giai đoạn cuối", "Suy tim",
+        "Chấn thương sọ não", "Sốc nhiễm khuẩn", "Bỏng nặng", "Đuối nước", "Tai nạn lao động"
+    ];
+    private readonly string[] _relationships = ["Vợ", "Chồng", "Con", "Cha", "Mẹ", "Anh", "Chị", "Em", "Cháu", "Bạn"];
+    private readonly string[] _availableSlots = [
+        "A-01","A-02","A-03","A-04","A-05","A-06","A-07","A-08","A-09","A-10",
+        "B-01","B-02","B-03","B-04","B-05","B-06","B-07","B-08","B-09","B-10",
+        "C-01","C-02","C-03","C-04","C-05"
+    ];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "morgue_manager_reports");
+            if (!string.IsNullOrEmpty(json))
+            {
+                _reports = System.Text.Json.JsonSerializer.Deserialize<List<ReportItem>>(json) ?? new();
+            }
+        }
+        catch { }
+
+        if (_reports == null || _reports.Count == 0)
+        {
+            _reports = new List<ReportItem>
+            {
+                new() { Id = 1, Type = "📋 Thi thể theo tháng", DateRange = "01/06 - 25/06", Format = "PDF", CreatedAt = "25/06/2026" },
+                new() { Id = 2, Type = "🗄️ Ngăn tủ & Nhiệt độ", DateRange = "01/06 - 25/06", Format = "Excel", CreatedAt = "24/06/2026" },
+                new() { Id = 3, Type = "📅 Ca trực", DateRange = "01/06 - 25/06", Format = "PDF", CreatedAt = "23/06/2026" }
+            };
+            await SaveReportsToStorage();
+        }
+
+        await LoadCorpsesAsync();
+    }
+
+    private async Task SaveReportsToStorage()
+    {
+        try
+        {
+            var json = System.Text.Json.JsonSerializer.Serialize(_reports);
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "morgue_manager_reports", json);
+        }
+        catch { }
+    }
+
+    private async Task LoadCorpsesAsync()
+    {
+        try
+        {
+            var response = await Supabase.From<Models.Corpse>().Get();
+            _allCorpses = response.Models ?? new List<Models.Corpse>();
+            if (_allCorpses.Count == 0)
+            {
+                SeedCorpses();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error loading corpses for report: " + ex.Message);
+            SeedCorpses();
+        }
+    }
+
+    private void SeedCorpses()
+    {
+        var rng = new Random(42);
+        var now = new DateTime(2026, 6, 25);
+
+        _allCorpses = Enumerable.Range(1, 25).Select(i =>
+        {
+            var id = i;
+            var year = 2026;
+            var seq = id.ToString("D4");
+            var dateOfDeathDt = new DateTime(2026, 6, 1).AddDays(rng.Next(20));
+            var dateAdmittedDt = dateOfDeathDt.AddDays(rng.Next(3));
+            var dateOfDeath = dateOfDeathDt.ToString("yyyy-MM-dd");
+            var dateAdmitted = dateAdmittedDt.ToString("yyyy-MM-dd");
+            var daysDiff = (now - dateAdmittedDt).Days;
+            var daysStored = Math.Max(1, daysDiff);
+
+            var statuses = new[] { "Tiếp nhận", "Lưu kho", "Bàn giao", "Quá hạn" };
+            var status = statuses[rng.Next(statuses.Length)];
+            var hasStorage = status == "Lưu kho" || status == "Quá hạn";
+
+            string? slot = null;
+            string? unit = null;
+            double? temp = null;
+            string notes = i % 5 == 0 ? "Cần xác minh danh tính qua CCCD" : "";
+
+            if (hasStorage)
+            {
+                slot = _availableSlots[rng.Next(_availableSlots.Length)];
+                if (slot.StartsWith("C"))
+                {
+                    unit = "Cold Room C";
+                    temp = Math.Round(-5.5 + rng.NextDouble() * 1.5, 1);
+                    notes = string.IsNullOrEmpty(notes) ? "[Thi thể không nguyên vẹn - Bảo quản đặc biệt]" : "[Thi thể không nguyên vẹn] " + notes;
+                }
+                else
+                {
+                    unit = slot.StartsWith("A") ? "Cold Room A" : "Cold Room B";
+                    temp = Math.Round(1.5 + rng.NextDouble() * 5, 1);
+                }
+            }
+
+            var priority = daysStored >= 14 ? "CRITICAL" : daysStored >= 7 ? "WARNING" : "NORMAL";
+            var name = _names[i % _names.Length] + (i >= 20 ? $" {Convert.ToChar(65 + i / 20)}" : "");
+
+            return new Models.Corpse
+            {
+                Id = id,
+                CaseId = $"MC-{year}-{seq}",
+                Name = name,
+                Cccd = $"079{(201000000 + i * 12345):D9}",
+                Gender = new[] { "Nam", "Nữ", "Không xác định" }[rng.Next(3)],
+                BirthDate = new DateTime(1940, 1, 1).AddDays(rng.Next(20000)).ToString("yyyy-MM-dd"),
+                Age = 25 + rng.Next(70),
+                CauseOfDeath = slot != null && slot.StartsWith("C") ? "Tai nạn nghiêm trọng (Đa chấn thương)" : _causes[rng.Next(_causes.Length)],
+                DateOfDeath = dateOfDeath,
+                DateAdmitted = dateAdmitted,
+                Status = status,
+                StorageUnit = unit,
+                StorageSlot = slot,
+                Temp = temp,
+                DaysStored = daysStored,
+                Priority = priority,
+                NextOfKin = new()
+                {
+                    Name = _names[rng.Next(_names.Length)],
+                    Phone = $"+84 9{rng.Next(10000000, 99999999)}",
+                    Relationship = _relationships[rng.Next(_relationships.Length)]
+                },
+                Notes = notes
+            };
+        }).ToList();
+    }
+
+    private List<Models.Corpse> GetFilteredCorpses()
+    {
+        var result = _allCorpses.AsEnumerable();
+        if (!string.IsNullOrEmpty(_fromDate))
+        {
+            result = result.Where(c => string.Compare(c.DateAdmitted, _fromDate) >= 0);
+        }
+        if (!string.IsNullOrEmpty(_toDate))
+        {
+            result = result.Where(c => string.Compare(c.DateAdmitted, _toDate) <= 0);
+        }
+        return result.ToList();
+    }
+
+    private List<Models.StorageSlot> GetStorageSlots()
+    {
+        var slots = new List<Models.StorageSlot>();
+        var rng = new Random(42);
+        var occupiedCorpses = _allCorpses.Where(c => c.Status == "Lưu kho" || c.Status == "Quá hạn").ToList();
+        
+        for (int i = 1; i <= 10; i++)
+        {
+            var slotId = $"A-{i:D2}";
+            var corpse = occupiedCorpses.FirstOrDefault(c => c.StorageSlot == slotId);
+            slots.Add(new Models.StorageSlot
+            {
+                Id = slotId, Zone = "A",
+                Status = corpse != null ? Models.SlotStatus.Occupied : Models.SlotStatus.Empty,
+                Temp = Math.Round(2.0 + rng.NextDouble() * 2.0, 1),
+                CorpseName = corpse?.Name,
+                DaysStored = corpse?.DaysStored ?? 0,
+                LastUpdate = DateTime.Now.ToString("HH:mm")
+            });
+        }
+        
+        for (int i = 1; i <= 10; i++)
+        {
+            var slotId = $"B-{i:D2}";
+            var corpse = occupiedCorpses.FirstOrDefault(c => c.StorageSlot == slotId);
+            slots.Add(new Models.StorageSlot
+            {
+                Id = slotId, Zone = "B",
+                Status = corpse != null ? Models.SlotStatus.Occupied : (i == 4 ? Models.SlotStatus.Cleaning : Models.SlotStatus.Empty),
+                Temp = Math.Round(3.0 + rng.NextDouble() * 1.5, 1),
+                CorpseName = corpse?.Name,
+                DaysStored = corpse?.DaysStored ?? 0,
+                LastUpdate = DateTime.Now.ToString("HH:mm")
+            });
+        }
+        
+        for (int i = 1; i <= 5; i++)
+        {
+            var slotId = $"C-{i:D2}";
+            var corpse = occupiedCorpses.FirstOrDefault(c => c.StorageSlot == slotId);
+            slots.Add(new Models.StorageSlot
+            {
+                Id = slotId, Zone = "C",
+                Status = corpse != null ? Models.SlotStatus.Occupied : Models.SlotStatus.Empty,
+                Temp = Math.Round(-5.0 + rng.NextDouble() * 1.0, 1),
+                CorpseName = corpse?.Name,
+                DaysStored = corpse?.DaysStored ?? 0,
+                LastUpdate = DateTime.Now.ToString("HH:mm")
+            });
+        }
+        
+        return slots;
+    }
+
+    private List<Models.Shift> GetShifts()
+    {
+        var shifts = new List<Models.Shift>();
+        
+        DateTime start = DateTime.TryParse(_fromDate, out var s) ? s : DateTime.Now.AddDays(-7);
+        DateTime end = DateTime.TryParse(_toDate, out var e) ? e : DateTime.Now;
+        
+        var totalDays = (end - start).Days;
+        int shiftId = 1;
+        
+        for (int d = 0; d <= Math.Min(totalDays, 30); d++)
+        {
+            var currentDate = start.AddDays(d);
+            var dateStr = currentDate.ToString("dd/MM");
+            
+            shifts.Add(new Models.Shift
+            {
+                Id = shiftId++,
+                Date = dateStr,
+                Type = ShiftType.Morning,
+                Status = ShiftStatus.Confirmed,
+                Notes = "Ca trực buổi sáng",
+                Staff = new List<StaffInfo>
+                {
+                    new() { Id = 1, Name = "Nguyễn Văn A", Role = "Nhân viên trực", Phone = "+84 912 345 678" }
+                }
+            });
+            
+            shifts.Add(new Models.Shift
+            {
+                Id = shiftId++,
+                Date = dateStr,
+                Type = ShiftType.Afternoon,
+                Status = ShiftStatus.Pending,
+                Notes = "Ca trực buổi chiều",
+                Staff = new List<StaffInfo>
+                {
+                    new() { Id = 2, Name = "Trần Thị B", Role = "Nhân viên trực", Phone = "+84 987 654 321" }
+                }
+            });
+            
+            shifts.Add(new Models.Shift
+            {
+                Id = shiftId++,
+                Date = dateStr,
+                Type = ShiftType.Night,
+                Status = ShiftStatus.Confirmed,
+                Notes = "Ca trực đêm",
+                Staff = new List<StaffInfo>
+                {
+                    new() { Id = 3, Name = "Lê Văn C", Role = "Quản lý ca trực", Phone = "+84 923 456 789" }
+                }
+            });
+        }
+        
+        return shifts;
+    }
+
+    private async Task CreateAndDownloadReport()
+    {
+        try
+        {
+            string dateRangeStr = $"{FormatDateString(_fromDate)} - {FormatDateString(_toDate)}";
+            
+            if (_selectedReportType == "📋 Thi thể theo tháng")
+            {
+                var corpses = GetFilteredCorpses();
+                if (_selectedFormat == "PDF")
+                {
+                    await ExportService.ExportToPdfAsync(corpses);
+                }
+                else
+                {
+                    await ExportService.ExportToExcelAsync(corpses);
+                }
+            }
+            else if (_selectedReportType == "🗄️ Ngăn tủ & Nhiệt độ")
+            {
+                var slots = GetStorageSlots();
+                if (_selectedFormat == "PDF")
+                {
+                    await ExportService.ExportStorageSlotsToPdfAsync(slots);
+                }
+                else
+                {
+                    await ExportService.ExportStorageSlotsToExcelAsync(slots);
+                }
+            }
+            else if (_selectedReportType == "📅 Ca trực")
+            {
+                var shifts = GetShifts();
+                if (_selectedFormat == "PDF")
+                {
+                    await ExportService.ExportShiftsToPdfAsync(shifts);
+                }
+                else
+                {
+                    await ExportService.ExportShiftsToExcelAsync(shifts);
+                }
+            }
+            else if (_selectedReportType == "📊 Tổng hợp")
+            {
+                var corpses = GetFilteredCorpses();
+                var slots = GetStorageSlots();
+                var shifts = GetShifts();
+                if (_selectedFormat == "PDF")
+                {
+                    await ExportService.ExportSummaryToPdfAsync(corpses, slots, shifts);
+                }
+                else
+                {
+                    await ExportService.ExportSummaryToExcelAsync(corpses, slots, shifts);
+                }
+            }
+
+            var newId = _reports.Count > 0 ? _reports.Max(r => r.Id) + 1 : 1;
+            _reports.Insert(0, new ReportItem
+            {
+                Id = newId,
+                Type = _selectedReportType,
+                DateRange = dateRangeStr,
+                Format = _selectedFormat,
+                CreatedAt = DateTime.Now.ToString("dd/MM/yyyy")
+            });
+            await SaveReportsToStorage();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error generating report: " + ex.Message);
+        }
+    }
+
+    private void PreviewReport()
+    {
+        _showPreviewModal = true;
+    }
+
+    private async Task DeleteReport(ReportItem report)
+    {
+        _reports.Remove(report);
+        await SaveReportsToStorage();
+    }
+
+    private async Task DownloadReport(ReportItem report)
+    {
+        try
+        {
+            if (report.Type == "📋 Thi thể theo tháng")
+            {
+                var corpses = GetFilteredCorpses();
+                if (report.Format == "PDF") await ExportService.ExportToPdfAsync(corpses);
+                else await ExportService.ExportToExcelAsync(corpses);
+            }
+            else if (report.Type == "🗄️ Ngăn tủ & Nhiệt độ")
+            {
+                var slots = GetStorageSlots();
+                if (report.Format == "PDF") await ExportService.ExportStorageSlotsToPdfAsync(slots);
+                else await ExportService.ExportStorageSlotsToExcelAsync(slots);
+            }
+            else if (report.Type == "📅 Ca trực")
+            {
+                var shifts = GetShifts();
+                if (report.Format == "PDF") await ExportService.ExportShiftsToPdfAsync(shifts);
+                else await ExportService.ExportShiftsToExcelAsync(shifts);
+            }
+            else if (report.Type == "📊 Tổng hợp")
+            {
+                var corpses = GetFilteredCorpses();
+                var slots = GetStorageSlots();
+                var shifts = GetShifts();
+                if (report.Format == "PDF") await ExportService.ExportSummaryToPdfAsync(corpses, slots, shifts);
+                else await ExportService.ExportSummaryToExcelAsync(corpses, slots, shifts);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error downloading report: " + ex.Message);
+        }
+    }
+
+    private string FormatDateString(string date)
+    {
+        if (DateTime.TryParse(date, out var parsed))
+        {
+            return parsed.ToString("dd/MM");
+        }
+        return date;
+    }
+
+    private void OnFromDateChanged(ChangeEventArgs e)
+    {
+        _fromDate = e.Value?.ToString() ?? "";
+    }
+
+    private void OnToDateChanged(ChangeEventArgs e)
+    {
+        _toDate = e.Value?.ToString() ?? "";
+    }
+}
