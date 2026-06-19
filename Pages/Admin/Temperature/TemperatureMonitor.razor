@@ -94,7 +94,7 @@
                 {
                     @foreach (var preset in new[] { -10.0, -8.0, -5.0, -2.0 })
                     {
-                        <button @onclick="() => SetTarget(zone, preset)"
+                        <button @onclick="() => StartSetTarget(zone, preset)"
                                 class="font-ui" style="@GetPresetButtonStyle(zone, preset, currentTarget)">@preset°C</button>
                     }
                 }
@@ -102,14 +102,14 @@
                 {
                     @foreach (var preset in new[] { 1.0, 2.0, 3.0, 4.0 })
                     {
-                        <button @onclick="() => SetTarget(zone, preset)"
+                        <button @onclick="() => StartSetTarget(zone, preset)"
                                 class="font-ui" style="@GetPresetButtonStyle(zone, preset, currentTarget)">@preset°C</button>
                     }
                 }
             </div>
             <div style="display: flex; gap: 8px;">
-                <button @onclick="() => SetTarget(zone, currentTarget)" class="font-ui" style="padding: 10px 24px; border: none; border-radius: 8px; background: var(--success); color: white; cursor: pointer; font-size: 13px; font-weight: 600;">✅ Áp dụng</button>
-                <button @onclick="() => ResetZoneTarget(zone)" class="font-ui" style="padding: 10px 24px; border: 1px solid var(--border-primary); border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 13px;">
+                <button @onclick="() => StartSetTarget(zone, currentTarget)" class="font-ui" style="padding: 10px 24px; border: none; border-radius: 8px; background: var(--success); color: white; cursor: pointer; font-size: 13px; font-weight: 600;">✅ Áp dụng</button>
+                <button @onclick="() => StartResetZoneTarget(zone)" class="font-ui" style="padding: 10px 24px; border: 1px solid var(--border-primary); border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 13px;">
                     ↩️ Đặt lại @(zone == "C" ? "-5°C" : "2°C")
                 </button>
             </div>
@@ -280,6 +280,15 @@
     </div>
 </div>
 
+<ConfirmDialog IsVisible="@_showTempConfirm"
+               Title="Xác nhận điều chỉnh nhiệt độ"
+               Message="@($"Xác nhận thay đổi nhiệt độ đích của Khu vực {_tempConfirmZone} thành {_tempConfirmValue:0.0}°C?\nViệc điều chỉnh nhiệt độ cần 5-10 phút để ổn định và có thể ảnh hưởng đến các mẫu vật đang bảo quản.")"
+               ConfirmText="Xác nhận áp dụng"
+               CancelText="Hủy"
+               Type="warning"
+               OnConfirm="ConfirmSetTarget"
+               OnCancel="() => _showTempConfirm = false" />
+
 @code {
     private string? _expandedZone;
     private double _zoneCTarget = -5.0;
@@ -333,22 +342,34 @@
         UpdateZoneCTemp();
     }
 
-    private void SetTarget(string zone, double value)
+    private bool _showTempConfirm;
+    private string _tempConfirmZone = "";
+    private double _tempConfirmValue;
+
+    private void StartSetTarget(string zone, double value)
     {
-        if (zone == "C")
+        _tempConfirmZone = zone;
+        _tempConfirmValue = value;
+        _showTempConfirm = true;
+    }
+
+    private void StartResetZoneTarget(string zone)
+    {
+        StartSetTarget(zone, zone == "C" ? -5.0 : 2.0);
+    }
+
+    private void ConfirmSetTarget()
+    {
+        _showTempConfirm = false;
+        if (_tempConfirmZone == "C")
         {
-            _zoneCTarget = value;
+            _zoneCTarget = _tempConfirmValue;
             UpdateZoneCTemp();
         }
         else
         {
-            TempService.SetTarget(zone, value);
+            TempService.SetTarget(_tempConfirmZone, _tempConfirmValue);
         }
-    }
-
-    private void ResetZoneTarget(string zone)
-    {
-        SetTarget(zone, zone == "C" ? -5.0 : 2.0);
     }
 
     private string GetPresetButtonStyle(string zone, double preset, double currentTarget)
