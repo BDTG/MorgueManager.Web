@@ -4,6 +4,7 @@
 
 /* === DARK MODE (default) === */
 :root, [data-theme="dark"] {
+    color-scheme: dark;
     --bg-primary: #05090F;
     --bg-secondary: #0A1018;
     --bg-card: #0A1018;
@@ -78,6 +79,7 @@
 
 /* === LIGHT MODE === */
 [data-theme="light"] {
+    color-scheme: light;
     --bg-primary: #F8FAFC;
     --bg-secondary: #F1F5F9;
     --bg-card: #FFFFFF;
@@ -278,6 +280,18 @@ body {
 ::-webkit-scrollbar-track { background: var(--bg-primary); }
 ::-webkit-scrollbar-thumb { background: var(--text-secondary); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--ice); }
+
+/* Standard scrollbar properties for cross-browser support (Firefox) */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--text-secondary) var(--bg-primary);
+}
+
+/* Style select options to match the theme in dark and light modes */
+select option {
+    background-color: var(--bg-elevated);
+    color: var(--text-primary);
+}
 
 /* Input */
 .cold-input {
