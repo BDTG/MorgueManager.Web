@@ -3,6 +3,8 @@
 @inject NavigationManager Navigation
 @inject TemperatureSimulatorService TempService
 @inject IJSRuntime JS
+@inject MorgueManager.Web.Services.ApiService ApiService
+@inject HttpClient Http
 @implements IDisposable
 
 <div class="min-h-screen pt-4 pb-12">
@@ -24,11 +26,11 @@
 
         <!-- KPI Cards Grid -->
         <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-            <KpiCard Icon="users" Label="Tổng thi thể" Value="127" SubText="+3 tuần này" Color="#3B82F6" OnClick="NavToCorpses" />
-            <KpiCard Icon="snowflake" Label="Đang lưu kho" Value="10" SubText="Hiện tại" Color="#0EA5E9" OnClick="NavToCorpses" />
-            <KpiCard Icon="alert-triangle" Label="Quá hạn / Cảnh báo" Value="2 / 3" Color="#EF4444" OnClick="NavToCorpses" />
-            <KpiCard Icon="check-square" Label="Đã bàn giao" Value="8" SubText="Tháng này" Color="#10B981" OnClick="NavToCorpses" />
-            <KpiCard Icon="thermometer" Label="Cảnh báo nhiệt độ" Value="3" SubText="Ngăn bất thường" Color="#F59E0B" OnClick="NavToTemperature" />
+            <KpiCard Icon="users" Label="Tổng thi thể" Value="@_totalActive.ToString()" SubText="Hiện tại" Color="#3B82F6" OnClick="NavToCorpses" />
+            <KpiCard Icon="snowflake" Label="Đang lưu kho" Value="@_inStorage.ToString()" SubText="Hiện tại" Color="#0EA5E9" OnClick="NavToCorpses" />
+            <KpiCard Icon="alert-triangle" Label="Quá hạn / Cảnh báo" Value="@($"{_overdueCount} / {_warningCount}")" Color="#EF4444" OnClick="NavToCorpses" />
+            <KpiCard Icon="check-square" Label="Đã bàn giao" Value="@_handedOver.ToString()" SubText="Tất cả" Color="#10B981" OnClick="NavToCorpses" />
+            <KpiCard Icon="thermometer" Label="Cảnh báo nhiệt độ" Value="0" SubText="Ngăn bất thường" Color="#F59E0B" OnClick="NavToTemperature" />
         </div>
 
         <!-- Charts + Overdue Grid -->
@@ -312,6 +314,12 @@
     private System.Threading.Timer? _timer;
     private DateTime _currentTime = DateTime.Now;
 
+    private int _totalActive = 0;
+    private int _inStorage = 0;
+    private int _overdueCount = 0;
+    private int _warningCount = 0;
+    private int _handedOver = 0;
+
     private readonly List<(string Day, int Admissions, int Releases)> _weeklyData = new()
     {
         new("Mon", 8, 5),
@@ -323,14 +331,11 @@
         new("Sun", 11, 10)
     };
 
-    private readonly List<(string Name, int Total, int Occupied, string Color)> _storageUnits = new()
+    private List<(string Name, int Total, int Occupied, string Color)> _storageUnits = new()
     {
-        new("Phòng lạnh A", 40, 38, "#3b82f6"),
-        new("Phòng lạnh B", 40, 35, "#06b6d4"),
-        new("Phòng lạnh C", 40, 28, "#6366f1"),
-        new("Ngăn đông 1", 30, 24, "#8b5cf6"),
-        new("Ngăn đông 2", 30, 22, "#a855f7"),
-        new("Khu vực khâm liệm", 20, 0, "#22c55e"),
+        new("Phòng lạnh A (Mát)", 10, 0, "#3b82f6"),
+        new("Phòng lạnh B (Mát)", 10, 0, "#06b6d4"),
+        new("Phòng lạnh C (Lạnh sâu)", 5, 0, "#6366f1")
     };
 
     private IEnumerable<(string Name, int Total, int Occupied, string Color, double StrokeDashArray, double StrokeDashOffset)> GetDonutSlices()
@@ -353,14 +358,7 @@
             accumulated += length;
         }
     }
-    private readonly List<(string Name, string CaseId, int Days, string Slot)> _overdueList = new()
-    {
-        new("Nguyễn Văn An", "MC-2026-0127", 18, "A-03"),
-        new("Trần Thị Bích", "MC-2026-0120", 14, "B-02"),
-        new("Lê Hoàng Nam", "MC-2026-0115", 9, "A-07"),
-        new("Phạm Minh Tuấn", "MC-2026-0110", 8, "B-05"),
-        new("Hoàng Thị Lan", "MC-2026-0108", 7, "A-01"),
-    };
+    private List<(string Name, string CaseId, int Days, string Slot)> _overdueList = new();
 
     private readonly List<(string Icon, string Title, string Desc, string Color, string Route)> _quickLinks = new()
     {
@@ -370,19 +368,81 @@
         new("bar-chart-3", "Báo cáo", "Thống kê & xuất file", "#10B981", "/admin/reports"),
     };
 
-    private readonly List<(string Time, string Action, string Target, string By, string BadgeBg, string BadgeText)> _recentActivity = new()
-    {
-        new("10:30", "Tiếp nhận", "MC-2026-0127", "Nguyễn Thị B", "var(--badge-tiepnhan-bg)", "var(--badge-tiepnhan-text)"),
-        new("10:15", "Chuyển ngăn", "A-03 → A-05", "Trần Văn C", "var(--badge-luukho-bg)", "var(--badge-luukho-text)"),
-        new("09:45", "Bàn giao", "MC-2026-0089", "Lê Thị D", "var(--badge-bangiao-bg)", "var(--badge-bangiao-text)"),
-        new("09:20", "Cập nhật nhiệt độ", "Cold Room A", "Hệ thống", "var(--badge-luukho-bg)", "var(--badge-luukho-text)"),
-        new("08:55", "Tiếp nhận", "MC-2026-0126", "Nguyễn Thị B", "var(--badge-tiepnhan-bg)", "var(--badge-tiepnhan-text)"),
-    };
+    private List<(string Time, string Action, string Target, string By, string BadgeBg, string BadgeText)> _recentActivity = new();
 
-    protected override void OnInitialized()
+    private async Task EnsureAuthorizedAsync()
     {
-        // Khởi tạo timer cập nhật đồng hồ mỗi giây
+        try
+        {
+            var token = await JS.InvokeAsync<string>("localStorage.getItem", "morguemanager-token");
+            if (!string.IsNullOrEmpty(token))
+            {
+                Http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error injecting auth header: " + ex.Message);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
         _timer = new System.Threading.Timer(Callback, null, 0, 1000);
+
+        try
+        {
+            await EnsureAuthorizedAsync();
+            var dtoList = await ApiService.GetAsync<List<CorpseApiDto>>("api/corpses");
+            if (dtoList != null)
+            {
+                _totalActive = dtoList.Count(c => c.Status != "Bàn giao");
+                _inStorage = dtoList.Count(c => c.Status == "Lưu kho" || c.Status == "Quá hạn");
+                _overdueCount = dtoList.Count(c => c.Status == "Quá hạn" || c.DaysStored >= 14);
+                _warningCount = dtoList.Count(c => c.DaysStored >= 7 && c.DaysStored < 14);
+                _handedOver = dtoList.Count(c => c.Status == "Bàn giao");
+
+                _storageUnits = new()
+                {
+                    new("Phòng lạnh A (Mát)", 10, dtoList.Count(c => c.StorageSlot != null && c.StorageSlot.StartsWith("A")), "#3b82f6"),
+                    new("Phòng lạnh B (Mát)", 10, dtoList.Count(c => c.StorageSlot != null && c.StorageSlot.StartsWith("B")), "#06b6d4"),
+                    new("Phòng lạnh C (Lạnh sâu)", 5, dtoList.Count(c => c.StorageSlot != null && c.StorageSlot.StartsWith("C")), "#6366f1")
+                };
+
+                _overdueList = dtoList
+                    .Where(c => c.Status == "Quá hạn" || c.DaysStored >= 14)
+                    .OrderByDescending(c => c.DaysStored)
+                    .Take(5)
+                    .Select(c => (c.Name, c.CaseId, c.DaysStored, c.StorageSlot ?? "—"))
+                    .ToList();
+
+                var activities = dtoList
+                    .Where(c => c.History != null)
+                    .SelectMany(c => c.History.Select(h => new { Corpse = c, History = h }))
+                    .OrderByDescending(x => x.History.Timestamp)
+                    .Take(5)
+                    .ToList();
+
+                _recentActivity = activities.Select(a =>
+                {
+                    var time = "00:00";
+                    if (DateTime.TryParse(a.History.Timestamp, out var dt))
+                    {
+                        time = dt.ToString("HH:mm");
+                    }
+                    var action = a.History.Status;
+                    var target = a.Corpse.CaseId;
+                    var by = a.History.By.Split(' ')[0];
+                    var badgeBg = action == "Tiếp nhận" ? "var(--badge-tiepnhan-bg)" : action == "Bàn giao" ? "var(--badge-bangiao-bg)" : "var(--badge-luukho-bg)";
+                    var badgeText = action == "Tiếp nhận" ? "var(--badge-tiepnhan-text)" : action == "Bàn giao" ? "var(--badge-bangiao-text)" : "var(--badge-luukho-text)";
+                    return (time, action, target, by, badgeBg, badgeText);
+                }).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error loading dashboard data: " + ex.Message);
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
