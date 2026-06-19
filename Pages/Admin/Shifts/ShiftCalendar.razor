@@ -48,11 +48,11 @@
                     var currentDay = day; // capture variable for lambda
                     <div class="calendar-cell @(isToday ? "today" : "")" @onclick="() => OpenAssignModalForDate(currentDay)">
                         <div class="calendar-date @(isToday ? "today" : "")">@day</div>
-                        <div class="shift-bar shift-morning">🌅 Nguyễn A</div>
-                        <div class="shift-bar shift-evening">🌆 Lê C</div>
+                        <div class="shift-bar shift-morning" @onclick:stopPropagation="true" @onclick="@(() => OpenEditModalForShift(currentDay, "morning", "Nguyễn A"))">🌅 Nguyễn A</div>
+                        <div class="shift-bar shift-evening" @onclick:stopPropagation="true" @onclick="@(() => OpenEditModalForShift(currentDay, "evening", "Lê C"))">🌆 Lê C</div>
                         @if (day % 3 == 0)
                         {
-                            <div class="shift-bar shift-missing">⚠️ Thiếu nhân viên</div>
+                            <div class="shift-bar shift-missing" @onclick:stopPropagation="true" @onclick="@(() => OpenAssignModalForDate(currentDay))">⚠️ Thiếu nhân viên</div>
                         }
                     </div>
                 }
@@ -92,7 +92,7 @@
 {
     <Modal OnClose="() => _showAssignModal = false">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-            <h2 class="font-ui" style="font-size: 18px; font-weight: 700; margin: 0; color: var(--text-primary);">➕ Phân ca trực mới</h2>
+            <h2 class="font-ui" style="font-size: 18px; font-weight: 700; margin: 0; color: var(--text-primary);">@(_isEditing ? "✏️ Chỉnh sửa ca trực" : "➕ Phân ca trực mới")</h2>
             <button @onclick="() => _showAssignModal = false" style="background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer;">✕</button>
         </div>
         <div style="margin-bottom: 16px;">
@@ -126,11 +126,20 @@
 @code {
     private string _view = "month";
     private bool _showAssignModal;
+    private bool _isEditing;
     private DateTime _selectedAssignDate = DateTime.Now;
 
     private void OpenAssignModalForDate(int day)
     {
         _selectedAssignDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, day);
+        _isEditing = false;
+        _showAssignModal = true;
+    }
+
+    private void OpenEditModalForShift(int day, string shiftType, string staff)
+    {
+        _selectedAssignDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, day);
+        _isEditing = true;
         _showAssignModal = true;
     }
 
