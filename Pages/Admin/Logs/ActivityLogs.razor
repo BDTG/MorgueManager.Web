@@ -1,5 +1,6 @@
 @page "/admin/logs"
 @layout Components.Layout.AdminLayout
+@inject MorgueManager.Web.Services.ApiService ApiService
 
 <div>
     <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px;">
@@ -65,18 +66,107 @@
 </div>
 
 @code {
-    private readonly List<LogEntry> _logs = Enumerable.Range(1, 25).Select(i => new LogEntry
+    private List<LogEntry> _logs = new();
+    private string _rawLogs = "";
+
+    protected override async Task OnInitializedAsync()
     {
-        Id = i,
-        Time = $"{(i < 10 ? "0" : "")}{i}/06/2026 0{i % 12 + 8}:{i * 3 % 60:D2}",
-        User = new[] { "Nguyễn Thị B", "Trần Văn C", "Lê Thị D", "Hệ thống" }[i % 4],
-        Action = new[] { "Tạo mới", "Cập nhật", "Xóa", "🌡️ Thay đổi nhiệt độ", "Đăng nhập" }[i % 5],
-        Detail = new[] { "Tạo mới thi thể 'Nguyễn Văn An'", "Cập nhật thông tin thi thể #127", "Điều chỉnh nhiệt độ Khu A: 2.0°C → 2.5°C", "Đăng nhập hệ thống", "Xóa thi thể #89" }[i % 5],
-        BadgeBg = new[] { "rgba(16,185,129,0.15)", "rgba(59,130,246,0.15)", "rgba(239,68,68,0.15)", "rgba(245,158,11,0.15)", "rgba(250,204,21,0.15)" }[i % 5],
-        BadgeText = new[] { "var(--success)", "var(--ice)", "var(--danger)", "var(--candle)", "#EAB308" }[i % 5],
-        Link = new[] { "/admin/corpses", "/admin/corpses/127", "/admin/temperature", "", "" }[i % 5],
-        LinkText = new[] { "Thi thể #127", "Thi thể #127", "Nhiệt độ Khu A", "", "" }[i % 5],
-    }).ToList();
+        await LoadLogsAsync();
+    }
+
+    private async Task LoadLogsAsync()
+    {
+        try
+        {
+            var res = await ApiService.GetAsync<LogsResponse>("api/logs");
+            if (res != null && !string.IsNullOrEmpty(res.Logs))
+            {
+                _rawLogs = res.Logs;
+                var lines = _rawLogs.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                _logs = lines.Select((line, index) =>
+                {
+                    var time = DateTime.Now.ToString("dd/MM/yyyy") + " ";
+                    var level = "INF";
+                    var detail = line;
+                    var user = "Hệ thống";
+
+                    if (line.StartsWith("[") && line.Contains("]"))
+                    {
+                        var bracketIndex = line.IndexOf(']');
+                        var meta = line.Substring(1, bracketIndex - 1);
+                        detail = line.Substring(bracketIndex + 1).Trim();
+
+                        var parts = meta.Split(' ');
+                        if (parts.Length >= 1) time += parts[0];
+                        if (parts.Length >= 2) level = parts[1];
+                    }
+
+                    var action = level switch
+                    {
+                        "INF" => "Thông tin",
+                        "WRN" => "Cảnh báo",
+                        "ERR" => "Lỗi",
+                        "FTL" => "Lỗi chí mạng",
+                        _ => level
+                    };
+                    var badgeBg = level switch
+                    {
+                        "INF" => "rgba(16,185,129,0.15)",
+                        "WRN" => "rgba(245,158,11,0.15)",
+                        "ERR" => "rgba(239,68,68,0.15)",
+                        "FTL" => "rgba(239,68,68,0.25)",
+                        _ => "var(--bg-elevated)"
+                    };
+                    var badgeText = level switch
+                    {
+                        "INF" => "var(--success)",
+                        "WRN" => "var(--candle)",
+                        "ERR" => "var(--danger)",
+                        "FTL" => "var(--danger)",
+                        _ => "var(--text-secondary)"
+                    };
+
+                    if (detail.Contains("Tiếp nhận"))
+                    {
+                        user = "Admin User";
+                        action = "Tiếp nhận";
+                    }
+                    else if (detail.Contains("Bàn giao"))
+                    {
+                        user = "Admin User";
+                        action = "Bàn giao";
+                    }
+                    else if (detail.Contains("Cập nhật"))
+                    {
+                        user = "Admin User";
+                        action = "Cập nhật";
+                    }
+
+                    return new LogEntry
+                    {
+                        Id = index + 1,
+                        Time = time,
+                        User = user,
+                        Action = action,
+                        Detail = detail,
+                        BadgeBg = badgeBg,
+                        BadgeText = badgeText,
+                        Link = detail.Contains("MC-") ? "/admin/corpses" : "",
+                        LinkText = detail.Contains("MC-") ? "Xem danh sách" : ""
+                    };
+                }).OrderByDescending(x => x.Id).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error loading logs: " + ex.Message);
+        }
+    }
+
+    private class LogsResponse
+    {
+        public string Logs { get; set; } = "";
+    }
 
     private class LogEntry
     {
