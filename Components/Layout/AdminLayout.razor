@@ -10,9 +10,39 @@
 }
 else
 {
+    <style>
+        .admin-content-wrapper {
+            margin-left: var(--sidebar-width);
+        }
+        .admin-content-wrapper.collapsed {
+            margin-left: 0;
+        }
+        .mobile-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 30;
+        }
+        @@media (max-width: 768px) {
+            .admin-content-wrapper {
+                margin-left: 0 !important;
+            }
+            .mobile-overlay.active {
+                display: block;
+            }
+            .admin-sidebar:not(.collapsed) {
+                transform: translateX(0) !important;
+            }
+        }
+    </style>
+
     <div class="flex min-h-screen">
         <Sidebar IsCollapsed="_sidebarCollapsed" />
-        <div class="flex-1 flex flex-col transition-all duration-300" style="margin-left: @(_sidebarCollapsed ? "0" : "var(--sidebar-width)")">
+        
+        <div class="mobile-overlay @(_sidebarCollapsed ? "" : "active")" @onclick="ToggleSidebar"></div>
+
+        <div class="flex-1 flex flex-col transition-all duration-300 admin-content-wrapper @(_sidebarCollapsed ? "collapsed" : "")">
             <TopBar IsCollapsed="_sidebarCollapsed" OnToggleSidebar="ToggleSidebar" />
             <main class="flex-1 p-6" style="margin-top: var(--topbar-height); background-color: var(--bg-primary);">
                 @Body
