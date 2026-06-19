@@ -231,4 +231,22 @@ public class ExportService
         string jsonData = JsonSerializer.Serialize(payload);
         await _jsRuntime.InvokeVoidAsync("window.ExportHelper.exportSummaryToPdf", jsonData);
     }
+
+    public async Task ExportActivityLogsToExcelAsync(List<LogEntry> logs)
+    {
+        await EnsureScriptsLoadedAsync();
+
+        var exportData = logs.Select(l => new
+        {
+            Id = l.Id,
+            Time = l.Time,
+            User = l.User,
+            Action = l.Action,
+            Detail = l.Detail,
+            LinkText = l.LinkText
+        }).ToList();
+
+        string jsonData = JsonSerializer.Serialize(exportData);
+        await _jsRuntime.InvokeVoidAsync("window.ExportHelper.exportActivityLogsToExcel", jsonData);
+    }
 }

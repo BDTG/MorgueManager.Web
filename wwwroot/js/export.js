@@ -450,5 +450,28 @@ window.ExportHelper = {
         });
         var dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
         doc.save('Bao_cao_tong_hop_' + dateStr + '.pdf');
+    },
+
+    exportActivityLogsToExcel: function (dataJson) {
+        var rawData = JSON.parse(dataJson);
+        var data = rawData.map(function (item) {
+            return {
+                'Mã': item.Id,
+                'Thời Gian': item.Time,
+                'Người Thực Hiện': item.User,
+                'Hành Động': item.Action,
+                'Chi Tiết': item.Detail,
+                'Trang Liên Quan': item.LinkText || '—'
+            };
+        });
+        var ws = XLSX.utils.json_to_sheet(data);
+        var wscols = [
+            { wch: 8 }, { wch: 22 }, { wch: 22 }, { wch: 20 }, { wch: 45 }, { wch: 20 }
+        ];
+        ws['!cols'] = wscols;
+        var wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Nhật ký hoạt động');
+        var dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        XLSX.writeFile(wb, 'Nhat_ky_hoat_dong_' + dateStr + '.xlsx');
     }
 };
