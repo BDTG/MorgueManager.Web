@@ -1,0 +1,144 @@
+@inject IJSRuntime JS
+
+@if (IsVisible)
+{
+    <div class="modal-overlay" @onclick="HandleCancel" style="animation: fadeIn 0.2s ease;">
+        <div class="modal-backdrop" style="background-color: var(--modal-overlay); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);"></div>
+        
+        <div class="modal-content" @onclick:stopPropagation style="max-width: 440px; border-radius: 16px; padding: 24px; background-color: var(--bg-card); border: 1px solid var(--border-primary); box-shadow: var(--shadow-lg); animation: slideInUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);">
+            
+            <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px;">
+                <!-- Icon container with dynamic styling based on Type -->
+                <div class="confirm-icon-wrapper" style="@GetIconWrapperStyle()">
+                    @if (Type == "danger")
+                    {
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    }
+                    else if (Type == "warning")
+                    {
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    }
+                    else if (Type == "success")
+                    {
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    }
+                    else
+                    {
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    }
+                </div>
+
+                <!-- Text content -->
+                <div style="width: 100%;">
+                    <h3 class="font-ui" style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin: 0 0 8px 0;">@Title</h3>
+                    <p class="font-ui" style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin: 0; white-space: pre-line;">@Message</p>
+                </div>
+
+                <!-- Action buttons -->
+                <div style="display: flex; gap: 12px; width: 100%; margin-top: 8px;">
+                    <button type="button" @onclick="HandleCancel" class="font-ui" style="flex: 1; padding: 10px 16px; border: 1px solid var(--border-primary); border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s;">
+                        @CancelText
+                    </button>
+                    <button type="button" @onclick="HandleConfirm" class="font-ui" style="flex: 1; padding: 10px 16px; border: none; border-radius: 8px; color: white; cursor: pointer; font-size: 13px; font-weight: 600; background: @GetConfirmBtnBg(); box-shadow: @GetConfirmBtnShadow(); transition: all 0.2s;">
+                        @ConfirmText
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+}
+
+<style>
+    @("@")keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @("@")keyframes slideInUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+</style>
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public string Title { get; set; } = "Xác nhận hành động";
+    [Parameter] public string Message { get; set; } = "Bạn có chắc chắn muốn thực hiện thao tác này?";
+    [Parameter] public string ConfirmText { get; set; } = "Xác nhận";
+    [Parameter] public string CancelText { get; set; } = "Hủy";
+    [Parameter] public string Type { get; set; } = "info"; // danger, warning, success, info
+
+    [Parameter] public EventCallback OnConfirm { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private async Task HandleConfirm()
+    {
+        await OnConfirm.InvokeAsync();
+    }
+
+    private async Task HandleCancel()
+    {
+        await OnCancel.InvokeAsync();
+    }
+
+    private string GetIconWrapperStyle()
+    {
+        string baseStyle = "width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; ";
+        if (Type == "danger")
+        {
+            return baseStyle + "background-color: rgba(238, 90, 36, 0.12); color: var(--danger);";
+        }
+        else if (Type == "warning")
+        {
+            return baseStyle + "background-color: rgba(246, 185, 59, 0.12); color: var(--candle);";
+        }
+        else if (Type == "success")
+        {
+            return baseStyle + "background-color: rgba(16, 185, 129, 0.12); color: var(--success);";
+        }
+        else
+        {
+            return baseStyle + "background-color: rgba(72, 219, 251, 0.12); color: var(--ice);";
+        }
+    }
+
+    private string GetConfirmBtnBg()
+    {
+        if (Type == "danger")
+        {
+            return "linear-gradient(135deg, #EE5A24, #C0392B)";
+        }
+        else if (Type == "warning")
+        {
+            return "linear-gradient(135deg, #F6B93B, #E67E22)";
+        }
+        else if (Type == "success")
+        {
+            return "linear-gradient(135deg, #10B981, #059669)";
+        }
+        else
+        {
+            return "linear-gradient(135deg, #2E86DE, #48DBFB)";
+        }
+    }
+
+    private string GetConfirmBtnShadow()
+    {
+        if (Type == "danger")
+        {
+            return "0 4px 12px rgba(238, 90, 36, 0.2)";
+        }
+        else if (Type == "warning")
+        {
+            return "0 4px 12px rgba(246, 185, 59, 0.2)";
+        }
+        else if (Type == "success")
+        {
+            return "0 4px 12px rgba(16, 185, 129, 0.2)";
+        }
+        else
+        {
+            return "0 4px 12px rgba(46, 134, 222, 0.2)";
+        }
+    }
+}
