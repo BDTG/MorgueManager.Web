@@ -1,5 +1,6 @@
 @page "/admin/logs"
 @layout Components.Layout.AdminLayout
+@inject ExportService ExportService
 
 <div>
     <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px;">
@@ -8,8 +9,8 @@
             <h1 class="font-ui" style="font-size: 22px; font-weight: 700; margin: 0; color: var(--text-primary);">📝 Nhật ký hoạt động</h1>
         </div>
         <div style="display: flex; gap: 8px;">
-            <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--success); color: var(--success); background: transparent;">📥 Xuất log</button>
-            <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--border-primary); color: var(--text-secondary); background: transparent;">🔄 Làm mới</button>
+            <button @onclick="ExportLogs" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--success); color: var(--success); background: transparent;">📥 Xuất log</button>
+            <button @onclick="RefreshLogs" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--border-primary); color: var(--text-secondary); background: transparent;">🔄 Làm mới</button>
         </div>
     </div>
 
@@ -65,29 +66,35 @@
 </div>
 
 @code {
-    private readonly List<LogEntry> _logs = Enumerable.Range(1, 25).Select(i => new LogEntry
-    {
-        Id = i,
-        Time = $"{(i < 10 ? "0" : "")}{i}/06/2026 0{i % 12 + 8}:{i * 3 % 60:D2}",
-        User = new[] { "Nguyễn Thị B", "Trần Văn C", "Lê Thị D", "Hệ thống" }[i % 4],
-        Action = new[] { "Tạo mới", "Cập nhật", "Xóa", "🌡️ Thay đổi nhiệt độ", "Đăng nhập" }[i % 5],
-        Detail = new[] { "Tạo mới thi thể 'Nguyễn Văn An'", "Cập nhật thông tin thi thể #127", "Điều chỉnh nhiệt độ Khu A: 2.0°C → 2.5°C", "Đăng nhập hệ thống", "Xóa thi thể #89" }[i % 5],
-        BadgeBg = new[] { "rgba(16,185,129,0.15)", "rgba(59,130,246,0.15)", "rgba(239,68,68,0.15)", "rgba(245,158,11,0.15)", "rgba(250,204,21,0.15)" }[i % 5],
-        BadgeText = new[] { "var(--success)", "var(--ice)", "var(--danger)", "var(--candle)", "#EAB308" }[i % 5],
-        Link = new[] { "/admin/corpses", "/admin/corpses/127", "/admin/temperature", "", "" }[i % 5],
-        LinkText = new[] { "Thi thể #127", "Thi thể #127", "Nhiệt độ Khu A", "", "" }[i % 5],
-    }).ToList();
+    private List<LogEntry> _logs = new();
 
-    private class LogEntry
+    protected override void OnInitialized()
     {
-        public int Id { get; set; }
-        public string Time { get; set; } = "";
-        public string User { get; set; } = "";
-        public string Action { get; set; } = "";
-        public string Detail { get; set; } = "";
-        public string BadgeBg { get; set; } = "";
-        public string BadgeText { get; set; } = "";
-        public string Link { get; set; } = "";
-        public string LinkText { get; set; } = "";
+        RefreshLogs();
+    }
+
+    private void RefreshLogs()
+    {
+        var now = DateTime.Now;
+        _logs = Enumerable.Range(1, 25).Select(i => {
+            var time = now.AddMinutes(-i * 12);
+            return new LogEntry
+            {
+                Id = i,
+                Time = time.ToString("dd/MM/yyyy HH:mm"),
+                User = new[] { "Nguyễn Thị B", "Trần Văn C", "Lê Thị D", "Hệ thống" }[i % 4],
+                Action = new[] { "Tạo mới", "Cập nhật", "Xóa", "🌡️ Thay đổi nhiệt độ", "Đăng nhập" }[i % 5],
+                Detail = new[] { "Tạo mới thi thể 'Nguyễn Văn An'", "Cập nhật thông tin thi thể #127", "Điều chỉnh nhiệt độ Khu A: 2.0°C → 2.5°C", "Đăng nhập hệ thống", "Xóa thi thể #89" }[i % 5],
+                BadgeBg = new[] { "rgba(16,185,129,0.15)", "rgba(59,130,246,0.15)", "rgba(239,68,68,0.15)", "rgba(245,158,11,0.15)", "rgba(250,204,21,0.15)" }[i % 5],
+                BadgeText = new[] { "var(--success)", "var(--ice)", "var(--danger)", "var(--candle)", "#EAB308" }[i % 5],
+                Link = new[] { "/admin/corpses", "/admin/corpses/127", "/admin/temperature", "", "" }[i % 5],
+                LinkText = new[] { "Thi thể #127", "Thi thể #127", "Nhiệt độ Khu A", "", "" }[i % 5],
+            };
+        }).ToList();
+    }
+
+    private async Task ExportLogs()
+    {
+        await ExportService.ExportActivityLogsToExcelAsync(_logs);
     }
 }
