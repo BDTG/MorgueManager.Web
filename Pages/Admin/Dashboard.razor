@@ -16,7 +16,7 @@
                     <span>Dashboard</span>
                 </div>
                 <h1 class="font-ui text-2xl font-bold" style="color: var(--text-primary);">
-                    Xin chào, Admin 👋
+                    Xin chào, @_userEmail (@(GetRoleDisplayName(_userRole))) 👋
                 </h1>
                 <p class="font-ui text-sm mt-1" style="color: var(--text-secondary);">
                     @_currentTime.ToString("dddd, dd/MM/yyyy", new System.Globalization.CultureInfo("vi-VN")) · @_currentTime.ToString("HH:mm:ss")
@@ -369,6 +369,16 @@
     };
 
     private List<(string Time, string Action, string Target, string By, string BadgeBg, string BadgeText)> _recentActivity = new();
+    private string _userRole = "None";
+    private string _userEmail = "";
+
+    private string GetRoleDisplayName(string role) => role switch
+    {
+        "Admin" => "Quản trị viên",
+        "Manager" => "Quản lý",
+        "Staff" => "Nhân viên",
+        _ => "Khách"
+    };
 
     private async Task EnsureAuthorizedAsync()
     {
@@ -393,6 +403,15 @@
         try
         {
             await EnsureAuthorizedAsync();
+            _userRole = await AdminAuthHelper.GetUserRoleAsync(JS);
+            _userEmail = await AdminAuthHelper.GetUserEmailAsync(JS);
+
+            if (_userRole == "None")
+            {
+                Navigation.NavigateTo("/login");
+                return;
+            }
+
             var dtoList = await ApiService.GetAsync<List<CorpseApiDto>>("api/corpses");
             if (dtoList != null)
             {
