@@ -1,0 +1,456 @@
+@page "/admin/iot"
+@layout Components.Layout.AdminLayout
+@inject NavigationManager Navigation
+@inject MorgueManager.Web.Services.ApiService ApiService
+@inject HttpClient Http
+@inject IJSRuntime JS
+
+<div class="min-h-screen pt-4 pb-12">
+    <div class="max-w-[1400px] mx-auto px-4">
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+            <div>
+                <div class="flex items-center gap-2 font-ui text-xs mb-1" style="color: var(--text-muted);">
+                    <span>Dashboard / Giám sát IoT</span>
+                </div>
+                <h1 class="font-ui text-2xl font-bold flex items-center gap-2" style="color: var(--text-primary);">
+                    <span style="color: #14B8A6;">📡</span> Giám sát Cảm biến & Bảo mật IoT
+                </h1>
+                <p class="font-ui text-sm mt-1" style="color: var(--text-secondary);">
+                    Hệ thống theo dõi cân nặng và nhiệt độ thời gian thực của các hộc đông lạnh.
+                </p>
+            </div>
+            <div class="flex items-center gap-2">
+                <button @onclick="LoadDataAsync" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--border-primary); color: var(--text-secondary); background: transparent; display: flex; align-items: center; gap: 4px;">
+                    🔄 Làm mới dữ liệu
+                </button>
+            </div>
+        </div>
+
+        @if (!_isLoaded)
+        {
+            <div class="flex flex-col items-center justify-center min-h-[40vh] font-ui">
+                <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-ice mb-4"></div>
+                <span style="color: var(--text-muted); font-size: 13px;">Đang thiết lập kết nối IoT...</span>
+            </div>
+        }
+        else
+        {
+            <!-- Overview Alerts banner -->
+            @if (_hasCriticalAlert)
+            {
+                <div class="mb-6 p-4 rounded-xl flex items-start gap-3 animate-pulse border font-ui" 
+                     style="background-color: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); color: #F87171;">
+                    <span style="font-size: 20px;">🚨</span>
+                    <div>
+                        <h4 class="font-bold text-sm">CẢNH BÁO BẢO MẬT: DI DỜI THI HÀI KHÔNG HỢP LỆ</h4>
+                        <p class="text-xs mt-1 leading-relaxed text-[#FECACA]">
+                            Hệ thống phát hiện có hộc tủ bị mất trọng lượng đột ngột khi chưa có lệnh bàn giao. Vui lòng kiểm tra khẩn cấp vị trí được báo động đỏ dưới đây.
+                        </p>
+                    </div>
+                </div>
+            }
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Grid Cảm biến (Room A & B) -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Room A -->
+                    <div class="rounded-xl p-5" style="background-color: var(--bg-card); border: 1px solid var(--border-primary);">
+                        <div class="flex items-center justify-between mb-4 pb-3 border-b" style="border-color: var(--border-primary);">
+                            <h3 class="font-ui text-sm font-semibold flex items-center gap-2" style="color: var(--text-primary);">
+                                <span>❄️ Phòng lạnh A (Cảm biến Mát)</span>
+                            </h3>
+                            <span class="font-mono text-xs text-success">Target: 2.0°C</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            @foreach (var slot in _slots.Where(s => s.StartsWith("A")))
+                            {
+                                @RenderSlotCard(slot)
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Room B -->
+                    <div class="rounded-xl p-5" style="background-color: var(--bg-card); border: 1px solid var(--border-primary);">
+                        <div class="flex items-center justify-between mb-4 pb-3 border-b" style="border-color: var(--border-primary);">
+                            <h3 class="font-ui text-sm font-semibold flex items-center gap-2" style="color: var(--text-primary);">
+                                <span>❄️ Phòng lạnh B (Cảm biến Mát)</span>
+                            </h3>
+                            <span class="font-mono text-xs text-success">Target: 3.5°C</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            @foreach (var slot in _slots.Where(s => s.StartsWith("B")))
+                            {
+                                @RenderSlotCard(slot)
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Room C -->
+                    <div class="rounded-xl p-5" style="background-color: var(--bg-card); border: 1px solid var(--border-primary);">
+                        <div class="flex items-center justify-between mb-4 pb-3 border-b" style="border-color: var(--border-primary);">
+                            <h3 class="font-ui text-sm font-semibold flex items-center gap-2" style="color: var(--text-primary);">
+                                <span>❄️ Phòng lạnh C (Cảm biến Lạnh Sâu)</span>
+                            </h3>
+                            <span class="font-mono text-xs text-[#6366F1]">Target: -5.0°C</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            @foreach (var slot in _slots.Where(s => s.StartsWith("C")))
+                            {
+                                @RenderSlotCard(slot)
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cột phải: Alarm Logs & Simulator Info -->
+                <div class="space-y-6">
+                    <!-- Dashboard Notifications / Alert Logs -->
+                    <div class="rounded-xl p-5" style="background-color: var(--bg-card); border: 1px solid var(--border-primary);">
+                        <h3 class="font-ui text-sm font-semibold flex items-center gap-2 mb-4" style="color: var(--text-primary);">
+                            <span>🚨 Cảnh báo bảo mật hệ thống</span>
+                        </h3>
+                        <div class="space-y-4">
+                            @if (_alerts.Count == 0)
+                            {
+                                <p class="text-xs text-center py-6 text-muted" style="color: var(--text-muted);">Không có báo động đỏ nào được ghi nhận gần đây.</p>
+                            }
+                            else
+                            {
+                                @foreach (var alert in _alerts)
+                                {
+                                    var isCritical = alert.Title.Contains("BÁO ĐỘNG");
+                                    <div class="p-3 rounded-lg border font-ui" 
+                                         style="background-color: @(isCritical ? "rgba(239,68,68,0.06)" : "var(--bg-secondary)"); border-color: @(isCritical ? "rgba(239,68,68,0.15)" : "var(--border-primary)");">
+                                        <div class="flex items-center justify-between mb-1.5">
+                                            <span class="text-xs font-bold" style="color: @(isCritical ? "var(--danger)" : "var(--text-secondary)");">
+                                                @alert.Title
+                                            </span>
+                                            <span class="text-[10px]" style="color: var(--text-muted);">
+                                                @alert.Time
+                                            </span>
+                                        </div>
+                                        <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">@alert.Content</p>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Simulator Info Card -->
+                    <div class="rounded-xl p-5" style="background-color: var(--bg-card); border: 1px solid var(--border-primary);">
+                        <h3 class="font-ui text-sm font-semibold flex items-center gap-2 mb-3" style="color: var(--text-primary);">
+                            <span>🛠️ Mô phỏng Cảm biến IoT</span>
+                        </h3>
+                        <p class="font-ui text-xs leading-relaxed mb-4" style="color: var(--text-secondary);">
+                            Tại phân vùng kiểm tra này, bạn có thể thực hiện kiểm nghiệm hoạt động của cảm biến cân nặng tủ lạnh. 
+                        </p>
+                        <div class="space-y-2.5 font-ui text-xs p-3 rounded-lg" style="background-color: var(--bg-secondary); border: 1px solid var(--border-primary); color: var(--text-secondary);">
+                            <div class="flex justify-between"><span>Vai trò tài khoản:</span> <strong style="color: var(--ice);">@_userRole</strong></div>
+                            <div class="flex justify-between"><span>Địa chỉ API IoT:</span> <code style="font-family: monospace; color: var(--candle);">api/iot/weight-log</code></div>
+                            <div class="flex justify-between"><span>Quyền Simulator:</span> <span>@(_userRole == "Admin" || _userRole == "Manager" ? "Đầy đủ ✅" : "Chỉ xem 🚫")</span></div>
+                        </div>
+                        @if (_userRole == "Staff")
+                        {
+                            <div class="mt-4 p-3 rounded-lg text-xs font-ui text-center" style="background-color: rgba(245,158,11,0.08); border: 1px dashed rgba(245,158,11,0.3); color: var(--candle);">
+                                ⚠️ Tài khoản Nhân viên chỉ có quyền giám sát, không thể bấm chạy mô phỏng.
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private bool _isLoaded = false;
+    private string _userRole = "None";
+    private string _userEmail = "";
+    private bool _hasCriticalAlert = false;
+
+    // Slots A-01 to A-04, B-01 to B-04, C-01 to C-02 to keep the grid clean but representative
+    private readonly List<string> _slots = new()
+    {
+        "A-01", "A-02", "A-03", "A-04",
+        "B-01", "B-02", "B-03", "B-04",
+        "C-01", "C-02"
+    };
+
+    private Dictionary<string, double> _weights = new();
+    private Dictionary<string, double> _originalWeights = new();
+    private Dictionary<string, double> _temps = new();
+    private Dictionary<string, string> _corpsesMap = new();
+
+    private List<IotAlertDto> _alerts = new();
+
+    private class IotAlertDto
+    {
+        public string Title { get; set; } = "";
+        public string Content { get; set; } = "";
+        public string Time { get; set; } = "";
+    }
+
+    private class CorpseListResponse
+    {
+        public List<CorpseApiDto> Data { get; set; } = new();
+    }
+
+    private async Task EnsureAuthorizedAsync()
+    {
+        try
+        {
+            var token = await JS.InvokeAsync<string>("localStorage.getItem", "morguemanager-token");
+            if (!string.IsNullOrEmpty(token))
+            {
+                Http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error injecting auth header: " + ex.Message);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _userRole = await AdminAuthHelper.GetUserRoleAsync(JS);
+        _userEmail = await AdminAuthHelper.GetUserEmailAsync(JS);
+
+        if (_userRole == "None")
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        await LoadDataAsync();
+        _isLoaded = true;
+    }
+
+    private async Task LoadDataAsync()
+    {
+        try
+        {
+            await EnsureAuthorizedAsync();
+            var corpses = await ApiService.GetAsync<List<CorpseApiDto>>("api/corpses");
+            var corpseList = corpses ?? new List<CorpseApiDto>();
+
+            var rng = new Random();
+            _weights.Clear();
+            _originalWeights.Clear();
+            _temps.Clear();
+            _corpsesMap.Clear();
+
+            // Setup default slot weights
+            foreach (var slot in _slots)
+            {
+                var c = corpseList.FirstOrDefault(x => x.StorageSlot == slot);
+                if (c != null)
+                {
+                    _corpsesMap[slot] = c.Name;
+                    
+                    // Occupied weight
+                    double w = rng.Next(55, 88) + Math.Round(rng.NextDouble(), 1);
+                    _weights[slot] = w;
+                    _originalWeights[slot] = w;
+
+                    // Temp
+                    _temps[slot] = c.Temp ?? (slot.StartsWith("C") ? -5.2 : 2.4);
+                }
+                else
+                {
+                    _weights[slot] = 0.0;
+                    _temps[slot] = slot.StartsWith("C") ? -5.0 : (slot.StartsWith("A") ? 2.0 : 3.5);
+                }
+            }
+
+            await LoadNotificationsAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error loading IoT data: " + ex.Message);
+        }
+    }
+
+    private async Task LoadNotificationsAsync()
+    {
+        try
+        {
+            var stats = await ApiService.GetAsync<DashboardStatsDto>("api/analytics/dashboard");
+            if (stats?.RecentNotifications != null)
+            {
+                _alerts = stats.RecentNotifications.Select(n =>
+                {
+                    var time = "Vừa xong";
+                    if (DateTime.TryParse(n.Timestamp, out var dt))
+                    {
+                        time = dt.ToString("HH:mm");
+                    }
+                    return new IotAlertDto
+                    {
+                        Title = n.Title,
+                        Content = n.Content,
+                        Time = time
+                    };
+                }).ToList();
+
+                _hasCriticalAlert = stats.RecentNotifications.Any(n => n.Title.Contains("BÁO ĐỘNG") && !n.IsRead);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error loading notifications: " + ex.Message);
+        }
+    }
+
+    private async Task SimulateRemoval(string slotNumber)
+    {
+        if (_userRole == "Staff") return;
+
+        try
+        {
+            await EnsureAuthorizedAsync();
+            // Drop weight below 5.0 kg (occupied slot trigger weight alert)
+            _weights[slotNumber] = 2.4;
+
+            var payload = new WeightLogDto
+            {
+                SlotNumber = slotNumber,
+                Weight = 2.4
+            };
+
+            await ApiService.PostAsync<object>("api/iot/weight-log", payload);
+            await LoadNotificationsAsync();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error simulating weight removal: " + ex.Message);
+        }
+    }
+
+    private async Task ResetSensor(string slotNumber)
+    {
+        if (_userRole == "Staff") return;
+
+        try
+        {
+            await EnsureAuthorizedAsync();
+            double original = _originalWeights.ContainsKey(slotNumber) ? _originalWeights[slotNumber] : 68.5;
+            _weights[slotNumber] = original;
+
+            var payload = new WeightLogDto
+            {
+                SlotNumber = slotNumber,
+                Weight = original
+            };
+
+            await ApiService.PostAsync<object>("api/iot/weight-log", payload);
+            await LoadNotificationsAsync();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error resetting weight sensor: " + ex.Message);
+        }
+    }
+
+    private RenderFragment RenderSlotCard(string slot)
+    {
+        var hasCorpse = _corpsesMap.ContainsKey(slot);
+        var corpseName = hasCorpse ? _corpsesMap[slot] : "";
+        var weight = _weights.ContainsKey(slot) ? _weights[slot] : 0.0;
+        var temp = _temps.ContainsKey(slot) ? _temps[slot] : 0.0;
+        var isAlert = hasCorpse && weight < 5.0;
+
+        var cardBg = isAlert 
+            ? "rgba(239, 68, 68, 0.08)" 
+            : (hasCorpse ? "var(--bg-secondary)" : "var(--bg-secondary)");
+            
+        var borderClr = isAlert 
+            ? "rgba(239, 68, 68, 0.4)" 
+            : (hasCorpse ? "rgba(59, 130, 246, 0.2)" : "var(--border-primary)");
+
+        return @<div class="p-4 rounded-xl border flex flex-col justify-between font-ui" 
+                     style="background-color: @cardBg; border-color: @borderClr; min-height: 120px;">
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="font-mono text-xs font-semibold text-ice-deep">Ngăn @slot</span>
+                            @if (isAlert)
+                            {
+                                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-red-500 text-white animate-pulse">
+                                    🚨 Báo động đỏ
+                                </span>
+                            }
+                            else if (hasCorpse)
+                            {
+                                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider" style="background-color: rgba(59, 130, 246, 0.15); color: var(--ice);">
+                                    Đang sử dụng
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider" style="background-color: rgba(16, 185, 129, 0.15); color: var(--success);">
+                                    Trống
+                                </span>
+                            }
+                        </div>
+
+                        <div class="space-y-1">
+                            @if (hasCorpse)
+                            {
+                                <p class="text-xs font-semibold" style="color: var(--text-primary);">
+                                    👤 @corpseName
+                                </p>
+                                <div class="flex items-center justify-between text-[11px] mt-2" style="color: var(--text-secondary);">
+                                    <span>Nhiệt độ: <strong style="color: @(temp > 6 ? "var(--danger)" : "var(--text-primary)");">@temp.ToString("F1")°C</strong></span>
+                                    <span>Trọng lượng: <strong style="color: @(isAlert ? "var(--danger)" : "var(--text-primary)"); font-weight: bold;">@weight.ToString("F1") kg</strong></span>
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-xs text-muted italic" style="color: var(--text-muted);">
+                                    Không lưu trữ thi hài
+                                </p>
+                                <div class="flex items-center justify-between text-[11px] mt-2" style="color: var(--text-secondary);">
+                                    <span>Nhiệt độ: <strong>@temp.ToString("F1")°C</strong></span>
+                                    <span>Trọng lượng: <strong>0.0 kg</strong></span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    @if (hasCorpse && (_userRole == "Admin" || _userRole == "Manager"))
+                    {
+                        <div class="mt-3.5 pt-3 border-t flex justify-end gap-2" style="border-color: var(--border-primary);">
+                            @if (isAlert)
+                            {
+                                <button @onclick="() => ResetSensor(slot)" class="px-3 py-1.5 rounded text-[10px] font-semibold cursor-pointer border-none bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1">
+                                    Đặt lại Cảm biến
+                                </button>
+                            }
+                            else
+                            {
+                                <button @onclick="() => SimulateRemoval(slot)" class="px-3 py-1.5 rounded text-[10px] font-semibold cursor-pointer border border-red-500 hover:bg-red-500/10 text-red-500 bg-transparent flex items-center gap-1">
+                                    ⚠️ Nhấc trái phép
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>;
+    }
+
+    // DTO Helper classes
+    private class DashboardStatsDto
+    {
+        public List<RecentNotificationDto> RecentNotifications { get; set; } = new();
+    }
+
+    private class RecentNotificationDto
+    {
+        public string Title { get; set; } = "";
+        public string Content { get; set; } = "";
+        public bool IsRead { get; set; }
+        public string Timestamp { get; set; } = "";
+    }
+}
