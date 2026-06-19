@@ -15,10 +15,16 @@
         </div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             <button @onclick="NavBack" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--border-primary); color: var(--text-secondary); background: transparent;">← Quay lại</button>
-            <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--candle); color: var(--candle); background: transparent;">✏️ Sửa</button>
-            <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: none; background: var(--success); color: white; font-weight: 600;">📋 Bàn giao</button>
+            @if (_userRole == "Admin" || _userRole == "Manager")
+            {
+                <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--candle); color: var(--candle); background: transparent;">✏️ Sửa</button>
+                <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: none; background: var(--success); color: white; font-weight: 600;">📋 Bàn giao</button>
+            }
             <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--ice); color: var(--ice); background: transparent;">🖨️ In hồ sơ</button>
-            <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--danger); color: var(--danger); background: transparent;">🗑️ Xóa</button>
+            @if (_userRole == "Admin")
+            {
+                <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--danger); color: var(--danger); background: transparent;">🗑️ Xóa</button>
+            }
         </div>
     </div>
 
@@ -200,6 +206,8 @@
     private string _activeTab = "info";
     private Models.Corpse? _corpse;
     private bool _loading = true;
+    private string _userRole = "None";
+    private string _userEmail = "";
 
     private async Task EnsureAuthorizedAsync()
     {
@@ -222,6 +230,15 @@
         try
         {
             await EnsureAuthorizedAsync();
+            _userRole = await AdminAuthHelper.GetUserRoleAsync(JS);
+            _userEmail = await AdminAuthHelper.GetUserEmailAsync(JS);
+
+            if (_userRole == "None")
+            {
+                Navigation.NavigateTo("/login");
+                return;
+            }
+
             var dto = await ApiService.GetAsync<CorpseApiDto>($"api/corpses/{Id}");
             if (dto != null)
             {
