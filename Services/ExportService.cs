@@ -231,4 +231,23 @@ public class ExportService
         string jsonData = JsonSerializer.Serialize(payload);
         await _jsRuntime.InvokeVoidAsync("window.ExportHelper.exportSummaryToPdf", jsonData);
     }
+
+    public async Task ExportUsersToExcelAsync(List<UserItem> users)
+    {
+        await EnsureScriptsLoadedAsync();
+
+        var exportData = users.Select(u => new
+        {
+            Id = u.Id,
+            Name = u.Name,
+            Email = u.Email,
+            Phone = u.Phone,
+            Role = u.Role,
+            Status = u.IsActive ? "Hoạt động" : "Tạm khóa",
+            JoinDate = u.JoinDate
+        }).ToList();
+
+        string jsonData = JsonSerializer.Serialize(exportData);
+        await _jsRuntime.InvokeVoidAsync("window.ExportHelper.exportUsersToExcel", jsonData);
+    }
 }

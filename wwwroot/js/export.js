@@ -450,5 +450,29 @@ window.ExportHelper = {
         });
         var dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
         doc.save('Bao_cao_tong_hop_' + dateStr + '.pdf');
+    },
+
+    exportUsersToExcel: function (dataJson) {
+        var rawData = JSON.parse(dataJson);
+        var data = rawData.map(function (item) {
+            return {
+                'Mã': item.Id,
+                'Họ Tên': item.Name,
+                'Email': item.Email,
+                'Số Điện Thoại': item.Phone,
+                'Vai Trò': item.Role,
+                'Trạng Thái': item.Status,
+                'Ngày Tham Gia': item.JoinDate
+            };
+        });
+        var ws = XLSX.utils.json_to_sheet(data);
+        var wscols = [
+            { wch: 8 }, { wch: 22 }, { wch: 25 }, { wch: 18 }, { wch: 12 }, { wch: 15 }, { wch: 15 }
+        ];
+        ws['!cols'] = wscols;
+        var wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Danh sách nhân viên');
+        var dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        XLSX.writeFile(wb, 'Danh_sach_nhan_vien_' + dateStr + '.xlsx');
     }
 };
