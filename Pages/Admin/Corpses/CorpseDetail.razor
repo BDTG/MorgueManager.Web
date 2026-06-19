@@ -14,9 +14,9 @@
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             <button @onclick="NavBack" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--border-primary); color: var(--text-secondary); background: transparent;">← Quay lại</button>
             <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--candle); color: var(--candle); background: transparent;">✏️ Sửa</button>
-            <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: none; background: var(--success); color: white; font-weight: 600;">📋 Bàn giao</button>
+            <button @onclick="StartHandover" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: none; background: var(--success); color: white; font-weight: 600;">📋 Bàn giao</button>
             <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--ice); color: var(--ice); background: transparent;">🖨️ In hồ sơ</button>
-            <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--danger); color: var(--danger); background: transparent;">🗑️ Xóa</button>
+            <button @onclick="StartDelete" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--danger); color: var(--danger); background: transparent;">🗑️ Xóa</button>
         </div>
     </div>
 
@@ -193,6 +193,24 @@
     }
 </div>
 
+<ConfirmDialog IsVisible="@_showDeleteConfirm"
+               Title="Xác nhận xóa hồ sơ"
+               Message="@($"Bạn có chắc chắn muốn xóa vĩnh viễn hồ sơ thi thể của {_corpse?.Name} ({_corpse?.CaseId}) khỏi hệ thống?\nHành động này không thể hoàn tác.")"
+               ConfirmText="Xóa hồ sơ"
+               CancelText="Hủy"
+               Type="danger"
+               OnConfirm="ConfirmDelete"
+               OnCancel="() => _showDeleteConfirm = false" />
+
+<ConfirmDialog IsVisible="@_showHandoverConfirm"
+               Title="Xác nhận bàn giao thi thể"
+               Message="@($"Xác nhận bàn giao thi thể {_corpse?.Name} ({_corpse?.CaseId}) cho thân nhân và giải phóng ngăn tủ {_corpse?.StorageSlot}?")"
+               ConfirmText="Xác nhận bàn giao"
+               CancelText="Hủy"
+               Type="success"
+               OnConfirm="ConfirmHandover"
+               OnCancel="() => _showHandoverConfirm = false" />
+
 @code {
     [Parameter] public int Id { get; set; }
     private string _activeTab = "info";
@@ -259,5 +277,49 @@
         if (text.Contains("QUÁ HẠN") || text.Contains("Lây nhiễm")) return "var(--danger)";
         if (text.Contains("Vô danh")) return "orange";
         return "var(--ice)";
+    }
+
+    private bool _showDeleteConfirm;
+    private bool _showHandoverConfirm;
+
+    private void StartDelete() => _showDeleteConfirm = true;
+    private void StartHandover() => _showHandoverConfirm = true;
+
+    private async Task ConfirmDelete()
+    {
+        _showDeleteConfirm = false;
+        if (_corpse != null)
+        {
+            try
+            {
+                await Supabase.From<Models.Corpse>().Delete(_corpse);
+                Navigation.NavigateTo("/admin/corpses");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+    }
+
+    private async Task ConfirmHandover()
+    {
+        _showHandoverConfirm = false;
+        if (_corpse != null)
+        {
+            try
+            {
+                _corpse.Status = "Bàn giao";
+                _corpse.StorageSlot = null;
+                _corpse.StorageUnit = null;
+                _corpse.Temp = null;
+                await Supabase.From<Models.Corpse>().Update(_corpse);
+                _corpse = await Supabase.From<Models.Corpse>().Where(x => x.Id == Id).Single();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
     }
 }

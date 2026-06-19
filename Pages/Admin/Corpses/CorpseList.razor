@@ -108,10 +108,10 @@
                                 <div style="display: flex; align-items: center; gap: 2px;">
                                     <button @onclick="() => OpenCorpseDetail(c.Id)" @onclick:stopPropagation="true" class="action-btn" style="color: var(--ice);" title="Xem chi tiết">👁</button>
                                     <button @onclick="() => EditCorpse(c)" @onclick:stopPropagation="true" class="action-btn" style="color: var(--candle);" title="Sửa">✏</button>
-                                    <button @onclick="() => DeleteCorpse(c)" @onclick:stopPropagation="true" class="action-btn" style="color: var(--danger);" title="Xóa">🗑</button>
+                                    <button @onclick="() => StartDeleteCorpse(c)" @onclick:stopPropagation="true" class="action-btn" style="color: var(--danger);" title="Xóa">🗑</button>
                                     @if (c.Status == "Lưu kho")
                                     {
-                                        <button @onclick="() => HandoverCorpse(c)" @onclick:stopPropagation="true" class="action-btn" style="color: var(--success);" title="Bàn giao">📋</button>
+                                        <button @onclick="() => StartHandoverCorpse(c)" @onclick:stopPropagation="true" class="action-btn" style="color: var(--success);" title="Bàn giao">📋</button>
                                     }
                                 </div>
                                 <div style="display: flex; justify-content: flex-end; margin-top: 2px;">
@@ -163,7 +163,7 @@
                                         <a href="tel:@c.NextOfKin.Phone" class="font-ui" style="font-size: 12px; font-weight: 500; color: var(--success); text-decoration: none; display: flex; align-items: center; gap: 4px;">📞 Liên hệ thân nhân</a>
                                         @if (c.Status == "Lưu kho")
                                         {
-                                            <button @onclick="() => HandoverCorpse(c)" class="font-ui" style="font-size: 12px; font-weight: 500; color: var(--success); background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 4px;">📋 Bàn giao</button>
+                                            <button @onclick="() => StartHandoverCorpse(c)" class="font-ui" style="font-size: 12px; font-weight: 500; color: var(--success); background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 4px;">📋 Bàn giao</button>
                                         }
                                         @if (c.StorageSlot is not null)
                                         {
@@ -281,6 +281,24 @@
     </Modal>
 }
 
+<ConfirmDialog IsVisible="@_showDeleteConfirm"
+               Title="Xác nhận xóa hồ sơ"
+               Message="@($"Bạn có chắc chắn muốn xóa vĩnh viễn hồ sơ thi thể của {_corpseToDelete?.Name} ({_corpseToDelete?.CaseId}) khỏi hệ thống?\nHành động này không thể hoàn tác.")"
+               ConfirmText="Xóa vĩnh viễn"
+               CancelText="Hủy"
+               Type="danger"
+               OnConfirm="ConfirmDeleteCorpse"
+               OnCancel="() => _showDeleteConfirm = false" />
+
+<ConfirmDialog IsVisible="@_showHandoverConfirm"
+               Title="Xác nhận bàn giao thi thể"
+               Message="@($"Xác nhận bàn giao thi thể {_corpseToHandover?.Name} ({_corpseToHandover?.CaseId}) cho thân nhân và giải phóng ngăn tủ {_corpseToHandover?.StorageSlot}?")"
+               ConfirmText="Xác nhận bàn giao"
+               CancelText="Hủy"
+               Type="success"
+               OnConfirm="ConfirmHandoverCorpse"
+               OnCancel="() => _showHandoverConfirm = false" />
+
 @code {
     private async Task ExportToExcel()
     {
@@ -357,6 +375,11 @@
     private List<Models.Corpse> _allCorpses = new();
     private List<Models.Corpse> _filteredCorpses = new();
     private List<Models.Corpse> _paginatedCorpses = new();
+
+    private bool _showDeleteConfirm;
+    private Models.Corpse? _corpseToDelete;
+    private bool _showHandoverConfirm;
+    private Models.Corpse? _corpseToHandover;
 
     private bool HasFilters => !string.IsNullOrEmpty(_search) || !string.IsNullOrEmpty(_statusFilter) || !string.IsNullOrEmpty(_genderFilter) || !string.IsNullOrEmpty(_dateFrom) || !string.IsNullOrEmpty(_dateTo);
 
@@ -581,33 +604,55 @@
         }
     }
 
-    private async Task DeleteCorpse(Models.Corpse c)
+    private void StartDeleteCorpse(Models.Corpse c)
     {
-        try
+        _corpseToDelete = c;
+        _showDeleteConfirm = true;
+    }
+
+    private async Task ConfirmDeleteCorpse()
+    {
+        _showDeleteConfirm = false;
+        if (_corpseToDelete != null)
         {
-            await Supabase.From<Models.Corpse>().Delete(c);
-            await LoadCorpsesAsync();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
+            try
+            {
+                await Supabase.From<Models.Corpse>().Delete(_corpseToDelete);
+                _corpseToDelete = null;
+                await LoadCorpsesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
     }
 
-    private async Task HandoverCorpse(Models.Corpse c)
+    private void StartHandoverCorpse(Models.Corpse c)
     {
-        try
+        _corpseToHandover = c;
+        _showHandoverConfirm = true;
+    }
+
+    private async Task ConfirmHandoverCorpse()
+    {
+        _showHandoverConfirm = false;
+        if (_corpseToHandover != null)
         {
-            c.Status = "Bàn giao";
-            c.StorageSlot = null;
-            c.StorageUnit = null;
-            c.Temp = null;
-            await Supabase.From<Models.Corpse>().Update(c);
-            await LoadCorpsesAsync();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
+            try
+            {
+                _corpseToHandover.Status = "Bàn giao";
+                _corpseToHandover.StorageSlot = null;
+                _corpseToHandover.StorageUnit = null;
+                _corpseToHandover.Temp = null;
+                await Supabase.From<Models.Corpse>().Update(_corpseToHandover);
+                _corpseToHandover = null;
+                await LoadCorpsesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
     }
 
