@@ -68,6 +68,12 @@
     --modal-overlay: rgba(0, 0, 0, 0.6);
     --sidebar-width: 260px;
     --topbar-height: 64px;
+    --shift-morning-bg: rgba(245, 158, 11, 0.15);
+    --shift-morning-text: #FBBF24;
+    --shift-evening-bg: rgba(249, 115, 22, 0.15);
+    --shift-evening-text: #FB923C;
+    --shift-night-bg: rgba(139, 92, 246, 0.15);
+    --shift-night-text: #A78BFA;
 }
 
 /* === LIGHT MODE === */
@@ -136,6 +142,12 @@
     --modal-overlay: rgba(15, 23, 42, 0.4);
     --sidebar-width: 260px;
     --topbar-height: 64px;
+    --shift-morning-bg: #FEF3C7;
+    --shift-morning-text: #B45309;
+    --shift-evening-bg: #FFEDD5;
+    --shift-evening-text: #C2410C;
+    --shift-night-bg: #F3E8FF;
+    --shift-night-text: #6D28D9;
 }
 
 *, *::before, *::after { 
@@ -712,10 +724,27 @@ body {
 
 /* Shift bar */
 .shift-bar {
-    font-size: 9px; padding: 1px 4px; border-radius: 3px;
-    margin-bottom: 1px; cursor: pointer;
+    font-size: 10px; padding: 2px 6px; border-radius: 4px;
+    margin-bottom: 2px; cursor: pointer;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    font-family: 'Inter', sans-serif; font-weight: 500;
+    font-family: 'Inter', sans-serif; font-weight: 600;
+}
+.shift-morning {
+    background-color: var(--shift-morning-bg);
+    color: var(--shift-morning-text);
+}
+.shift-evening {
+    background-color: var(--shift-evening-bg);
+    color: var(--shift-evening-text);
+}
+.shift-night {
+    background-color: var(--shift-night-bg);
+    color: var(--shift-night-text);
+}
+.shift-missing {
+    background-color: var(--badge-quahan-bg);
+    color: var(--danger);
+    border: 1px dashed var(--danger);
 }
 
 /* Filter bar */

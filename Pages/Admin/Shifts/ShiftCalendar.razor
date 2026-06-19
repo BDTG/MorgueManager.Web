@@ -47,11 +47,11 @@
                     var isToday = day == DateTime.Now.Day;
                     <div class="calendar-cell @(isToday ? "today" : "")">
                         <div class="calendar-date @(isToday ? "today" : "")">@day</div>
-                        <div class="shift-bar" style="background-color: rgba(250,204,21,0.2); color: #F59E0B;">🌅 Nguyễn A</div>
-                        <div class="shift-bar" style="background-color: rgba(251,146,60,0.2); color: #F97316;">🌆 Lê C</div>
+                        <div class="shift-bar shift-morning">🌅 Nguyễn A</div>
+                        <div class="shift-bar shift-evening">🌆 Lê C</div>
                         @if (day % 3 == 0)
                         {
-                            <div class="shift-bar" style="background-color: rgba(239,68,68,0.15); color: var(--danger); border: 1px dashed var(--danger);">⚠️ Thiếu nhân viên</div>
+                            <div class="shift-bar shift-missing">⚠️ Thiếu nhân viên</div>
                         }
                     </div>
                 }
