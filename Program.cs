@@ -13,6 +13,7 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:5075") });
 builder.Services.AddScoped<ApiService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<ExportService>();
 builder.Services.AddSingleton<TemperatureSimulatorService>();
 
 var supabaseSection = builder.Configuration.GetSection("Supabase");
