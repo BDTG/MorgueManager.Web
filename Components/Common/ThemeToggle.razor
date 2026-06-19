@@ -1,13 +1,13 @@
 @inject IJSRuntime JS
 
-<button @onclick="ToggleTheme" class="p-2 rounded-lg transition-all duration-300 hover:scale-110" style="color: var(--text-secondary); background: none; border: none; cursor: pointer;" aria-label="Toggle theme">
+<button @onclick="ToggleTheme" class="p-2 rounded-lg transition-all duration-300 hover:bg-black/5 dark:hover:bg-white/5 flex-shrink-0" style="background: transparent; border: none; cursor: pointer; color: @(_isDark ? "#facc15" : "#64748b");" aria-label="Toggle theme">
     @if (_isDark)
     {
-        <LucideIcon Name="sun" Class="w-[18px] h-[18px]" />
+        <LucideIcon Name="sun" Class="w-5 h-5" />
     }
     else
     {
-        <LucideIcon Name="moon" Class="w-[18px] h-[18px]" />
+        <LucideIcon Name="moon" Class="w-5 h-5" />
     }
 </button>
 
@@ -34,6 +34,7 @@
     private async Task ToggleTheme()
     {
         _isDark = !_isDark;
+        StateHasChanged(); // Force update UI immediately
         var theme = _isDark ? "dark" : "light";
         try
         {

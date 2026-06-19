@@ -24,8 +24,8 @@
             {
                 <div class="fixed inset-0 z-40" @onclick="CloseNotifications"></div>
                 
-                <div class="absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-xs sm:max-w-none sm:w-80 rounded-xl shadow-lg z-50 overflow-hidden" 
-                     style="background-color: var(--bg-card); border: 1px solid var(--border-primary); box-shadow: var(--shadow-xl); transform: translateX(10px);">
+                <div class="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 mt-2 sm:w-80 rounded-xl shadow-lg z-50 overflow-hidden" 
+                     style="top: var(--topbar-height); sm:top-auto; background-color: var(--bg-card); border: 1px solid var(--border-primary); box-shadow: var(--shadow-xl);">
                     <div class="p-4 border-b flex justify-between items-center" style="border-color: var(--border-primary);">
                         <h3 class="font-ui text-sm font-semibold" style="color: var(--text-primary);">Thông báo (@_unreadCount)</h3>
                         @if (_unreadCount > 0)
