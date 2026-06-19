@@ -72,3 +72,9 @@ public class UpdateCorpseDto
     public BiohazardLevel Biohazard { get; set; } = BiohazardLevel.None;
     public NextOfKinDto NextOfKin { get; set; } = new();
 }
+
+public class WeightLogDto
+{
+    public string SlotNumber { get; set; } = "";
+    public double Weight { get; set; }
+}
