@@ -284,6 +284,7 @@
 @code {
     private async Task ExportToExcel()
     {
+        Console.WriteLine("ExportToExcel clicked. Count: " + (_filteredCorpses?.Count ?? 0));
         try
         {
             await ExportService.ExportToExcelAsync(_filteredCorpses);
@@ -296,6 +297,7 @@
 
     private async Task ExportToPdf()
     {
+        Console.WriteLine("ExportToPdf clicked. Count: " + (_filteredCorpses?.Count ?? 0));
         try
         {
             await ExportService.ExportToPdfAsync(_filteredCorpses);
