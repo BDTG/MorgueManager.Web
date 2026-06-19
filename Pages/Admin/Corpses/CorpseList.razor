@@ -1,7 +1,9 @@
 @page "/admin/corpses"
 @layout Components.Layout.AdminLayout
 @inject NavigationManager Navigation
-@inject Supabase.Client Supabase
+@inject MorgueManager.Web.Services.ApiService ApiService
+@inject HttpClient Http
+@inject IJSRuntime JS
 
 <div>
     <!-- Top Bar -->
@@ -333,6 +335,22 @@
 
     private bool HasFilters => !string.IsNullOrEmpty(_search) || !string.IsNullOrEmpty(_statusFilter) || !string.IsNullOrEmpty(_genderFilter) || !string.IsNullOrEmpty(_dateFrom) || !string.IsNullOrEmpty(_dateTo);
 
+    private async Task EnsureAuthorizedAsync()
+    {
+        try
+        {
+            var token = await JS.InvokeAsync<string>("localStorage.getItem", "morguemanager-token");
+            if (!string.IsNullOrEmpty(token))
+            {
+                Http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error injecting auth header: " + ex.Message);
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await LoadCorpsesAsync();
@@ -342,27 +360,50 @@
     {
         try
         {
-            var response = await Supabase.From<Models.Corpse>().Get();
-            _allCorpses = response.Models ?? new List<Models.Corpse>();
-
-            if (_allCorpses.Count == 0)
+            await EnsureAuthorizedAsync();
+            var dtoList = await ApiService.GetAsync<List<CorpseApiDto>>("api/corpses");
+            if (dtoList != null)
             {
-                SeedCorpses();
-                if (_allCorpses != null && _allCorpses.Count > 0)
+                _allCorpses = dtoList.Select(dto => new Models.Corpse
                 {
-                    await Supabase.From<Models.Corpse>().Insert(_allCorpses);
-                }
-                var seedResponse = await Supabase.From<Models.Corpse>().Get();
-                _allCorpses = seedResponse.Models ?? new List<Models.Corpse>();
+                    Id = dto.Id,
+                    CaseId = dto.CaseId,
+                    Name = dto.Name,
+                    Cccd = dto.Cccd,
+                    Gender = dto.Gender,
+                    BirthDate = dto.BirthDate,
+                    Age = dto.Age,
+                    CauseOfDeath = dto.CauseOfDeath,
+                    DateOfDeath = dto.DateOfDeath,
+                    DateAdmitted = dto.DateAdmitted,
+                    Status = dto.Status,
+                    StorageUnit = dto.StorageUnit,
+                    StorageSlot = dto.StorageSlot,
+                    Temp = dto.Temp,
+                    DaysStored = dto.DaysStored,
+                    Priority = dto.Priority,
+                    Notes = dto.Notes,
+                    NextOfKin = new Models.NextOfKinInfo
+                    {
+                        Name = dto.NextOfKin?.Name ?? "",
+                        Phone = dto.NextOfKin?.Phone ?? "",
+                        Relationship = dto.NextOfKin?.Relationship ?? ""
+                    },
+                    IsInfectious = dto.Biohazard == BiohazardLevel.Infectious || dto.Biohazard == BiohazardLevel.HighRisk,
+                    InfectiousGroup = dto.Biohazard == BiohazardLevel.HighRisk ? "Nhóm nguy hiểm cao (Khu B)" : dto.Biohazard == BiohazardLevel.Infectious ? "Nhóm lây nhiễm" : "",
+                    RequiresDeepFreeze = dto.StorageSlot != null && dto.StorageSlot.StartsWith("C"),
+                    IsUnidentified = dto.Name.Contains("Vô danh") || dto.Notes.Contains("chưa xác định")
+                }).ToList();
+            }
+            else
+            {
+                _allCorpses = new List<Models.Corpse>();
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Error loading from Supabase: " + ex.Message);
-            if (_allCorpses == null || _allCorpses.Count == 0)
-            {
-                SeedCorpses();
-            }
+            Console.WriteLine("Error loading from API: " + ex.Message);
+            _allCorpses = new List<Models.Corpse>();
         }
         ApplyFilters();
     }
@@ -544,8 +585,30 @@
     {
         try
         {
-            c.DaysStored += 1;
-            await Supabase.From<Models.Corpse>().Update(c);
+            await EnsureAuthorizedAsync();
+            var dto = new UpdateCorpseDto
+            {
+                Name = c.Name,
+                Cccd = c.Cccd,
+                Gender = c.Gender,
+                BirthDate = c.BirthDate,
+                Age = c.Age,
+                CauseOfDeath = c.CauseOfDeath,
+                DateOfDeath = c.DateOfDeath,
+                Status = c.Status,
+                StorageUnit = c.StorageUnit,
+                StorageSlot = c.StorageSlot,
+                Temp = c.Temp,
+                Notes = c.Notes,
+                Biohazard = c.IsInfectious ? BiohazardLevel.Infectious : BiohazardLevel.None,
+                NextOfKin = new NextOfKinDto
+                {
+                    Name = c.NextOfKin?.Name ?? "",
+                    Phone = c.NextOfKin?.Phone ?? "",
+                    Relationship = c.NextOfKin?.Relationship ?? ""
+                }
+            };
+            await ApiService.PutAsync<object>($"api/corpses/{c.Id}", dto);
             await LoadCorpsesAsync();
         }
         catch (Exception ex)
@@ -558,7 +621,8 @@
     {
         try
         {
-            await Supabase.From<Models.Corpse>().Delete(c);
+            await EnsureAuthorizedAsync();
+            await ApiService.DeleteAsync($"api/corpses/{c.Id}");
             await LoadCorpsesAsync();
         }
         catch (Exception ex)
@@ -571,11 +635,30 @@
     {
         try
         {
-            c.Status = "Bàn giao";
-            c.StorageSlot = null;
-            c.StorageUnit = null;
-            c.Temp = null;
-            await Supabase.From<Models.Corpse>().Update(c);
+            await EnsureAuthorizedAsync();
+            var dto = new UpdateCorpseDto
+            {
+                Name = c.Name,
+                Cccd = c.Cccd,
+                Gender = c.Gender,
+                BirthDate = c.BirthDate,
+                Age = c.Age,
+                CauseOfDeath = c.CauseOfDeath,
+                DateOfDeath = c.DateOfDeath,
+                Status = "Bàn giao",
+                StorageSlot = null,
+                StorageUnit = null,
+                Temp = null,
+                Notes = c.Notes,
+                Biohazard = c.IsInfectious ? BiohazardLevel.Infectious : BiohazardLevel.None,
+                NextOfKin = new NextOfKinDto
+                {
+                    Name = c.NextOfKin?.Name ?? "",
+                    Phone = c.NextOfKin?.Phone ?? "",
+                    Relationship = c.NextOfKin?.Relationship ?? ""
+                }
+            };
+            await ApiService.PutAsync<object>($"api/corpses/{c.Id}", dto);
             await LoadCorpsesAsync();
         }
         catch (Exception ex)
@@ -588,43 +671,40 @@
     {
         if (string.IsNullOrWhiteSpace(_newName)) return;
 
-        var newCorpse = new Models.Corpse
+        var dto = new CreateCorpseDto
         {
-            CaseId = $"MC-{DateTime.Now.Year}-{(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() % 10000):D4}",
             Name = _newName,
+            Cccd = string.IsNullOrWhiteSpace(_newCccd) ? "000000000000" : _newCccd,
             Gender = _newGender,
             BirthDate = _newBirthDate.ToString("yyyy-MM-dd"),
-            Cccd = _newCccd,
+            Age = DateTime.Now.Year - _newBirthDate.Year,
             CauseOfDeath = _newCause,
             DateOfDeath = _newDateOfDeath.ToString("yyyy-MM-dd"),
-            DateAdmitted = _newDateAdmitted.ToString("yyyy-MM-dd"),
             Status = string.IsNullOrEmpty(_newSlot) ? "Tiếp nhận" : "Lưu kho",
             StorageSlot = string.IsNullOrEmpty(_newSlot) ? null : _newSlot,
             StorageUnit = string.IsNullOrEmpty(_newSlot) ? null : (_newSlot.StartsWith("A") ? "Cold Room A" : _newSlot.StartsWith("B") ? "Cold Room B" : "Cold Room C"),
             Temp = string.IsNullOrEmpty(_newSlot) ? null : (_newSlot.StartsWith("C") ? -5.5 : 2.5),
-            DaysStored = 1,
-            Priority = "NORMAL",
-            NextOfKin = new NextOfKinInfo
+            Notes = _newNotes,
+            Biohazard = BiohazardLevel.None,
+            NextOfKin = new NextOfKinDto
             {
                 Name = "Thân nhân " + _newName,
                 Phone = _newNokPhone,
                 Relationship = "Người thân"
-            },
-            Notes = _newNotes
+            }
         };
 
         try
         {
-            await Supabase.From<Models.Corpse>().Insert(newCorpse);
+            await EnsureAuthorizedAsync();
+            await ApiService.PostAsync<object>("api/corpses", dto);
             _showCreateModal = false;
             await LoadCorpsesAsync();
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
-            _allCorpses.Add(newCorpse);
+            Console.WriteLine("Error saving new corpse: " + ex.Message);
             _showCreateModal = false;
-            ApplyFilters();
         }
     }
 
