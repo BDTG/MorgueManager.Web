@@ -112,11 +112,23 @@
         }
     }
 
+    private string _userRole = "None";
+    private string _userEmail = "";
+
     protected override async Task OnInitializedAsync()
     {
         try
         {
             await EnsureAuthorizedAsync();
+            _userRole = await AdminAuthHelper.GetUserRoleAsync(JS);
+            _userEmail = await AdminAuthHelper.GetUserEmailAsync(JS);
+
+            if (_userRole == "None")
+            {
+                Navigation.NavigateTo("/login");
+                return;
+            }
+
             var corpses = await ApiService.GetAsync<List<CorpseApiDto>>("api/corpses");
             var corpseList = corpses ?? new List<CorpseApiDto>();
 
