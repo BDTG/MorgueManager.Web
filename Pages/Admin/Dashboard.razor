@@ -3,6 +3,7 @@
 @inject NavigationManager Navigation
 @inject TemperatureSimulatorService TempService
 @inject IJSRuntime JS
+@inject MorgueManager.Web.Services.TourService TourService
 @implements IDisposable
 
 <div class="min-h-screen pt-4 pb-12">
@@ -23,7 +24,7 @@
         </div>
 
         <!-- KPI Cards Grid -->
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8" id="tour-kpi-grid">
             <KpiCard Icon="users" Label="Tổng thi thể" Value="127" SubText="+3 tuần này" Color="#3B82F6" OnClick="NavToCorpses" />
             <KpiCard Icon="snowflake" Label="Đang lưu kho" Value="10" SubText="Hiện tại" Color="#0EA5E9" OnClick="NavToCorpses" />
             <KpiCard Icon="alert-triangle" Label="Quá hạn / Cảnh báo" Value="2 / 3" Color="#EF4444" OnClick="NavToCorpses" />
@@ -34,7 +35,7 @@
         <!-- Charts + Overdue Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <!-- Chart Container -->
-            <div class="lg:col-span-2 rounded-xl p-6 relative" style="background-color: var(--bg-card); border: 1px solid var(--border-primary);">
+            <div class="lg:col-span-2 rounded-xl p-6 relative" style="background-color: var(--bg-card); border: 1px solid var(--border-primary);" id="tour-chart-container">
                 <div class="flex items-start justify-between mb-8">
                     <div>
                         <h3 class="font-ui text-base font-bold flex items-center gap-2" style="color: var(--text-primary);">
@@ -168,7 +169,7 @@
             <LucideIcon Name="package" Class="w-4 h-4" Style="color: var(--ice);" /> 
             <span>Truy cập nhanh</span>
         </h3>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8" id="tour-quick-links">
             @foreach (var link in _quickLinks)
             {
                 <button @onclick="() => Navigation.NavigateTo(link.Route)" 
@@ -225,7 +226,7 @@
             </div>
 
             <!-- Recent Activity Table -->
-            <div class="lg:col-span-2 rounded-xl p-6 h-full" style="background-color: var(--bg-card); border: 1px solid var(--border-primary);">
+            <div class="lg:col-span-2 rounded-xl p-6 h-full" style="background-color: var(--bg-card); border: 1px solid var(--border-primary);" id="tour-recent-activity">
                 <h3 class="font-ui text-sm font-semibold mb-4 flex items-center gap-2" style="color: var(--text-primary);">
                     <LucideIcon Name="search" Class="w-4 h-4" Style="color: var(--ice);" /> 
                     <span>Hoạt động gần đây</span>
@@ -390,6 +391,7 @@
         if (firstRender)
         {
             await JS.InvokeVoidAsync("initDashboardTooltip");
+            TourService.TriggerStateChangeFromPage();
         }
     }
 
