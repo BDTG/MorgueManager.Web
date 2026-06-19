@@ -1,83 +1,144 @@
 @page "/admin/logs"
 @layout Components.Layout.AdminLayout
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@inject HttpClient Http
 @inject MorgueManager.Web.Services.ApiService ApiService
 
-<div>
-    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px;">
-        <div>
-            <div class="font-ui" style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Dashboard / Nhật ký</div>
-            <h1 class="font-ui" style="font-size: 22px; font-weight: 700; margin: 0; color: var(--text-primary);">📝 Nhật ký hoạt động</h1>
+@if (!_isLoaded)
+{
+    <div class="font-ui" style="padding: 40px; text-align: center; color: var(--text-muted);">
+        Đang tải nhật ký hoạt động...
+    </div>
+}
+else if (_isAccessDenied)
+{
+    <div class="font-ui" style="padding: 40px; text-align: center; margin-top: 40px;">
+        <div style="font-size: 48px; margin-bottom: 16px;">🚫</div>
+        <h2 style="font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">Quyền truy cập bị từ chối</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 24px;">Bạn không có quyền truy cập vào trang này. Chức năng này chỉ dành cho Quản lý hoặc Quản trị viên.</p>
+        <button @onclick="NavToDashboard" style="padding: 8px 16px; border-radius: 8px; border: none; background: linear-gradient(135deg, #3B82F6, #2563EB); color: white; cursor: pointer; font-size: 13px; font-weight: 600;">Quay lại Dashboard</button>
+    </div>
+}
+else
+{
+    <div>
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px;">
+            <div>
+                <div class="font-ui" style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Dashboard / Nhật ký</div>
+                <h1 class="font-ui" style="font-size: 22px; font-weight: 700; margin: 0; color: var(--text-primary);">📝 Nhật ký hoạt động</h1>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--success); color: var(--success); background: transparent;">📥 Xuất log</button>
+                <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--border-primary); color: var(--text-secondary); background: transparent;">🔄 Làm mới</button>
+            </div>
         </div>
-        <div style="display: flex; gap: 8px;">
-            <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--success); color: var(--success); background: transparent;">📥 Xuất log</button>
-            <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--border-primary); color: var(--text-secondary); background: transparent;">🔄 Làm mới</button>
+
+        <div class="filter-bar">
+            <input class="filter-input" placeholder="🔍 Tìm theo nội dung..." />
+            <select class="filter-select">
+                <option value="">Người thực hiện</option>
+                <option>Nguyễn Thị B</option>
+                <option>Trần Văn C</option>
+                <option>Lê Thị D</option>
+            </select>
+            <select class="filter-select">
+                <option value="">Loại hành động</option>
+                <option>Tạo mới</option>
+                <option>Cập nhật</option>
+                <option>Xóa</option>
+                <option>Đăng nhập</option>
+                <option>🌡️ Thay đổi nhiệt độ</option>
+            </select>
+            <input type="date" class="filter-input" style="min-width: 140px;" />
+            <button class="font-ui" style="padding: 8px 12px; border: none; background: none; color: var(--text-muted); cursor: pointer; font-size: 12px;">🔄 Xóa bộ lọc</button>
+        </div>
+
+        <div style="border-radius: 12px; border: 1px solid var(--border-primary); overflow: hidden; background-color: var(--bg-card);">
+            <table class="data-table">
+                <thead><tr><th>#</th><th>Thời gian</th><th>Người thực hiện</th><th>Hành động</th><th>Chi tiết</th><th>Trang liên quan</th></tr></thead>
+                <tbody>
+                    @foreach (var log in _logs)
+                    {
+                        <tr>
+                            <td style="font-size: 12px; color: var(--text-muted);">@log.Id</td>
+                            <td style="font-family: monospace; font-size: 12px;">@log.Time</td>
+                            <td style="font-size: 13px;">@log.User</td>
+                            <td><span class="badge-pill" style="background-color: @(log.BadgeBg); color: @(log.BadgeText);">@log.Action</span></td>
+                            <td style="font-size: 13px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@log.Detail</td>
+                            <td><a href="@log.Link" class="font-ui" style="font-size: 12px; color: var(--ice); text-decoration: none;">@log.LinkText</a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+            <div class="font-ui" style="font-size: 13px; color: var(--text-muted);">Hiển thị 1-25 / @_logs.Count kết quả</div>
+            <div style="display: flex; gap: 4px;">
+                <button class="font-ui" style="padding: 6px 12px; border: 1px solid var(--border-primary); background: var(--bg-card); border-radius: 6px; color: var(--text-secondary); cursor: pointer; font-size: 12px;">‹</button>
+                <button class="font-ui" style="padding: 6px 12px; border: 1px solid var(--ice); background: var(--ice); border-radius: 6px; color: var(--bg-primary); cursor: pointer; font-size: 12px; font-weight: 600;">1</button>
+                <button class="font-ui" style="padding: 6px 12px; border: 1px solid var(--border-primary); background: var(--bg-card); border-radius: 6px; color: var(--text-secondary); cursor: pointer; font-size: 12px;">2</button>
+                <button class="font-ui" style="padding: 6px 12px; border: 1px solid var(--border-primary); background: var(--bg-card); border-radius: 6px; color: var(--text-secondary); cursor: pointer; font-size: 12px;">3</button>
+                <button class="font-ui" style="padding: 6px 12px; border: 1px solid var(--border-primary); background: var(--bg-card); border-radius: 6px; color: var(--text-secondary); cursor: pointer; font-size: 12px;">›</button>
+            </div>
         </div>
     </div>
-
-    <div class="filter-bar">
-        <input class="filter-input" placeholder="🔍 Tìm theo nội dung..." />
-        <select class="filter-select">
-            <option value="">Người thực hiện</option>
-            <option>Nguyễn Thị B</option>
-            <option>Trần Văn C</option>
-            <option>Lê Thị D</option>
-        </select>
-        <select class="filter-select">
-            <option value="">Loại hành động</option>
-            <option>Tạo mới</option>
-            <option>Cập nhật</option>
-            <option>Xóa</option>
-            <option>Đăng nhập</option>
-            <option>🌡️ Thay đổi nhiệt độ</option>
-        </select>
-        <input type="date" class="filter-input" style="min-width: 140px;" />
-        <button class="font-ui" style="padding: 8px 12px; border: none; background: none; color: var(--text-muted); cursor: pointer; font-size: 12px;">🔄 Xóa bộ lọc</button>
-    </div>
-
-    <div style="border-radius: 12px; border: 1px solid var(--border-primary); overflow: hidden; background-color: var(--bg-card);">
-        <table class="data-table">
-            <thead><tr><th>#</th><th>Thời gian</th><th>Người thực hiện</th><th>Hành động</th><th>Chi tiết</th><th>Trang liên quan</th></tr></thead>
-            <tbody>
-                @foreach (var log in _logs)
-                {
-                    <tr>
-                        <td style="font-size: 12px; color: var(--text-muted);">@log.Id</td>
-                        <td style="font-family: monospace; font-size: 12px;">@log.Time</td>
-                        <td style="font-size: 13px;">@log.User</td>
-                        <td><span class="badge-pill" style="background-color: @(log.BadgeBg); color: @(log.BadgeText);">@log.Action</span></td>
-                        <td style="font-size: 13px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@log.Detail</td>
-                        <td><a href="@log.Link" class="font-ui" style="font-size: 12px; color: var(--ice); text-decoration: none;">@log.LinkText</a></td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
-        <div class="font-ui" style="font-size: 13px; color: var(--text-muted);">Hiển thị 1-25 / @_logs.Count kết quả</div>
-        <div style="display: flex; gap: 4px;">
-            <button class="font-ui" style="padding: 6px 12px; border: 1px solid var(--border-primary); background: var(--bg-card); border-radius: 6px; color: var(--text-secondary); cursor: pointer; font-size: 12px;">‹</button>
-            <button class="font-ui" style="padding: 6px 12px; border: 1px solid var(--ice); background: var(--ice); border-radius: 6px; color: var(--bg-primary); cursor: pointer; font-size: 12px; font-weight: 600;">1</button>
-            <button class="font-ui" style="padding: 6px 12px; border: 1px solid var(--border-primary); background: var(--bg-card); border-radius: 6px; color: var(--text-secondary); cursor: pointer; font-size: 12px;">2</button>
-            <button class="font-ui" style="padding: 6px 12px; border: 1px solid var(--border-primary); background: var(--bg-card); border-radius: 6px; color: var(--text-secondary); cursor: pointer; font-size: 12px;">3</button>
-            <button class="font-ui" style="padding: 6px 12px; border: 1px solid var(--border-primary); background: var(--bg-card); border-radius: 6px; color: var(--text-secondary); cursor: pointer; font-size: 12px;">›</button>
-        </div>
-    </div>
-</div>
+}
 
 @code {
     private List<LogEntry> _logs = new();
     private string _rawLogs = "";
+    private string _userRole = "None";
+    private string _userEmail = "";
+    private bool _isLoaded = false;
+    private bool _isAccessDenied = false;
+
+    private async Task EnsureAuthorizedAsync()
+    {
+        try
+        {
+            var token = await JS.InvokeAsync<string>("localStorage.getItem", "morguemanager-token");
+            if (!string.IsNullOrEmpty(token))
+            {
+                Http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error injecting auth header: " + ex.Message);
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
+        _userRole = await AdminAuthHelper.GetUserRoleAsync(JS);
+        _userEmail = await AdminAuthHelper.GetUserEmailAsync(JS);
+
+        if (_userRole == "None")
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        if (_userRole != "Admin" && _userRole != "Manager")
+        {
+            _isAccessDenied = true;
+            _isLoaded = true;
+            return;
+        }
+
         await LoadLogsAsync();
+        _isLoaded = true;
     }
+
+    private void NavToDashboard() => Navigation.NavigateTo("/admin/dashboard");
 
     private async Task LoadLogsAsync()
     {
         try
         {
+            await EnsureAuthorizedAsync();
             var res = await ApiService.GetAsync<LogsResponse>("api/logs");
             if (res != null && !string.IsNullOrEmpty(res.Logs))
             {
