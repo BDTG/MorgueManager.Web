@@ -46,11 +46,15 @@
                 {
                     var isToday = day == DateTime.Now.Day;
                     var currentDay = day; // capture variable for lambda
+                    var dayShifts = _monthShifts.Where(s => s.Date.Day == currentDay).ToList();
                     <div class="calendar-cell @(isToday ? "today" : "")" @onclick="() => OpenAssignModalForDate(currentDay)">
                         <div class="calendar-date @(isToday ? "today" : "")">@day</div>
-                        <div class="shift-bar shift-morning" @onclick:stopPropagation="true" @onclick="@(() => OpenEditModalForShift(currentDay, "morning", "Nguyễn A"))">🌅 Nguyễn A</div>
-                        <div class="shift-bar shift-evening" @onclick:stopPropagation="true" @onclick="@(() => OpenEditModalForShift(currentDay, "evening", "Lê C"))">🌆 Lê C</div>
-                        @if (day % 3 == 0)
+                        @foreach (var shift in dayShifts)
+                        {
+                            var shiftIcon = shift.ShiftType == "morning" ? "🌅" : shift.ShiftType == "evening" ? "🌆" : "🌙";
+                            <div class="shift-bar shift-@shift.ShiftType" @onclick:stopPropagation="true" @onclick="@(() => OpenEditModalForShift(currentDay, shift.ShiftType, shift.StaffName))">@shiftIcon @shift.StaffName</div>
+                        }
+                        @if (day % 3 == 0 && !dayShifts.Any())
                         {
                             <div class="shift-bar shift-missing" @onclick:stopPropagation="true" @onclick="@(() => OpenAssignModalForDate(currentDay))">⚠️ Thiếu nhân viên</div>
                         }
@@ -128,7 +132,7 @@
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 12px;">
                 <button @onclick="() => { _isViewMode = false; _isEditing = true; }" class="font-ui" style="padding: 10px 20px; border: 1px solid var(--ice); border-radius: 8px; background: transparent; color: var(--ice); cursor: pointer; font-size: 13px;">✏️ Chỉnh sửa</button>
-                <button @onclick="() => _showAssignModal = false" class="font-ui" style="padding: 10px 20px; border: none; border-radius: 8px; background: rgba(239, 68, 68, 0.15); color: var(--danger); cursor: pointer; font-size: 13px; font-weight: 600;">🗑️ Hủy ca</button>
+                <button @onclick="DeleteShift" class="font-ui" style="padding: 10px 20px; border: none; border-radius: 8px; background: rgba(239, 68, 68, 0.15); color: var(--danger); cursor: pointer; font-size: 13px; font-weight: 600;">🗑️ Hủy ca</button>
             </div>
         }
         else
@@ -147,16 +151,17 @@
             </div>
             <div style="margin-bottom: 16px;">
                 <label class="font-ui" style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Nhân viên</label>
-                <select multiple class="filter-select" style="width: 100%; min-height: 100px;">
-                    <option selected="@(_viewStaff.Contains("Nguyễn Văn A"))">Nguyễn Văn A — Staff</option>
-                    <option selected="@(_viewStaff.Contains("Trần Thị B"))">Trần Thị B — Staff</option>
-                    <option selected="@(_viewStaff.Contains("Lê Văn C") || _viewStaff == "Lê C")">Lê Văn C — Manager</option>
-                    <option selected="@(_viewStaff.Contains("Phạm Thị D"))">Phạm Thị D — Staff</option>
+                <select class="filter-select" style="width: 100%; min-height: 40px;" @bind="_viewStaff">
+                    <option value="" disabled>-- Chọn nhân viên --</option>
+                    <option value="Nguyễn Văn A">Nguyễn Văn A — Staff</option>
+                    <option value="Trần Thị B">Trần Thị B — Staff</option>
+                    <option value="Lê Văn C">Lê Văn C — Manager</option>
+                    <option value="Phạm Thị D">Phạm Thị D — Staff</option>
                 </select>
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 12px;">
                 <button @onclick="() => { if (_isEditing) _isViewMode = true; else _showAssignModal = false; }" class="font-ui" style="padding: 10px 20px; border: 1px solid var(--border-primary); border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 13px;">Hủy</button>
-                <button @onclick="() => _showAssignModal = false" class="font-ui" style="padding: 10px 20px; border: none; border-radius: 8px; background: var(--ice); color: white; cursor: pointer; font-size: 13px; font-weight: 600;">💾 Lưu</button>
+                <button @onclick="SaveShift" class="font-ui" style="padding: 10px 20px; border: none; border-radius: 8px; background: var(--ice); color: white; cursor: pointer; font-size: 13px; font-weight: 600;">💾 Lưu</button>
             </div>
         }
     </Modal>
@@ -174,25 +179,80 @@
     private string _viewStaff = "";
     private string _viewPhone = "";
 
+    public class ShiftEvent
+    {
+        public DateTime Date { get; set; }
+        public string ShiftType { get; set; }
+        public string StaffName { get; set; }
+        public string Phone { get; set; }
+    }
+
+    private List<ShiftEvent> _monthShifts = new();
+    private ShiftEvent? _originalEditingShift;
+
+    protected override void OnInitialized()
+    {
+        var year = DateTime.Now.Year;
+        var month = DateTime.Now.Month;
+        _monthShifts.Add(new ShiftEvent { Date = new DateTime(year, month, 1), ShiftType = "morning", StaffName = "Nguyễn Văn A", Phone = "+84 912 345 678" });
+        _monthShifts.Add(new ShiftEvent { Date = new DateTime(year, month, 1), ShiftType = "evening", StaffName = "Lê Văn C", Phone = "+84 923 456 789" });
+        _monthShifts.Add(new ShiftEvent { Date = new DateTime(year, month, 3), ShiftType = "morning", StaffName = "Trần Thị B", Phone = "+84 934 567 890" });
+    }
+
     private void OpenAssignModalForDate(int day)
     {
         _selectedAssignDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, day);
         _isEditing = false;
         _isViewMode = false;
-        _viewShiftType = "";
-        _viewStaff = "";
+        _viewShiftType = "morning";
+        _viewStaff = "Nguyễn Văn A";
         _showAssignModal = true;
     }
 
     private void OpenEditModalForShift(int day, string shiftType, string staff)
     {
         _selectedAssignDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, day);
+        _originalEditingShift = _monthShifts.FirstOrDefault(s => s.Date == _selectedAssignDate && s.ShiftType == shiftType && s.StaffName == staff);
+        
         _isEditing = false;
         _isViewMode = true;
         _viewShiftType = shiftType;
         _viewStaff = staff;
-        _viewPhone = "+84 " + new Random().Next(100000000, 999999999).ToString("### ### ###");
+        _viewPhone = _originalEditingShift?.Phone ?? "+84 999 888 777";
         _showAssignModal = true;
+    }
+
+    private void SaveShift()
+    {
+        var staff = string.IsNullOrEmpty(_viewStaff) ? "Nhân viên mới" : _viewStaff;
+        var shiftType = string.IsNullOrEmpty(_viewShiftType) ? "morning" : _viewShiftType;
+        
+        if (_isEditing && _originalEditingShift != null)
+        {
+            _originalEditingShift.ShiftType = shiftType;
+            _originalEditingShift.StaffName = staff;
+            _originalEditingShift.Date = _selectedAssignDate;
+        }
+        else
+        {
+            _monthShifts.Add(new ShiftEvent { 
+                Date = _selectedAssignDate.Date, 
+                ShiftType = shiftType, 
+                StaffName = staff, 
+                Phone = "+84 999 888 777" 
+            });
+        }
+        _showAssignModal = false;
+    }
+
+    private void DeleteShift()
+    {
+        var existing = _monthShifts.FirstOrDefault(s => s.Date == _selectedAssignDate && s.ShiftType == _viewShiftType && s.StaffName == _viewStaff);
+        if (existing != null)
+        {
+            _monthShifts.Remove(existing);
+        }
+        _showAssignModal = false;
     }
 
     private readonly string[] _dayHeaders = { "CN", "T2", "T3", "T4", "T5", "T6", "T7" };
