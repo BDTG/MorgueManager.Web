@@ -97,7 +97,7 @@
         </div>
         <div style="margin-bottom: 16px;">
             <label class="font-ui" style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Chọn ngày</label>
-            <input type="date" class="filter-input" style="width: 100%;" @bind="_selectedAssignDate" />
+            <input type="date" class="filter-input" style="width: 100%;" @bind="_selectedAssignDate" @bind:format="yyyy-MM-dd" />
         </div>
         <div style="margin-bottom: 16px;">
             <label class="font-ui" style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Ca trực</label>
@@ -126,11 +126,11 @@
 @code {
     private string _view = "month";
     private bool _showAssignModal;
-    private string _selectedAssignDate = DateTime.Now.ToString("yyyy-MM-dd");
+    private DateTime _selectedAssignDate = DateTime.Now;
 
     private void OpenAssignModalForDate(int day)
     {
-        _selectedAssignDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, day).ToString("yyyy-MM-dd");
+        _selectedAssignDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, day);
         _showAssignModal = true;
     }
 
