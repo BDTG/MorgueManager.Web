@@ -8,12 +8,12 @@
 <!-- START_STATS -->
 | Thành viên | Số lượng Commits | Tỷ lệ (%) | Trạng thái |
 |---|---|---|---|
-| **BDTG (Leader)** | 179 | ~67.3% | 🟢 Vượt chỉ tiêu |
-| **newiexk-cyber** | 33 | ~12.4% | 🔴 Cần cố gắng hơn |
-| **Simpson-31ev3n** | 29 | ~10.9% | 🔴 Cần cố gắng hơn |
-| **khanhphamvn222** | 25 | ~9.4% | 🔴 Cần cố gắng hơn |
+| **BDTG (Leader)** | 181 | ~66.5% | 🟢 Vượt chỉ tiêu |
+| **newiexk-cyber** | 33 | ~12.1% | 🔴 Cần cố gắng hơn |
+| **khanhphamvn222** | 29 | ~10.7% | 🔴 Cần cố gắng hơn |
+| **Simpson-31ev3n** | 29 | ~10.7% | 🔴 Cần cố gắng hơn |
 
-*(Tổng số commits dự án: 266)*
+*(Tổng số commits dự án: 272)*
 <!-- END_STATS -->
 
 ---
