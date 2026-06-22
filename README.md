@@ -22,11 +22,31 @@
 **MorgueManager** là một hệ thống phần mềm chuyên dụng quản lý nhà xác (Morgue) dành cho các bệnh viện và cơ sở y tế. Hệ thống giúp số hóa toàn bộ quy trình tiếp nhận, lưu trữ, giám sát và bàn giao thi thể, đảm bảo tính minh bạch, chính xác và tuân thủ các quy định y tế/pháp lý nghiêm ngặt.
 
 ### 🚀 Công nghệ sử dụng (Tech Stack)
-* **Kiến trúc Frontend:** Blazor WebAssembly Standalone (.NET 10). Toàn bộ ứng dụng chạy trực tiếp trên trình duyệt của người dùng (Client-Side Rendering) giúp giảm tải hoàn toàn cho Server, tốc độ chuyển trang tức thời không độ trễ.
-* **Giao diện (UI/UX):** Thiết kế độc bản, chuẩn Premium với Tailwind CSS. Tích hợp thư viện GSAP và Lenis để xử lý các hiệu ứng hoạt ảnh vi mô (micro-animations), hỗ trợ Dark/Light Mode và giao diện Responsive 100% trên thiết bị di động.
-* **Backend & Cơ sở dữ liệu:** Hệ thống sử dụng Supabase đóng vai trò Backend-as-a-Service (BaaS) với lõi là PostgreSQL. Giao tiếp dữ liệu thông qua RESTful API chuẩn mực.
-* **Xác thực bảo mật (Authentication):** Tích hợp Supabase Auth với giao thức OAuth 2.0 (Google Sign-In), đảm bảo định danh nhân sự chặt chẽ, an toàn.
-* **Tự động hóa Triển khai (CI/CD):** Xây dựng luồng DevOps tự động với GitHub Actions, tự động Build và Deploy lên hạ tầng Cloudflare Pages chỉ trong 1-2 phút sau mỗi lần đẩy code.
+
+Dự án được xây dựng trên nền tảng kiến trúc phân tách rõ ràng giữa Frontend và Backend API:
+
+**1. 💻 Frontend (Giao diện người dùng):**
+* **Framework:** Blazor WebAssembly Standalone (.NET 10). Toàn bộ ứng dụng chạy trực tiếp trên trình duyệt (Client-Side Rendering), tốc độ chuyển trang tức thời.
+* **Ngôn ngữ:** C#, HTML5, CSS3, JavaScript.
+* **Giao diện (UI/UX):** Thiết kế chuẩn Premium với Custom CSS.
+* **Hiệu ứng & Hoạt ảnh:** Sử dụng thư viện GSAP và Lenis (Smooth Scroll) cho các vi hiệu ứng (micro-animations), hỗ trợ Dark/Light Mode và 100% Responsive trên Mobile.
+* **Thư viện tích hợp:** JSInterop, jsPDF, SheetJS (hỗ trợ xuất file báo cáo Excel/PDF).
+
+**2. ⚙️ Backend (Xử lý nghiệp vụ):**
+* **Framework:** ASP.NET Core Web API (.NET 10).
+* **Ngôn ngữ:** C#.
+* **ORM:** Entity Framework Core (Code-First).
+* **Kiến trúc:** RESTful API chuẩn mực.
+* **Xác thực bảo mật:** JWT kết hợp Supabase Auth & giao thức OAuth 2.0 (Google Sign-In), phân quyền theo Role.
+
+**3. 🗄️ Cơ sở dữ liệu (Database):**
+* **Hệ quản trị:** PostgreSQL.
+* **Nền tảng:** Supabase. Áp dụng cơ chế Connection Pooling (Session Pooler qua IPv4) để tối ưu hóa kết nối.
+
+**4. ☁️ Hạ tầng & Triển khai (DevOps / Cloud Hosting):**
+* **Frontend Hosting:** Triển khai qua **Cloudflare Pages**.
+* **Backend Hosting:** Triển khai trên máy chủ đám mây của **Render**.
+* **CI/CD Pipeline:** Sử dụng **GitHub Actions** để tự động Build và Deploy tự động lên Cloudflare & Render ngay khi có code mới.
 
 ### ✨ Các tính năng cốt lõi đã hoàn thiện
 1. **Số hóa Toàn diện Hồ sơ Pháp lý & Y tế:**
