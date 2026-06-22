@@ -1,22 +1,6 @@
 # MorgueManager.Web
 
-> [!WARNING]
-> **THÔNG BÁO TỪ QUẢN TRỊ VIÊN (LEADER)**
-> Hiện tại tỷ lệ đóng góp (Commit) của các thành viên đang bị mất cân bằng nghiêm trọng. Đề nghị các thành viên đẩy nhanh tiến độ làm việc để hoàn thành các tính năng và kéo lại % đóng góp của mình (Mục tiêu: mỗi thành viên cần đạt ít nhất 15-20 commits).
 
-### 📊 Bảng thống kê đóng góp (Tự động cập nhật)
-<!-- START_STATS -->
-| Thành viên | Số lượng Commits | Tỷ lệ (%) | Trạng thái |
-|---|---|---|---|
-| **BDTG (Leader)** | 181 | ~66.5% | 🟢 Vượt chỉ tiêu |
-| **newiexk-cyber** | 33 | ~12.1% | 🔴 Cần cố gắng hơn |
-| **khanhphamvn222** | 29 | ~10.7% | 🔴 Cần cố gắng hơn |
-| **Simpson-31ev3n** | 29 | ~10.7% | 🔴 Cần cố gắng hơn |
-
-*(Tổng số commits dự án: 272)*
-<!-- END_STATS -->
-
----
 
 ## 💡 Về dự án MorgueManager
 **MorgueManager** là một hệ thống phần mềm chuyên dụng quản lý nhà xác (Morgue) dành cho các bệnh viện và cơ sở y tế. Hệ thống giúp số hóa toàn bộ quy trình tiếp nhận, lưu trữ, giám sát và bàn giao thi thể, đảm bảo tính minh bạch, chính xác và tuân thủ các quy định y tế/pháp lý nghiêm ngặt.

@@ -67,21 +67,25 @@ def format_table(stats):
     table += f"\n*(Tổng số commits dự án: {total})*\n"
     return table
 
-def update_readme(table_content):
-    with open('README.md', 'r', encoding='utf-8') as f:
-        content = f.read()
+def update_stats_file(table_content):
+    file_path = '.github/STATS.md'
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+            
+        pattern = r'<!-- START_STATS -->.*?<!-- END_STATS -->'
+        replacement = f"<!-- START_STATS -->\n{table_content}<!-- END_STATS -->"
         
-    pattern = r'<!-- START_STATS -->.*?<!-- END_STATS -->'
-    replacement = f"<!-- START_STATS -->\n{table_content}<!-- END_STATS -->"
-    
-    new_content = re.sub(pattern, replacement, content, flags=re.DOTALL)
-    
-    with open('README.md', 'w', encoding='utf-8') as f:
-        f.write(new_content)
+        new_content = re.sub(pattern, replacement, content, flags=re.DOTALL)
+        
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(new_content)
+    except FileNotFoundError:
+        print(f"File not found: {file_path}")
 
 if __name__ == "__main__":
     stats = get_git_stats()
     if stats:
         table = format_table(stats)
-        update_readme(table)
-        print("Updated README.md with dynamic stats.")
+        update_stats_file(table)
+        print("Updated .github/STATS.md with dynamic stats.")
