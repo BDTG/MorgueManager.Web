@@ -2,6 +2,9 @@
 @layout Components.Layout.AdminLayout
 @inject NavigationManager Navigation
 @inject MorgueManager.Web.Services.TourService TourService
+@inject Supabase.Client Supabase
+@inject IJSRuntime JS
+
 
 <div>
     <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px;">
@@ -76,14 +79,78 @@
                 }
             </div>
         </div>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--ice); color: var(--ice); background: transparent;">👁️ Xem thi thể</button>
-            <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--candle); color: var(--candle); background: transparent;">🔄 Chuyển ngăn</button>
-            <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--candle-deep); color: var(--candle-deep); background: transparent;">🧹 Đánh dấu vệ sinh</button>
-            <button class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--info); color: var(--info); background: transparent;">🔧 Bảo trì</button>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+            @if (_selectedSlot.Status == Models.SlotStatus.Occupied)
+            {
+                <button @onclick="ViewCorpse" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--ice); color: var(--ice); background: transparent;">👁️ Xem thi thể</button>
+                <button @onclick="StartTransfer" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--candle); color: var(--candle); background: transparent;">🔄 Chuyển ngăn</button>
+            }
+            else
+            {
+                <button disabled class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: not-allowed; border: 1px solid var(--border-primary); color: var(--text-muted); background: transparent; opacity: 0.5;">👁️ Xem thi thể</button>
+                <button disabled class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: not-allowed; border: 1px solid var(--border-primary); color: var(--text-muted); background: transparent; opacity: 0.5;">🔄 Chuyển ngăn</button>
+            }
+
+            @if (_selectedSlot.Status == Models.SlotStatus.Cleaning)
+            {
+                <button @onclick="ToggleCleaning" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--success); color: var(--success); background: transparent;">✅ Hoàn tất vệ sinh</button>
+            }
+            else
+            {
+                <button @onclick="ToggleCleaning" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--candle-deep); color: var(--candle-deep); background: transparent;">🧹 Đánh dấu vệ sinh</button>
+            }
+
+            @if (_selectedSlot.Status == Models.SlotStatus.Maintenance)
+            {
+                <button @onclick="ToggleMaintenance" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--success); color: var(--success); background: transparent;">✅ Hoàn tất bảo trì</button>
+            }
+            else
+            {
+                <button @onclick="ToggleMaintenance" class="font-ui" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--info); color: var(--info); background: transparent;">🔧 Bảo trì</button>
+            }
         </div>
+
+        @if (_isTransferring)
+        {
+            <div style="margin-top: 16px; padding: 16px; border-radius: 12px; background-color: var(--bg-elevated); border: 1px solid var(--border-primary); width: 100%;">
+                <div class="font-ui" style="font-size: 13px; color: var(--text-primary); margin-bottom: 8px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                    <span>🔄</span> Chuyển thi thể sang ngăn khác:
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <select class="filter-select" style="flex: 1; padding: 8px; border-radius: 8px; background-color: var(--bg-card); border: 1px solid var(--border-primary); color: var(--text-primary); font-size: 13px;" @bind="_targetSlotId">
+                        <option value="">— Chọn ngăn trống —</option>
+                        @foreach (var s in GetEmptySlots())
+                        {
+                            <option value="@s.Id">@s.Id (@(s.Zone == "C" ? "Khu C - Lạnh sâu" : "Mát"))</option>
+                        }
+                    </select>
+                    <button @onclick="ConfirmTransfer" class="font-ui" style="padding: 8px 16px; border-radius: 8px; border: none; background: var(--success); color: white; cursor: pointer; font-size: 12px; font-weight: 600;">Xác nhận</button>
+                    <button @onclick="() => _isTransferring = false" class="font-ui" style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border-primary); background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 12px;">Hủy</button>
+                </div>
+            </div>
+        }
+
     </Modal>
 }
+
+<ConfirmDialog IsVisible="@_showCleanConfirm"
+               Title="Xác nhận dọn dẹp và dời thi thể"
+               Message="@($"Ngăn tủ {_selectedSlot?.Id} đang chứa thi thể của {_selectedSlot?.CorpseName}. Bạn có chắc chắn muốn dời thi thể này về trạng thái 'Tiếp nhận' và đánh dấu vệ sinh ngăn tủ?")"
+               ConfirmText="Xác nhận"
+               CancelText="Hủy"
+               Type="warning"
+               OnConfirm="ConfirmCleanOccupied"
+               OnCancel="() => _showCleanConfirm = false" />
+
+<ConfirmDialog IsVisible="@_showMaintConfirm"
+               Title="Xác nhận bảo trì và dời thi thể"
+               Message="@($"Ngăn tủ {_selectedSlot?.Id} đang chứa thi thể của {_selectedSlot?.CorpseName}. Bạn có chắc chắn muốn dời thi thể này về trạng thái 'Tiếp nhận' và đánh dấu bảo trì ngăn tủ?")"
+               ConfirmText="Xác nhận"
+               CancelText="Hủy"
+               Type="danger"
+               OnConfirm="ConfirmMaintOccupied"
+               OnCancel="() => _showMaintConfirm = false" />
+
 
 @code {
     private bool _showTemp = true;
@@ -96,7 +163,26 @@
     private List<Models.StorageSlot> _zoneBSlots = new();
     private List<Models.StorageSlot> _zoneCSlots = new();
 
+    private List<Models.Corpse> _corpses = new();
+    private Dictionary<string, string> _slotOverrides = new();
+
+    private bool _isTransferring = false;
+    private string _targetSlotId = "";
+
+    private bool _showCleanConfirm = false;
+    private bool _showMaintConfirm = false;
+
     protected override void OnInitialized()
+    {
+        PopulateMockData();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private void PopulateMockData()
     {
         _zoneASlots = Enumerable.Range(1, 10).Select(i => new Models.StorageSlot
         {
@@ -104,6 +190,7 @@
             Status = i <= 5 ? Models.SlotStatus.Occupied : Models.SlotStatus.Empty,
             Temp = 1.8 + (i * 0.3),
             CorpseName = i <= 5 ? $"Nguyễn Văn {i}" : null,
+            CorpseId = i <= 5 ? i : null,
             DaysStored = i * 3,
             LastUpdate = $"{DateTime.Now:HH:mm}",
         }).ToList();
@@ -114,24 +201,125 @@
             Status = i <= 3 ? Models.SlotStatus.Occupied : i == 4 ? Models.SlotStatus.Cleaning : i == 5 ? Models.SlotStatus.Maintenance : Models.SlotStatus.Empty,
             Temp = 3.0 + (i * 0.4),
             CorpseName = i <= 3 ? $"Trần Thị {i}" : null,
+            CorpseId = i <= 3 ? (10 + i) : null,
             DaysStored = i * 2,
             LastUpdate = $"{DateTime.Now:HH:mm}",
         }).ToList();
 
-        // TODO(khanhphamvn222): Thay thế dữ liệu giả bên dưới bằng lệnh gọi IStorageService.GetSlotsAsync("C")
-        // khi Backend API đã sẵn sàng. Xem Issue #30.
         _zoneCSlots = Enumerable.Range(1, 5).Select(i => new Models.StorageSlot
         {
             Id = $"C-{i:D2}", Zone = "C",
             Status = i <= 2 ? Models.SlotStatus.Occupied : i == 3 ? Models.SlotStatus.Cleaning : Models.SlotStatus.Empty,
             Temp = -5.4 + (i * 0.2),
             CorpseName = i == 1 ? "Thi thể MC-2026-0128 (Tai nạn nghiêm trọng - Không nguyên vẹn)" : i == 2 ? "Bộ phận thi thể MC-2026-0129" : null,
+            CorpseId = i <= 2 ? (20 + i) : null,
             DaysStored = i * 4,
             LastUpdate = $"{DateTime.Now:HH:mm}",
         }).ToList();
     }
 
+    private async Task LoadOverridesAsync()
+    {
+        try
+        {
+            var json = await JS.InvokeAsync<string>("localStorage.getItem", "storage_slot_overrides");
+            if (!string.IsNullOrEmpty(json))
+            {
+                _slotOverrides = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(json) ?? new();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error loading overrides: " + ex.Message);
+        }
+    }
+
+    private async Task SaveOverridesAsync()
+    {
+        try
+        {
+            var json = System.Text.Json.JsonSerializer.Serialize(_slotOverrides);
+            await JS.InvokeVoidAsync("localStorage.setItem", "storage_slot_overrides", json);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error saving overrides: " + ex.Message);
+        }
+    }
+
+    private async Task LoadDataAsync()
+    {
+        try
+        {
+            await LoadOverridesAsync();
+            var response = await Supabase.From<Models.Corpse>().Get();
+            _corpses = response.Models ?? new List<Models.Corpse>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error loading data from Supabase/LocalStorage: " + ex.Message);
+        }
+        RebuildSlots();
+    }
+
+    private void RebuildSlots()
+    {
+        _zoneASlots = Enumerable.Range(1, 10).Select(i => CreateSlot($"A-{i:D2}", "A", 2.3 + (i * 0.1))).ToList();
+        _zoneBSlots = Enumerable.Range(1, 10).Select(i => CreateSlot($"B-{i:D2}", "B", 3.8 + (i * 0.1))).ToList();
+        _zoneCSlots = Enumerable.Range(1, 5).Select(i => CreateSlot($"C-{i:D2}", "C", -4.8 + (i * 0.1))).ToList();
+
+        if (_selectedSlot != null)
+        {
+            var updated = _zoneASlots.Concat(_zoneBSlots).Concat(_zoneCSlots).FirstOrDefault(s => s.Id == _selectedSlot.Id);
+            if (updated != null)
+            {
+                _selectedSlot = updated;
+            }
+        }
+    }
+
+    private Models.StorageSlot CreateSlot(string id, string zone, double defaultTemp)
+    {
+        var corpse = _corpses.FirstOrDefault(c => c.StorageSlot == id && (c.Status == "Lưu kho" || c.Status == "Quá hạn"));
+        if (corpse != null)
+        {
+            return new Models.StorageSlot
+            {
+                Id = id,
+                Zone = zone,
+                Status = Models.SlotStatus.Occupied,
+                Temp = corpse.Temp ?? defaultTemp,
+                CorpseName = corpse.Name,
+                CorpseId = corpse.Id,
+                DaysStored = corpse.DaysStored,
+                LastUpdate = $"{DateTime.Now:HH:mm}"
+            };
+        }
+        else
+        {
+            var status = Models.SlotStatus.Empty;
+            if (_slotOverrides.TryGetValue(id, out var overrideStatus))
+            {
+                if (overrideStatus == "Cleaning") status = Models.SlotStatus.Cleaning;
+                else if (overrideStatus == "Maintenance") status = Models.SlotStatus.Maintenance;
+            }
+
+            return new Models.StorageSlot
+            {
+                Id = id,
+                Zone = zone,
+                Status = status,
+                Temp = defaultTemp,
+                CorpseName = null,
+                CorpseId = null,
+                DaysStored = 0,
+                LastUpdate = $"{DateTime.Now:HH:mm}"
+            };
+        }
+    }
+
     private void NavToTemperature() => Navigation.NavigateTo("/admin/temperature");
+
     protected override void OnAfterRender(bool firstRender)
     {
         if (firstRender)
@@ -143,5 +331,177 @@
     private void SlotClicked(Models.StorageSlot slot)
     {
         _selectedSlot = slot;
+        _isTransferring = false;
+    }
+
+    private void ViewCorpse()
+    {
+        if (_selectedSlot?.CorpseId is not null)
+        {
+            Navigation.NavigateTo($"/admin/corpses/{_selectedSlot.CorpseId}");
+        }
+    }
+
+    private void StartTransfer()
+    {
+        _isTransferring = true;
+        _targetSlotId = "";
+    }
+
+    private async Task ConfirmTransfer()
+    {
+        if (string.IsNullOrEmpty(_targetSlotId) || _selectedSlot == null) return;
+
+        var corpse = _corpses.FirstOrDefault(c => c.StorageSlot == _selectedSlot.Id && (c.Status == "Lưu kho" || c.Status == "Quá hạn"));
+        if (corpse != null)
+        {
+            try
+            {
+                corpse.StorageSlot = _targetSlotId;
+                corpse.StorageUnit = _targetSlotId.StartsWith("A") ? "Cold Room A" : _targetSlotId.StartsWith("B") ? "Cold Room B" : "Cold Room C";
+                corpse.Temp = _targetSlotId.StartsWith("C") ? -5.5 : 2.5;
+
+                await Supabase.From<Models.Corpse>().Update(corpse);
+
+                if (_slotOverrides.ContainsKey(_targetSlotId))
+                {
+                    _slotOverrides.Remove(_targetSlotId);
+                    await SaveOverridesAsync();
+                }
+
+                _isTransferring = false;
+                _selectedSlot = null;
+
+                await LoadDataAsync();
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error transferring corpse: " + ex.Message);
+            }
+        }
+    }
+
+    private async Task ToggleCleaning()
+    {
+        if (_selectedSlot == null) return;
+
+        if (_selectedSlot.Status == Models.SlotStatus.Occupied)
+        {
+            _showCleanConfirm = true;
+            return;
+        }
+
+        if (_selectedSlot.Status == Models.SlotStatus.Cleaning)
+        {
+            _slotOverrides.Remove(_selectedSlot.Id);
+        }
+        else
+        {
+            _slotOverrides[_selectedSlot.Id] = "Cleaning";
+            if (_slotOverrides.ContainsKey(_selectedSlot.Id) && _slotOverrides[_selectedSlot.Id] == "Maintenance")
+            {
+                _slotOverrides.Remove(_selectedSlot.Id);
+            }
+        }
+
+        await SaveOverridesAsync();
+        RebuildSlots();
+    }
+
+    private async Task ConfirmCleanOccupied()
+    {
+        _showCleanConfirm = false;
+        if (_selectedSlot == null) return;
+
+        var corpse = _corpses.FirstOrDefault(c => c.StorageSlot == _selectedSlot.Id && (c.Status == "Lưu kho" || c.Status == "Quá hạn"));
+        if (corpse != null)
+        {
+            try
+            {
+                corpse.StorageSlot = null;
+                corpse.StorageUnit = null;
+                corpse.Temp = null;
+                corpse.Status = "Tiếp nhận";
+
+                await Supabase.From<Models.Corpse>().Update(corpse);
+
+                _slotOverrides[_selectedSlot.Id] = "Cleaning";
+                await SaveOverridesAsync();
+
+                _selectedSlot = null; // Close modal
+                await LoadDataAsync();
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error marking cleaning on occupied: " + ex.Message);
+            }
+        }
+    }
+
+    private async Task ToggleMaintenance()
+    {
+        if (_selectedSlot == null) return;
+
+        if (_selectedSlot.Status == Models.SlotStatus.Occupied)
+        {
+            _showMaintConfirm = true;
+            return;
+        }
+
+        if (_selectedSlot.Status == Models.SlotStatus.Maintenance)
+        {
+            _slotOverrides.Remove(_selectedSlot.Id);
+        }
+        else
+        {
+            _slotOverrides[_selectedSlot.Id] = "Maintenance";
+            if (_slotOverrides.ContainsKey(_selectedSlot.Id) && _slotOverrides[_selectedSlot.Id] == "Cleaning")
+            {
+                _slotOverrides.Remove(_selectedSlot.Id);
+            }
+        }
+
+        await SaveOverridesAsync();
+        RebuildSlots();
+    }
+
+    private async Task ConfirmMaintOccupied()
+    {
+        _showMaintConfirm = false;
+        if (_selectedSlot == null) return;
+
+        var corpse = _corpses.FirstOrDefault(c => c.StorageSlot == _selectedSlot.Id && (c.Status == "Lưu kho" || c.Status == "Quá hạn"));
+        if (corpse != null)
+        {
+            try
+            {
+                corpse.StorageSlot = null;
+                corpse.StorageUnit = null;
+                corpse.Temp = null;
+                corpse.Status = "Tiếp nhận";
+
+                await Supabase.From<Models.Corpse>().Update(corpse);
+
+                _slotOverrides[_selectedSlot.Id] = "Maintenance";
+                await SaveOverridesAsync();
+
+                _selectedSlot = null; // Close modal
+                await LoadDataAsync();
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error marking maintenance on occupied: " + ex.Message);
+            }
+        }
+    }
+
+    private IEnumerable<Models.StorageSlot> GetEmptySlots()
+    {
+        var all = _zoneASlots.Concat(_zoneBSlots).Concat(_zoneCSlots);
+        return all.Where(s => s.Status == Models.SlotStatus.Empty);
     }
 }
+
