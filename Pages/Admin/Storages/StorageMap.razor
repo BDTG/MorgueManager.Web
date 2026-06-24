@@ -138,8 +138,6 @@
                 }
             </div>
         }
-            </div>
-        }
     </Modal>
 }
 
@@ -580,12 +578,6 @@
             ?? _zoneCSlots.FirstOrDefault(s => s.Id == id);
     }
 
-    private List<Models.StorageSlot> GetEmptySlots()
-    {
-        return _zoneASlots.Concat(_zoneBSlots).Concat(_zoneCSlots)
-            .Where(s => s.Status == Models.SlotStatus.Empty)
-            .ToList();
-    }
 
     private async Task ViewCorpseDetails()
     {
@@ -676,97 +668,6 @@
         }
     }
 
-    private void CancelTransfer()
-    {
-        _isTransferring = false;
-        _targetSlotId = "";
-    }
-
-    private async Task ConfirmTransfer()
-    {
-        if (string.IsNullOrEmpty(_targetSlotId) || _selectedSlot == null) return;
-        try
-        {
-            var response = await Supabase.From<Models.Corpse>()
-                .Where(c => c.StorageSlot == _selectedSlot.Id)
-                .Get();
-            var corpse = response.Models.FirstOrDefault();
-            if (corpse != null)
-            {
-                // Update corpse slot in database
-                corpse.StorageSlot = _targetSlotId;
-                corpse.StorageUnit = _targetSlotId.StartsWith("A") ? "Cold Room A" : _targetSlotId.StartsWith("B") ? "Cold Room B" : "Cold Room C";
-                corpse.Temp = _targetSlotId.StartsWith("C") ? -5.5 : 2.5;
-
-                // Add history record
-                corpse.History.Add(new HistoryEntry
-                {
-                    Status = "Lưu kho",
-                    Timestamp = DateTime.Now.ToString("dd-MM-yyyy HH:mm"),
-                    By = "Hệ thống",
-                    Detail = $"Di chuyển từ ngăn {_selectedSlot.Id} sang ngăn {_targetSlotId}"
-                });
-
-                await Supabase.From<Models.Corpse>().Update(corpse);
-
-                // Update UI states
-                var targetSlot = GetSlotById(_targetSlotId);
-                if (targetSlot != null)
-                {
-                    targetSlot.Status = Models.SlotStatus.Occupied;
-                    targetSlot.CorpseName = corpse.Name;
-                    targetSlot.DaysStored = corpse.DaysStored;
-                    targetSlot.Temp = corpse.Temp ?? targetSlot.Temp;
-                    targetSlot.LastUpdate = $"{DateTime.Now:HH:mm}";
-                }
-
-                _selectedSlot.Status = Models.SlotStatus.Empty;
-                _selectedSlot.CorpseName = null;
-                _selectedSlot.DaysStored = 0;
-                _selectedSlot.LastUpdate = $"{DateTime.Now:HH:mm}";
-
-                _isTransferring = false;
-                _selectedSlot = null; // Close modal
-                StateHasChanged();
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Error transferring slot: " + ex.Message);
-        }
-    }
-
-    private void ToggleCleaning()
-    {
-        if (_selectedSlot == null || _selectedSlot.Status == Models.SlotStatus.Occupied) return;
-
-        if (_selectedSlot.Status == Models.SlotStatus.Cleaning)
-        {
-            _selectedSlot.Status = Models.SlotStatus.Empty;
-        }
-        else
-        {
-            _selectedSlot.Status = Models.SlotStatus.Cleaning;
-        }
-        _selectedSlot.LastUpdate = $"{DateTime.Now:HH:mm}";
-        _selectedSlot = null; // Close modal
-    }
-
-    private void ToggleMaintenance()
-    {
-        if (_selectedSlot == null || _selectedSlot.Status == Models.SlotStatus.Occupied) return;
-
-        if (_selectedSlot.Status == Models.SlotStatus.Maintenance)
-        {
-            _selectedSlot.Status = Models.SlotStatus.Empty;
-        }
-        else
-        {
-            _selectedSlot.Status = Models.SlotStatus.Maintenance;
-        }
-        _selectedSlot.LastUpdate = $"{DateTime.Now:HH:mm}";
-        _selectedSlot = null; // Close modal
-    }
 
     private void NavToTemperature() => Navigation.NavigateTo("/admin/temperature");
     protected override void OnAfterRender(bool firstRender)
