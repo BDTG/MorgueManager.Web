@@ -274,28 +274,44 @@
 
     private async Task LoadRequestsAsync()
     {
+        // Load from Supabase first
+        await LoadFromSupabaseAsync();
+
+        // Always merge localStorage as fallback (works even if Supabase is down)
+        await LoadFromLocalStorageAsync();
+
+        // If still empty, seed with sample data
+        if (_allRequests.Count == 0)
+        {
+            SeedRequests();
+        }
+
+        ApplyFilters();
+    }
+
+    private async Task LoadFromSupabaseAsync()
+    {
         try
         {
             var response = await Supabase.From<ContactModel>().Get();
-            _allRequests = response.Models ?? new List<ContactModel>();
-
-            if (_allRequests.Count == 0)
+            var supabaseData = response.Models ?? new List<ContactModel>();
+            if (supabaseData.Count > 0)
             {
-                SeedRequests();
-                await Supabase.From<ContactModel>().Insert(_allRequests);
-                var seedResponse = await Supabase.From<ContactModel>().Get();
-                _allRequests = seedResponse.Models ?? new List<ContactModel>();
+                _allRequests = supabaseData;
+                if (supabaseData.Any(r => r.Id == 0))
+                {
+                    Console.WriteLine("Warning: Found requests with Id=0 - Supabase auto-increment may not work correctly.");
+                }
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Error loading contact requests: " + ex.Message);
-            if (_allRequests.Count == 0)
-            {
-                SeedRequests();
-            }
+            Console.WriteLine("Supabase load failed (likely RLS or table issue): " + ex.Message);
         }
+    }
 
+    private async Task LoadFromLocalStorageAsync()
+    {
         try
         {
             var localDataJson = await JS.InvokeAsync<string>("localStorage.getItem", "local_contact_requests");
@@ -311,15 +327,14 @@
                             _allRequests.Add(lr);
                         }
                     }
+                    Console.WriteLine($"Loaded {localRequests.Count} requests from localStorage fallback.");
                 }
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Error loading fallback requests from LocalStorage: " + ex.Message);
+            Console.WriteLine("Error loading fallback from LocalStorage: " + ex.Message);
         }
-
-        ApplyFilters();
     }
 
     private void SeedRequests()

@@ -31,7 +31,12 @@ public class ContactService : IContactService
                 model.Status = "Chưa xử lý";
             }
 
-            await _supabase.From<ContactModel>().Insert(model);
+            var response = await _supabase.From<ContactModel>().Insert(model);
+            // If Supabase returns the inserted record with generated ID, use it
+            if (response?.Models?.Count > 0)
+            {
+                Console.WriteLine($"Inserted to Supabase with Id={response.Models[0].Id}");
+            }
         }
         catch (Exception ex)
         {
@@ -46,7 +51,7 @@ public class ContactService : IContactService
                 ? new List<ContactModel>() 
                 : JsonSerializer.Deserialize<List<ContactModel>>(localDataJson) ?? new List<ContactModel>();
             
-            // Assign a local ID (>= 1000)
+            // Assign a local ID (>= 1000) to differentiate from Supabase DB IDs
             model.Id = localRequests.Count > 0 ? localRequests.Max(r => r.Id) + 1 : 1000;
             localRequests.Add(model);
             
