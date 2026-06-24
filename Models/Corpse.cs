@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using Postgrest.Attributes;
 using Postgrest.Models;
 using System.Collections.Generic;
@@ -41,12 +42,15 @@ public class Corpse : BaseModel
     public string Status { get; set; } = "Tiếp nhận";
 
     [Column("storage_unit")]
+    [JsonProperty(NullValueHandling = NullValueHandling.Include)]
     public string? StorageUnit { get; set; }
 
     [Column("storage_slot")]
+    [JsonProperty(NullValueHandling = NullValueHandling.Include)]
     public string? StorageSlot { get; set; }
 
     [Column("temp")]
+    [JsonProperty(NullValueHandling = NullValueHandling.Include)]
     public double? Temp { get; set; }
 
     [Column("days_stored")]

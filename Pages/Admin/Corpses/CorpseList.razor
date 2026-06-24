@@ -300,6 +300,11 @@
                OnConfirm="ConfirmHandoverCorpse"
                OnCancel="() => _showHandoverConfirm = false" />
 
+@if (_showToast)
+{
+    <Toast Message="@_toastMessage" Type="success" />
+}
+
 @code {
     protected override void OnAfterRender(bool firstRender)
     {
@@ -389,6 +394,8 @@
     private Models.Corpse? _corpseToDelete;
     private bool _showHandoverConfirm;
     private Models.Corpse? _corpseToHandover;
+    private bool _showToast = false;
+    private string _toastMessage = "";
 
     private bool HasFilters => !string.IsNullOrEmpty(_search) || !string.IsNullOrEmpty(_statusFilter) || !string.IsNullOrEmpty(_genderFilter) || !string.IsNullOrEmpty(_dateFrom) || !string.IsNullOrEmpty(_dateTo);
 
@@ -650,13 +657,26 @@
         {
             try
             {
+                var corpseName = _corpseToHandover.Name;
+                var caseId = _corpseToHandover.CaseId;
+
                 _corpseToHandover.Status = "Bàn giao";
                 _corpseToHandover.StorageSlot = null;
                 _corpseToHandover.StorageUnit = null;
                 _corpseToHandover.Temp = null;
                 await Supabase.From<Models.Corpse>().Update(_corpseToHandover);
+
+                // Show success toast
+                _toastMessage = $"Đã bàn giao thi thể {corpseName} ({caseId}) thành công!";
+                _showToast = true;
+
                 _corpseToHandover = null;
                 await LoadCorpsesAsync();
+                StateHasChanged();
+
+                await Task.Delay(3000);
+                _showToast = false;
+                StateHasChanged();
             }
             catch (Exception ex)
             {
