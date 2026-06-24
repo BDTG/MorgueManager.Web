@@ -137,6 +137,11 @@
                OnConfirm="ConfirmHandover"
                OnCancel="() => _showHandoverConfirm = false" />
 
+@if (_showToast)
+{
+    <Toast Message="@_toastMessage" Type="success" />
+}
+
 @code {
     private bool _showTemp = true;
     private double _zoneATemp = 2.3;
@@ -152,6 +157,8 @@
     private string _targetSlotId = "";
     private bool _showHandoverConfirm = false;
     private Models.Corpse? _handoverCorpse;
+    private bool _showToast = false;
+    private string _toastMessage = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -295,6 +302,9 @@
         {
             try
             {
+                var corpseName = _handoverCorpse.Name;
+                var caseId = _handoverCorpse.CaseId;
+
                 _handoverCorpse.Status = "Bàn giao";
                 _handoverCorpse.StorageSlot = null;
                 _handoverCorpse.StorageUnit = null;
@@ -315,8 +325,16 @@
                 _selectedSlot.DaysStored = 0;
                 _selectedSlot.LastUpdate = $"{DateTime.Now:HH:mm}";
 
+                // Show success toast
+                _toastMessage = $"Đã bàn giao thi thể {corpseName} ({caseId}) thành công!";
+                _showToast = true;
+
                 _selectedSlot = null;
                 _handoverCorpse = null;
+                StateHasChanged();
+
+                await Task.Delay(3000);
+                _showToast = false;
                 StateHasChanged();
             }
             catch (Exception ex)
