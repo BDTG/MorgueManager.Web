@@ -422,8 +422,8 @@
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @onclick="CloseBookingModal"></div>
         
         <!-- Content -->
-        <div class="relative z-10 w-full max-w-lg p-8 rounded-2xl border border-[var(--border-primary)] shadow-2xl overflow-hidden"
-             style="background-color: rgba(10, 16, 24, 0.9); backdrop-filter: blur(16px);">
+        <div class="relative z-10 w-full max-w-lg p-8 rounded-2xl border border-[var(--border-primary)] shadow-2xl"
+             style="background-color: rgba(10, 16, 24, 0.9); backdrop-filter: blur(16px); max-height: 90vh; overflow-y: auto;">
             <!-- Decorative blur background -->
             <div class="absolute -top-12 -left-12 w-24 h-24 rounded-full bg-[var(--ice)]/20 filter blur-xl pointer-events-none"></div>
             
@@ -454,7 +454,7 @@
             <EditForm Model="@_bookingModel" OnValidSubmit="HandleBookingSubmit" class="space-y-4 text-left">
                 <DataAnnotationsValidator />
 
-                <div style="max-height: 50vh; overflow-y: auto; padding-right: 8px;" class="space-y-5">
+                <div class="space-y-5">
                     <!-- SECTION 1: THÔNG TIN NGƯỜI ĐÃ KHUẤT -->
                     <div class="border-b border-white/10 pb-4">
                         <h4 class="text-xs uppercase tracking-wider font-semibold text-[var(--ice)] mb-3">📍 Thông tin người đã khuất</h4>
