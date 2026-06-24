@@ -14,11 +14,21 @@ QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Register DbContext
+// Register DbContext (Auto-switch between SQL Server and PostgreSQL based on Connection String)
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        sqlOptions => sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "";
+    if (connectionString.Contains("localdb") || connectionString.Contains("Server=") || connectionString.Contains("Database="))
+    {
+        options.UseSqlServer(connectionString,
+            sqlOptions => sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+    }
+    else
+    {
+        options.UseNpgsql(connectionString,
+            sqlOptions => sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+    }
+});
 
 
 // Configure Serilog
@@ -129,13 +139,20 @@ app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Run auto-migrations on startup in Development
+// Run database migrations or schema creation on startup based on database provider
 if (app.Environment.IsDevelopment())
 {
     using (var scope = app.Services.CreateScope())
     {
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        db.Database.Migrate();
+        if (db.Database.ProviderName == "Microsoft.EntityFrameworkCore.SqlServer")
+        {
+            db.Database.EnsureCreated();
+        }
+        else
+        {
+            db.Database.Migrate();
+        }
     }
 }
 
