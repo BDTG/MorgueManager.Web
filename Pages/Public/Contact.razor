@@ -382,11 +382,11 @@
     }
 </main>
 
-@if (_showAccessKeyModal)
+@if (_showSuccessModal)
 {
     <div class="fixed inset-0 z-[2000] flex items-center justify-center p-4">
         <!-- Backdrop -->
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @onclick="CloseModal"></div>
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @onclick="CloseSuccessModal"></div>
         
         <!-- Content -->
         <div class="relative z-10 w-full max-w-md p-8 rounded-2xl border border-[var(--border-primary)] shadow-2xl overflow-hidden text-center"
@@ -400,41 +400,15 @@
             </div>
             
             <h3 class="font-display text-2xl font-bold mb-2" style="color: var(--text-primary);">
-                Đăng ký truy cập thành công!
+                Gửi yêu cầu thành công!
             </h3>
-            <p class="font-ui text-sm mb-6" style="color: var(--text-secondary);">
-                Yêu cầu của bạn đã được duyệt. Dưới đây là khóa truy cập (Access Key) của bạn:
+            <p class="font-ui text-sm mb-8" style="color: var(--text-secondary);">
+                Yêu cầu của bạn đã được ghi nhận vào hệ thống. Ban quản lý nhà xác sẽ liên hệ với bạn trong thời gian sớm nhất qua thông tin liên hệ đã cung cấp.
             </p>
             
-            <!-- Access Key Display Box -->
-            <div class="flex items-center justify-between p-4 rounded-xl mb-6 font-mono text-base font-bold tracking-wider"
-                 style="background-color: var(--bg-elevated); border: 1px solid var(--border-primary); color: var(--ice);">
-                <span>MM-ACTIVE-2026</span>
-                <button @onclick="CopyAccessKey" class="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-white cursor-pointer transition-all flex items-center justify-center" style="border: none; background: rgba(255,255,255,0.05); padding: 6px;">
-                    @if (_copied)
-                    {
-                        <LucideIcon Name="check" Class="w-4 h-4 text-[#10B981]" />
-                    }
-                    else
-                    {
-                        <LucideIcon Name="copy" Class="w-4 h-4 text-[var(--text-secondary)]" />
-                    }
-                </button>
-            </div>
-            
-            <p class="font-ui text-xs mb-8" style="color: var(--text-muted);">
-                * Vui lòng sao chép mã này và sử dụng tại trang Đăng nhập để mở khóa cổng thông tin nhà xác.
-            </p>
-            
-            <div class="flex flex-col gap-3">
-                <button @onclick="GoToLogin" class="btn-warm font-ui text-sm font-semibold py-3.5 rounded-lg w-full flex items-center justify-center gap-2 cursor-pointer" style="border: none; outline: none;">
-                    <span>Đi đến Đăng nhập</span>
-                    <LucideIcon Name="arrow-right" Class="w-4 h-4" />
-                </button>
-                <button @onclick="CloseModal" class="font-ui text-xs py-2 rounded-lg w-full hover:underline" style="color: var(--text-secondary); background: none; border: none; cursor: pointer;">
-                    Đóng cửa sổ
-                </button>
-            </div>
+            <button @onclick="CloseSuccessModal" class="btn-warm font-ui text-sm font-semibold py-3.5 rounded-lg w-full flex items-center justify-center gap-2 cursor-pointer" style="border: none; outline: none;">
+                <span>Đóng cửa sổ</span>
+            </button>
         </div>
     </div>
 }
@@ -525,10 +499,9 @@
     private string? _focusedField = null;
     private bool _isSubmitting = false;
     private bool _submitted = false;
-    private bool _showAccessKeyModal = false;
+    private bool _showSuccessModal = false;
     private bool _showBookingModal = false;
     private bool _isBookingSubmitting = false;
-    private bool _copied = false;
 
     private int _calcDaysValue = 5;
     private int _calcDays
@@ -680,9 +653,8 @@
         {
             _showBookingModal = false;
             _submitted = true;
-            _contactModel = new ContactModel(); // Reset
-            _copied = false;
-            _showAccessKeyModal = true;
+            _bookingModel = new ContactModel(); // Reset booking form
+            _showSuccessModal = true;
         }
         StateHasChanged();
     }
@@ -720,35 +692,14 @@
         {
             _submitted = true;
             _contactModel = new ContactModel(); // Reset form
-            _copied = false;
-            _showAccessKeyModal = true;
+            _showSuccessModal = true;
         }
         StateHasChanged();
     }
 
-    private async Task CopyAccessKey()
+    private void CloseSuccessModal()
     {
-        try
-        {
-            await JS.InvokeVoidAsync("navigator.clipboard.writeText", "MM-ACTIVE-2026");
-        }
-        catch
-        {
-            // Ignored
-        }
-        _copied = true;
-        StateHasChanged();
-    }
-
-    private void GoToLogin()
-    {
-        _showAccessKeyModal = false;
-        Navigation.NavigateTo("/login");
-    }
-
-    private void CloseModal()
-    {
-        _showAccessKeyModal = false;
+        _showSuccessModal = false;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
