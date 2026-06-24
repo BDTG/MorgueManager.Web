@@ -52,3 +52,48 @@ public class ContactModel : BaseModel
     [Column("price")]
     public long? Price { get; set; }
 }
+
+public class ContactModelDto
+{
+    public int Id { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string? Phone { get; set; }
+    public string Subject { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public string Status { get; set; } = "Chưa xử lý";
+    public string? StorageSlot { get; set; }
+    public string? PackageName { get; set; }
+    public long? Price { get; set; }
+
+    public static ContactModelDto FromModel(ContactModel m) => new()
+    {
+        Id = m.Id,
+        CreatedAt = m.CreatedAt,
+        Name = m.Name,
+        Email = m.Email,
+        Phone = m.Phone,
+        Subject = m.Subject,
+        Message = m.Message,
+        Status = m.Status,
+        StorageSlot = m.StorageSlot,
+        PackageName = m.PackageName,
+        Price = m.Price
+    };
+
+    public ContactModel ToModel() => new()
+    {
+        Id = this.Id,
+        CreatedAt = this.CreatedAt,
+        Name = this.Name,
+        Email = this.Email,
+        Phone = this.Phone,
+        Subject = this.Subject,
+        Message = this.Message,
+        Status = this.Status,
+        StorageSlot = this.StorageSlot,
+        PackageName = this.PackageName,
+        Price = this.Price
+    };
+}

@@ -47,13 +47,26 @@ public class ContactService : IContactService
         try
         {
             var localDataJson = await _js.InvokeAsync<string>("localStorage.getItem", "local_contact_requests");
-            var localRequests = string.IsNullOrEmpty(localDataJson) 
-                ? new List<ContactModel>() 
-                : JsonSerializer.Deserialize<List<ContactModel>>(localDataJson) ?? new List<ContactModel>();
+            List<ContactModelDto> localRequests = new List<ContactModelDto>();
+            if (!string.IsNullOrEmpty(localDataJson))
+            {
+                try
+                {
+                    localRequests = JsonSerializer.Deserialize<List<ContactModelDto>>(localDataJson) ?? new List<ContactModelDto>();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Corrupt JSON in local_contact_requests. Wiping it out: " + ex.Message);
+                    localRequests = new List<ContactModelDto>();
+                }
+            }
             
+            var dto = ContactModelDto.FromModel(model);
             // Assign a local ID (>= 1000) to differentiate from Supabase DB IDs
-            model.Id = localRequests.Count > 0 ? localRequests.Max(r => r.Id) + 1 : 1000;
-            localRequests.Add(model);
+            dto.Id = localRequests.Count > 0 ? localRequests.Max(r => r.Id) + 1 : 1000;
+            model.Id = dto.Id; // Sync back to the source model
+            
+            localRequests.Add(dto);
             
             await _js.InvokeVoidAsync("localStorage.setItem", "local_contact_requests", JsonSerializer.Serialize(localRequests));
             Console.WriteLine("Saved request to LocalStorage fallback/cache.");
