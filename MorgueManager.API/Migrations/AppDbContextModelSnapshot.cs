@@ -2,9 +2,9 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MorgueManager.API.Data;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -18,40 +18,40 @@ namespace MorgueManager.API.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "10.0.9")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("MorgueManager.API.Models.AuditLog", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Action")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Details")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("EntityId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("EntityName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("UserEmail")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -62,27 +62,27 @@ namespace MorgueManager.API.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("CorpseId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsPaid")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<double>("ServiceFee")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double>("StorageFeePerDay")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double>("TotalAmount")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.HasKey("Id");
 
@@ -93,74 +93,74 @@ namespace MorgueManager.API.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("Age")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("Biohazard")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("BirthDate")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("CaseId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("CauseOfDeath")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Cccd")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("DateAdmitted")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("DateOfDeath")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int>("DaysStored")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Gender")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Notes")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Priority")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("StorageSlot")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int?>("StorageSlotId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("StorageUnit")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<double?>("Temp")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.HasKey("Id");
 
@@ -171,23 +171,23 @@ namespace MorgueManager.API.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Content")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<bool>("IsRead")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -198,24 +198,24 @@ namespace MorgueManager.API.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Notes")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("ShiftType")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("StaffEmail")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -948,23 +948,23 @@ namespace MorgueManager.API.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<double>("CurrentTemperature")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<string>("SlotNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int>("Status")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("UnitName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -1137,18 +1137,18 @@ namespace MorgueManager.API.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("StorageSlotId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<double>("Temperature")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -1159,32 +1159,32 @@ namespace MorgueManager.API.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ArrivalTime")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("CorpseId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("DepartureTime")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Destination")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("DriverName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int>("Status")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("VehicleId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -1195,20 +1195,20 @@ namespace MorgueManager.API.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("LicensePlate")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Model")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int>("Status")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -1242,28 +1242,28 @@ namespace MorgueManager.API.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("DisplayName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Role")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -1304,26 +1304,26 @@ namespace MorgueManager.API.Migrations
                     b.OwnsOne("MorgueManager.API.Models.AutopsyReport", "AutopsyReport", b1 =>
                         {
                             b1.Property<int>("CorpseId")
-                                .HasColumnType("int");
+                                .HasColumnType("integer");
 
                             b1.Property<string>("ConcludingCause")
                                 .IsRequired()
-                                .HasColumnType("nvarchar(max)");
+                                .HasColumnType("text");
 
                             b1.Property<string>("InternalExamDetails")
                                 .IsRequired()
-                                .HasColumnType("nvarchar(max)");
+                                .HasColumnType("text");
 
                             b1.Property<string>("PathologistName")
                                 .IsRequired()
-                                .HasColumnType("nvarchar(max)");
+                                .HasColumnType("text");
 
                             b1.Property<DateTime>("Timestamp")
-                                .HasColumnType("datetime2");
+                                .HasColumnType("timestamp with time zone");
 
                             b1.Property<string>("ToxicologyResult")
                                 .IsRequired()
-                                .HasColumnType("nvarchar(max)");
+                                .HasColumnType("text");
 
                             b1.HasKey("CorpseId");
 
@@ -1337,27 +1337,27 @@ namespace MorgueManager.API.Migrations
                         {
                             b1.Property<int>("Id")
                                 .ValueGeneratedOnAdd()
-                                .HasColumnType("int");
+                                .HasColumnType("integer");
 
-                            SqlServerPropertyBuilderExtensions.UseIdentityColumn(b1.Property<int>("Id"));
+                            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b1.Property<int>("Id"));
 
                             b1.Property<string>("Condition")
                                 .IsRequired()
-                                .HasColumnType("nvarchar(max)");
+                                .HasColumnType("text");
 
                             b1.Property<int>("CorpseId")
-                                .HasColumnType("int");
+                                .HasColumnType("integer");
 
                             b1.Property<string>("Desc")
                                 .IsRequired()
-                                .HasColumnType("nvarchar(max)");
+                                .HasColumnType("text");
 
                             b1.Property<bool>("HasImage")
-                                .HasColumnType("bit");
+                                .HasColumnType("boolean");
 
                             b1.Property<string>("Name")
                                 .IsRequired()
-                                .HasColumnType("nvarchar(max)");
+                                .HasColumnType("text");
 
                             b1.HasKey("Id");
 
@@ -1373,24 +1373,24 @@ namespace MorgueManager.API.Migrations
                         {
                             b1.Property<int>("Id")
                                 .ValueGeneratedOnAdd()
-                                .HasColumnType("int");
+                                .HasColumnType("integer");
 
-                            SqlServerPropertyBuilderExtensions.UseIdentityColumn(b1.Property<int>("Id"));
+                            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b1.Property<int>("Id"));
 
                             b1.Property<int>("CorpseId")
-                                .HasColumnType("int");
+                                .HasColumnType("integer");
 
                             b1.Property<string>("Name")
                                 .IsRequired()
-                                .HasColumnType("nvarchar(max)");
+                                .HasColumnType("text");
 
                             b1.Property<string>("Size")
                                 .IsRequired()
-                                .HasColumnType("nvarchar(max)");
+                                .HasColumnType("text");
 
                             b1.Property<string>("Type")
                                 .IsRequired()
-                                .HasColumnType("nvarchar(max)");
+                                .HasColumnType("text");
 
                             b1.HasKey("Id");
 
@@ -1405,22 +1405,22 @@ namespace MorgueManager.API.Migrations
                     b.OwnsOne("MorgueManager.API.Models.EmbalmingInfo", "EmbalmingInfo", b1 =>
                         {
                             b1.Property<int>("CorpseId")
-                                .HasColumnType("int");
+                                .HasColumnType("integer");
 
                             b1.Property<string>("ChemicalsUsed")
                                 .IsRequired()
-                                .HasColumnType("nvarchar(max)");
+                                .HasColumnType("text");
 
                             b1.Property<string>("DateEmbalmed")
                                 .IsRequired()
-                                .HasColumnType("nvarchar(max)");
+                                .HasColumnType("text");
 
                             b1.Property<string>("EmbalmerName")
                                 .IsRequired()
-                                .HasColumnType("nvarchar(max)");
+                                .HasColumnType("text");
 
                             b1.Property<bool>("IsEmbalmed")
-                                .HasColumnType("bit");
+                                .HasColumnType("boolean");
 
                             b1.HasKey("CorpseId");
 
@@ -1434,28 +1434,28 @@ namespace MorgueManager.API.Migrations
                         {
                             b1.Property<int>("Id")
                                 .ValueGeneratedOnAdd()
-                                .HasColumnType("int");
+                                .HasColumnType("integer");
 
-                            SqlServerPropertyBuilderExtensions.UseIdentityColumn(b1.Property<int>("Id"));
+                            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b1.Property<int>("Id"));
 
                             b1.Property<string>("By")
                                 .IsRequired()
-                                .HasColumnType("nvarchar(max)");
+                                .HasColumnType("text");
 
                             b1.Property<int>("CorpseId")
-                                .HasColumnType("int");
+                                .HasColumnType("integer");
 
                             b1.Property<string>("Detail")
                                 .IsRequired()
-                                .HasColumnType("nvarchar(max)");
+                                .HasColumnType("text");
 
                             b1.Property<string>("Status")
                                 .IsRequired()
-                                .HasColumnType("nvarchar(max)");
+                                .HasColumnType("text");
 
                             b1.Property<string>("Timestamp")
                                 .IsRequired()
-                                .HasColumnType("nvarchar(max)");
+                                .HasColumnType("text");
 
                             b1.HasKey("Id");
 
@@ -1470,19 +1470,19 @@ namespace MorgueManager.API.Migrations
                     b.OwnsOne("MorgueManager.API.Models.NextOfKinInfo", "NextOfKin", b1 =>
                         {
                             b1.Property<int>("CorpseId")
-                                .HasColumnType("int");
+                                .HasColumnType("integer");
 
                             b1.Property<string>("Name")
                                 .IsRequired()
-                                .HasColumnType("nvarchar(max)");
+                                .HasColumnType("text");
 
                             b1.Property<string>("Phone")
                                 .IsRequired()
-                                .HasColumnType("nvarchar(max)");
+                                .HasColumnType("text");
 
                             b1.Property<string>("Relationship")
                                 .IsRequired()
-                                .HasColumnType("nvarchar(max)");
+                                .HasColumnType("text");
 
                             b1.HasKey("CorpseId");
 
