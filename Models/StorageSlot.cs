@@ -1,6 +1,6 @@
 namespace MorgueManager.Web.Models;
 
-public enum SlotStatus { Empty, Occupied, Cleaning, Maintenance }
+public enum SlotStatus { Empty, Occupied, Cleaning, Maintenance, Pending }
 
 public class StorageSlot
 {

@@ -3,6 +3,7 @@
 @inject NavigationManager Navigation
 @inject MorgueManager.Web.Services.TourService TourService
 @inject Supabase.Client Supabase
+@inject IJSRuntime JS
 
 <div>
     <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px;">
@@ -24,6 +25,7 @@
         var occupiedCount = allSlots.Count(s => s.Status == Models.SlotStatus.Occupied);
         var cleaningCount = allSlots.Count(s => s.Status == Models.SlotStatus.Cleaning);
         var maintCount = allSlots.Count(s => s.Status == Models.SlotStatus.Maintenance);
+        var pendingCount = allSlots.Count(s => s.Status == Models.SlotStatus.Pending);
         var totalCount = allSlots.Count;
         var usagePercent = totalCount > 0 ? (occupiedCount * 100 / totalCount) : 0;
     }
@@ -31,6 +33,7 @@
         <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: center;">
             <span class="font-ui" style="font-size: 12px; color: var(--text-muted);"><span style="color: #10B981;">🟢</span> Trống (@emptyCount)</span>
             <span class="font-ui" style="font-size: 12px; color: var(--text-muted);"><span style="color: #EF4444;">🔴</span> Đang sử dụng (@occupiedCount)</span>
+            <span class="font-ui" style="font-size: 12px; color: var(--text-muted);"><span style="color: #EC4899;">🌸</span> Đang xử lý (@pendingCount)</span>
             <span class="font-ui" style="font-size: 12px; color: var(--text-muted);"><span style="color: #F59E0B;">🟡</span> Chờ vệ sinh (@cleaningCount)</span>
             <span class="font-ui" style="font-size: 12px; color: var(--text-muted);"><span style="color: #6366F1;">🟣</span> Bảo trì (@maintCount)</span>
             <span class="font-ui" style="font-size: 12px; color: var(--text-muted); padding-left: 8px; border-left: 1px solid var(--border-primary); margin-left: 8px; display: inline-flex; align-items: center; gap: 4px;">
@@ -68,7 +71,7 @@
             }
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                 <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Ngăn</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">@_selectedSlot.Id</div></div>
-                <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Trạng thái</div><div class="font-ui" style="font-size: 14px; color: @(_selectedSlot.Status == Models.SlotStatus.Occupied ? "#EF4444" : _selectedSlot.Status == Models.SlotStatus.Empty ? "#10B981" : _selectedSlot.Status == Models.SlotStatus.Cleaning ? "#F59E0B" : "#6366F1");">@_selectedSlot.Status</div></div>
+                <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Trạng thái</div><div class="font-ui" style="font-size: 14px; color: @(_selectedSlot.Status == Models.SlotStatus.Occupied ? "#EF4444" : _selectedSlot.Status == Models.SlotStatus.Empty ? "#10B981" : _selectedSlot.Status == Models.SlotStatus.Cleaning ? "#F59E0B" : _selectedSlot.Status == Models.SlotStatus.Pending ? "#EC4899" : "#6366F1");">@(_selectedSlot.Status == Models.SlotStatus.Occupied ? "Đang sử dụng" : _selectedSlot.Status == Models.SlotStatus.Empty ? "Trống" : _selectedSlot.Status == Models.SlotStatus.Cleaning ? "Chờ vệ sinh" : _selectedSlot.Status == Models.SlotStatus.Pending ? "Yêu cầu thuê" : "Bảo trì")</div></div>
                 <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Nhiệt độ</div><div class="font-ui" style="font-size: 14px; color: @(_selectedSlot.Temp > 6 ? "var(--danger)" : _selectedSlot.Temp < 0 ? "var(--ice)" : "var(--success)");">@_selectedSlot.Temp.ToString("F1")°C</div></div>
                 <div><div class="font-ui" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Thời gian lưu</div><div class="font-ui" style="font-size: 14px; color: var(--text-primary);">@_selectedSlot.DaysStored ngày</div></div>
                 @if (_selectedSlot.Status == Models.SlotStatus.Occupied)
@@ -97,9 +100,101 @@
     private List<Models.StorageSlot> _zoneBSlots = new();
     private List<Models.StorageSlot> _zoneCSlots = new();
 
+    private List<ContactModel> _contactRequests = new();
+
     protected override async Task OnInitializedAsync()
     {
+        await LoadContactRequestsAsync();
         await LoadSlotsFromSupabaseAsync();
+    }
+
+    private async Task LoadContactRequestsAsync()
+    {
+        _contactRequests.Clear();
+        // 1. Try loading from Supabase
+        try
+        {
+            var response = await Supabase.From<ContactModel>().Get();
+            if (response?.Models != null && response.Models.Count > 0)
+            {
+                _contactRequests.AddRange(response.Models);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Supabase load failed in StorageMap: " + ex.Message);
+        }
+
+        // 2. Load from LocalStorage and merge
+        try
+        {
+            var localDataJson = await JS.InvokeAsync<string>("localStorage.getItem", "local_contact_requests");
+            if (!string.IsNullOrEmpty(localDataJson))
+            {
+                List<ContactModelDto>? localRequests = null;
+                try
+                {
+                    localRequests = System.Text.Json.JsonSerializer.Deserialize<List<ContactModelDto>>(localDataJson);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Failed to deserialize local storage contact requests in StorageMap: " + ex.Message);
+                }
+
+                if (localRequests != null && localRequests.Count > 0)
+                {
+                    foreach (var lrdto in localRequests)
+                    {
+                        var lr = lrdto.ToModel();
+                        if (!_contactRequests.Any(r => r.Id == lr.Id || (r.Name == lr.Name && r.Email == lr.Email && r.Message == lr.Message)))
+                        {
+                            _contactRequests.Add(lr);
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error loading local requests in StorageMap: " + ex.Message);
+        }
+    }
+
+    private void ApplyRequestOverlay(List<Models.StorageSlot> slots)
+    {
+        foreach (var slot in slots)
+        {
+            // Only overlay requests if the slot is currently Empty
+            if (slot.Status == Models.SlotStatus.Empty)
+            {
+                // Find the latest request for this slot
+                var matchingRequest = _contactRequests
+                    .Where(r => r.StorageSlot == slot.Id)
+                    .OrderByDescending(r => r.CreatedAt)
+                    .FirstOrDefault();
+
+                if (matchingRequest != null)
+                {
+                    if (matchingRequest.Status == "Đã hoàn thành")
+                    {
+                        slot.Status = Models.SlotStatus.Occupied;
+                        slot.CorpseName = matchingRequest.Name;
+                        slot.PackageName = matchingRequest.PackageName;
+                    }
+                    else if (matchingRequest.Status == "Chưa xử lý" || matchingRequest.Status == "Đang xử lý")
+                    {
+                        // Check if the request is within 24 hours (UTC)
+                        var limitTime = DateTime.UtcNow.AddDays(-1);
+                        if (matchingRequest.CreatedAt >= limitTime)
+                        {
+                            slot.Status = Models.SlotStatus.Pending;
+                            slot.CorpseName = matchingRequest.Name;
+                            slot.PackageName = matchingRequest.PackageName;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private async Task LoadSlotsFromSupabaseAsync()
@@ -159,6 +254,11 @@
                     LastUpdate = $"{DateTime.Now:HH:mm}"
                 };
             }).ToList();
+
+            // Apply overlay for contact requests
+            ApplyRequestOverlay(_zoneASlots);
+            ApplyRequestOverlay(_zoneBSlots);
+            ApplyRequestOverlay(_zoneCSlots);
         }
         catch (Exception ex)
         {
@@ -198,6 +298,11 @@
             DaysStored = i * 4,
             LastUpdate = $"{DateTime.Now:HH:mm}",
         }).ToList();
+
+        // Apply overlay for contact requests
+        ApplyRequestOverlay(_zoneASlots);
+        ApplyRequestOverlay(_zoneBSlots);
+        ApplyRequestOverlay(_zoneCSlots);
     }
 
     private void NavToTemperature() => Navigation.NavigateTo("/admin/temperature");
