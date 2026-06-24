@@ -57,17 +57,17 @@
                 _borderColor = "#10B981"; _bgColor = "rgba(16,185,129,0.06)"; _glowColor = "0 0 20px rgba(16,185,129,0.15)"; _label = "Trống"; _icon = "✅"; _status = "empty";
                 break;
             case Models.SlotStatus.Occupied:
-                if (Slot.PackageName == "deep")
+                if (string.Equals(Slot.PackageName, "deep", StringComparison.OrdinalIgnoreCase))
                 {
                     _borderColor = "#48DBFB"; _bgColor = "rgba(72,219,251,0.06)"; _glowColor = "0 0 20px rgba(72,219,251,0.2)"; _label = "Thuê - Lạnh Sâu"; _icon = "❄️"; _status = "occupied";
                 }
-                else if (Slot.PackageName == "Forensic")
+                else if (string.Equals(Slot.PackageName, "Forensic", StringComparison.OrdinalIgnoreCase))
                 {
                     _borderColor = "#F59E0B"; _bgColor = "rgba(245,158,11,0.06)"; _glowColor = "0 0 20px rgba(245,158,11,0.2)"; _label = "Thuê - Pháp Y"; _icon = "⚖️"; _status = "occupied";
                 }
-                else if (Slot.PackageName == "standard")
+                else if (string.Equals(Slot.PackageName, "standard", StringComparison.OrdinalIgnoreCase))
                 {
-                    _borderColor = "#10B981"; _bgColor = "rgba(16,185,129,0.06)"; _glowColor = "0 0 20px rgba(16,185,129,0.2)"; _label = "Thuê - Tiêu Chuẩn"; _icon = "👤"; _status = "occupied";
+                    _borderColor = "#EF4444"; _bgColor = "rgba(239,68,68,0.06)"; _glowColor = "0 0 20px rgba(239,68,68,0.2)"; _label = "Thuê - Tiêu Chuẩn"; _icon = "👤"; _status = "occupied";
                 }
                 else
                 {
