@@ -364,16 +364,10 @@
                             </p>
                         </div>
 
-                        <div class="space-y-3 mt-6">
-                            <button @onclick="OpenBookingModal" class="btn-warm w-full font-ui text-sm font-semibold py-3.5 rounded-lg flex items-center justify-center gap-2 cursor-pointer" style="border: none; outline: none;">
-                                <span>⚡ Đăng ký dịch vụ ngay</span>
-                                <LucideIcon Name="send" Class="w-4 h-4" />
-                            </button>
-                            <button @onclick="ApplyEstimateToForm" class="w-full font-ui text-xs font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-all duration-300 hover:bg-white/5" style="background: transparent; border: 1px solid var(--border-primary); color: var(--text-secondary); outline: none;">
-                                <span>📥 Điền thông tin vào Form liên hệ</span>
-                                <LucideIcon Name="file-text" Class="w-3.5 h-3.5" />
-                            </button>
-                        </div>
+                        <button @onclick="OpenBookingModal" class="btn-warm w-full font-ui text-sm font-semibold py-3.5 rounded-lg flex items-center justify-center gap-2 mt-6 cursor-pointer" style="border: none; outline: none;">
+                            <span>⚡ Đăng ký dịch vụ ngay</span>
+                            <LucideIcon Name="send" Class="w-4 h-4" />
+                        </button>
                     </div>
 
                 </div>
