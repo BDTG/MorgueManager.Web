@@ -364,10 +364,16 @@
                             </p>
                         </div>
 
-                        <button @onclick="ApplyEstimateToForm" class="btn-warm w-full font-ui text-sm font-semibold py-3.5 rounded-lg flex items-center justify-center gap-2 mt-6 cursor-pointer" style="border: none; outline: none;">
-                            <span>📥 Điền thông tin này vào Form liên hệ</span>
-                            <LucideIcon Name="file-text" Class="w-4 h-4" />
-                        </button>
+                        <div class="space-y-3 mt-6">
+                            <button @onclick="OpenBookingModal" class="btn-warm w-full font-ui text-sm font-semibold py-3.5 rounded-lg flex items-center justify-center gap-2 cursor-pointer" style="border: none; outline: none;">
+                                <span>⚡ Đăng ký dịch vụ ngay</span>
+                                <LucideIcon Name="send" Class="w-4 h-4" />
+                            </button>
+                            <button @onclick="ApplyEstimateToForm" class="w-full font-ui text-xs font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-all duration-300 hover:bg-white/5" style="background: transparent; border: 1px solid var(--border-primary); color: var(--text-secondary); outline: none;">
+                                <span>📥 Điền thông tin vào Form liên hệ</span>
+                                <LucideIcon Name="file-text" Class="w-3.5 h-3.5" />
+                            </button>
+                        </div>
                     </div>
 
                 </div>
@@ -439,12 +445,95 @@
     </div>
 }
 
+@if (_showBookingModal)
+{
+    <div class="fixed inset-0 z-[2000] flex items-center justify-center p-4">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @onclick="CloseBookingModal"></div>
+        
+        <!-- Content -->
+        <div class="relative z-10 w-full max-w-lg p-8 rounded-2xl border border-[var(--border-primary)] shadow-2xl overflow-hidden"
+             style="background-color: rgba(10, 16, 24, 0.9); backdrop-filter: blur(16px);">
+            <!-- Decorative blur background -->
+            <div class="absolute -top-12 -left-12 w-24 h-24 rounded-full bg-[var(--ice)]/20 filter blur-xl pointer-events-none"></div>
+            
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-display text-xl font-bold" style="color: var(--text-primary);">
+                    Đăng ký dịch vụ & Nhận báo giá
+                </h3>
+                <button @onclick="CloseBookingModal" style="background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer;">✕</button>
+            </div>
+
+            <!-- Service Summary -->
+            <div class="p-4 rounded-xl mb-6 font-ui text-sm border border-white/5" style="background-color: rgba(255,255,255,0.02); text-align: left;">
+                <div class="text-[var(--ice)] font-bold mb-2">Tóm tắt dịch vụ đã chọn:</div>
+                <div class="space-y-1 text-[var(--text-secondary)] text-xs">
+                    <div>- Thời gian lưu trữ: <strong>@_calcDays ngày</strong> (@(_calcZone == "deep" ? "Khu C - Cấp đông lạnh sâu" : "Khu A/B - Lưu mát thông thường"))</div>
+                    <div>- Khoảng cách vận chuyển: <strong>@_calcDistance km</strong></div>
+                    @if (_calcEmbalm) { <div>- Dịch vụ khâm liệm & trang điểm thi hài (+1.5M)</div> }
+                    @if (_calcPreserve) { <div>- Dịch vụ ướp bảo quản lâu ngày (+3.0M)</div> }
+                    @if (_calcForensic) { <div>- Dịch vụ thuê phòng y khoa khám nghiệm (+1.2M)</div> }
+                </div>
+                <div class="mt-3 pt-3 border-t border-white/5 flex justify-between items-center">
+                    <span class="text-xs text-[var(--text-muted)]">Tổng chi phí tạm tính:</span>
+                    <span class="text-lg font-bold text-[var(--candle)]">@_totalEstimate.ToString("N0") đ</span>
+                </div>
+            </div>
+
+            <!-- Booking Form -->
+            <EditForm Model="@_bookingModel" OnValidSubmit="HandleBookingSubmit" class="space-y-4 text-left">
+                <DataAnnotationsValidator />
+
+                <div class="relative">
+                    <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Họ tên khách hàng *</label>
+                    <InputText @bind-Value="_bookingModel.Name" class="cold-input py-2" placeholder="Nguyễn Văn A" style="background-color: rgba(0,0,0,0.3);" />
+                    <ValidationMessage For="@(() => _bookingModel.Name)" class="text-xs mt-1 block text-left" style="color: var(--danger);" />
+                </div>
+
+                <div class="relative">
+                    <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Số điện thoại</label>
+                    <InputText @bind-Value="_bookingModel.Phone" class="cold-input py-2" placeholder="0912345678" style="background-color: rgba(0,0,0,0.3);" />
+                    <ValidationMessage For="@(() => _bookingModel.Phone)" class="text-xs mt-1 block text-left" style="color: var(--danger);" />
+                </div>
+
+                <div class="relative">
+                    <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Email *</label>
+                    <InputText @bind-Value="_bookingModel.Email" class="cold-input py-2" placeholder="customer@example.com" style="background-color: rgba(0,0,0,0.3);" />
+                    <ValidationMessage For="@(() => _bookingModel.Email)" class="text-xs mt-1 block text-left" style="color: var(--danger);" />
+                </div>
+
+                <div class="relative">
+                    <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Ghi chú thêm</label>
+                    <InputTextArea @bind-Value="_bookingModel.Message" rows="3" class="cold-input py-2 resize-none" placeholder="Nhập yêu cầu đặc biệt của gia đình..." style="background-color: rgba(0,0,0,0.3);" />
+                    <ValidationMessage For="@(() => _bookingModel.Message)" class="text-xs mt-1 block text-left" style="color: var(--danger);" />
+                </div>
+
+                <button type="submit" disabled="@_isBookingSubmitting" class="btn-warm w-full font-ui text-sm font-semibold py-3 rounded-lg flex items-center justify-center gap-2 mt-4 disabled:opacity-60 disabled:cursor-not-allowed">
+                    @if (_isBookingSubmitting)
+                    {
+                        <LucideIcon Name="loader" Class="w-4 h-4 animate-spin" />
+                        <span>Đang xử lý đăng ký...</span>
+                    }
+                    else
+                    {
+                        <span>Xác nhận đăng ký</span>
+                        <LucideIcon Name="check" Class="w-4 h-4" />
+                    }
+                </button>
+            </EditForm>
+        </div>
+    </div>
+}
+
 @code {
     private ContactModel _contactModel = new();
+    private ContactModel _bookingModel = new();
     private string? _focusedField = null;
     private bool _isSubmitting = false;
     private bool _submitted = false;
     private bool _showAccessKeyModal = false;
+    private bool _showBookingModal = false;
+    private bool _isBookingSubmitting = false;
     private bool _copied = false;
 
     private int _calcDaysValue = 5;
@@ -559,6 +648,49 @@
         {
             _calcForensic = true;
         }
+    }
+
+    private void OpenBookingModal()
+    {
+        _bookingModel = new ContactModel();
+        var zoneText = _calcZone == "deep" ? "Khu C (Cấp đông lạnh sâu)" : "Khu A/B (Lưu mát thông thường)";
+        var embalmText = _calcEmbalm ? "- Dịch vụ khâm liệm & trang điểm thi hài\n" : "";
+        var preserveText = _calcPreserve ? "- Dịch vụ ướp bảo quản lâu ngày\n" : "";
+        var forensicText = _calcForensic ? "- Dịch vụ thuê phòng y khoa khám nghiệm\n" : "";
+
+        _bookingModel.Subject = "Đăng ký dịch vụ trực tuyến từ bộ tính phí";
+        _bookingModel.Message = $"Tôi cần đăng ký gói dịch vụ y tế sau:\n" +
+                                $"- Thời gian lưu trữ: {_calcDays} ngày\n" +
+                                $"- Loại ngăn tủ: {zoneText}\n" +
+                                $"- Khoảng cách vận chuyển: {_calcDistance} km\n" +
+                                $"{embalmText}{preserveText}{forensicText}" +
+                                $"---------------------------------------\n" +
+                                $"Tổng chi phí dự kiến tạm tính: {_totalEstimate.ToString("N0")} VNĐ.\n";
+        _showBookingModal = true;
+    }
+
+    private void CloseBookingModal()
+    {
+        _showBookingModal = false;
+    }
+
+    private async Task HandleBookingSubmit()
+    {
+        _isBookingSubmitting = true;
+        StateHasChanged();
+
+        var success = await ContactService.SubmitContactAsync(_bookingModel);
+
+        _isBookingSubmitting = false;
+        if (success)
+        {
+            _showBookingModal = false;
+            _submitted = true;
+            _contactModel = new ContactModel(); // Reset
+            _copied = false;
+            _showAccessKeyModal = true;
+        }
+        StateHasChanged();
     }
 
     private void HandleFocus(string fieldName) => _focusedField = fieldName;
