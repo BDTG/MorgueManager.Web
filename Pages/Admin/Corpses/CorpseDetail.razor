@@ -211,11 +211,18 @@
                OnConfirm="ConfirmHandover"
                OnCancel="() => _showHandoverConfirm = false" />
 
+@if (_showToast)
+{
+    <Toast Message="@_toastMessage" Type="success" />
+}
+
 @code {
     [Parameter] public int Id { get; set; }
     private string _activeTab = "info";
     private Models.Corpse? _corpse;
     private bool _loading = true;
+    private bool _showToast = false;
+    private string _toastMessage = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -309,12 +316,24 @@
         {
             try
             {
+                var corpseName = _corpse.Name;
+                var caseId = _corpse.CaseId;
+
                 _corpse.Status = "Bàn giao";
                 _corpse.StorageSlot = null;
                 _corpse.StorageUnit = null;
                 _corpse.Temp = null;
                 await Supabase.From<Models.Corpse>().Update(_corpse);
                 _corpse = await Supabase.From<Models.Corpse>().Where(x => x.Id == Id).Single();
+
+                // Show success toast
+                _toastMessage = $"Đã bàn giao thi thể {corpseName} ({caseId}) thành công!";
+                _showToast = true;
+                StateHasChanged();
+
+                await Task.Delay(3000);
+                _showToast = false;
+                StateHasChanged();
             }
             catch (Exception ex)
             {

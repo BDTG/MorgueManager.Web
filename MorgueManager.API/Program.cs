@@ -14,11 +14,11 @@ QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Register DbContext (Auto-switch between SQL Server and PostgreSQL based on Connection String)
+// Register DbContext (SQL Server for local dev, PostgreSQL for production)
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "";
-    if (connectionString.Contains("localdb") || connectionString.Contains("Server=") || connectionString.Contains("Database="))
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    if (builder.Environment.IsDevelopment())
     {
         options.UseSqlServer(connectionString,
             sqlOptions => sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
@@ -139,20 +139,17 @@ app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Run database migrations or schema creation on startup based on database provider
-if (app.Environment.IsDevelopment())
+// Run database migrations or creation on startup based on configured provider
+using (var scope = app.Services.CreateScope())
 {
-    using (var scope = app.Services.CreateScope())
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    if (db.Database.IsSqlServer())
     {
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        if (db.Database.ProviderName == "Microsoft.EntityFrameworkCore.SqlServer")
-        {
-            db.Database.EnsureCreated();
-        }
-        else
-        {
-            db.Database.Migrate();
-        }
+        db.Database.EnsureCreated();
+    }
+    else
+    {
+        db.Database.Migrate();
     }
 }
 
