@@ -51,6 +51,30 @@ public class ContactModel : BaseModel
 
     [Column("price")]
     public long? Price { get; set; }
+
+    [Column("deceased_name")]
+    public string? DeceasedName { get; set; }
+
+    [Column("deceased_gender")]
+    public string? DeceasedGender { get; set; } = "Nam";
+
+    [Column("deceased_age")]
+    public int? DeceasedAge { get; set; }
+
+    [Column("deceased_cccd")]
+    public string? DeceasedCccd { get; set; }
+
+    [Column("cause_of_death")]
+    public string? CauseOfDeath { get; set; }
+
+    [Column("date_of_death")]
+    public string? DateOfDeath { get; set; }
+
+    [Column("is_infectious")]
+    public bool IsInfectious { get; set; }
+
+    [Column("next_of_kin_relationship")]
+    public string? NextOfKinRelationship { get; set; }
 }
 
 public class ContactModelDto
@@ -66,6 +90,14 @@ public class ContactModelDto
     public string? StorageSlot { get; set; }
     public string? PackageName { get; set; }
     public long? Price { get; set; }
+    public string? DeceasedName { get; set; }
+    public string? DeceasedGender { get; set; }
+    public int? DeceasedAge { get; set; }
+    public string? DeceasedCccd { get; set; }
+    public string? CauseOfDeath { get; set; }
+    public string? DateOfDeath { get; set; }
+    public bool IsInfectious { get; set; }
+    public string? NextOfKinRelationship { get; set; }
 
     public static ContactModelDto FromModel(ContactModel m) => new()
     {
@@ -79,7 +111,15 @@ public class ContactModelDto
         Status = m.Status,
         StorageSlot = m.StorageSlot,
         PackageName = m.PackageName,
-        Price = m.Price
+        Price = m.Price,
+        DeceasedName = m.DeceasedName,
+        DeceasedGender = m.DeceasedGender,
+        DeceasedAge = m.DeceasedAge,
+        DeceasedCccd = m.DeceasedCccd,
+        CauseOfDeath = m.CauseOfDeath,
+        DateOfDeath = m.DateOfDeath,
+        IsInfectious = m.IsInfectious,
+        NextOfKinRelationship = m.NextOfKinRelationship
     };
 
     public ContactModel ToModel() => new()
@@ -94,6 +134,14 @@ public class ContactModelDto
         Status = this.Status,
         StorageSlot = this.StorageSlot,
         PackageName = this.PackageName,
-        Price = this.Price
+        Price = this.Price,
+        DeceasedName = this.DeceasedName,
+        DeceasedGender = this.DeceasedGender,
+        DeceasedAge = this.DeceasedAge,
+        DeceasedCccd = this.DeceasedCccd,
+        CauseOfDeath = this.CauseOfDeath,
+        DateOfDeath = this.DateOfDeath,
+        IsInfectious = this.IsInfectious,
+        NextOfKinRelationship = this.NextOfKinRelationship
     };
 }

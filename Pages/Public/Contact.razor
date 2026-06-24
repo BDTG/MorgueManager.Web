@@ -454,42 +454,107 @@
             <EditForm Model="@_bookingModel" OnValidSubmit="HandleBookingSubmit" class="space-y-4 text-left">
                 <DataAnnotationsValidator />
 
-                <div class="relative">
-                    <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Họ tên khách hàng *</label>
-                    <InputText @bind-Value="_bookingModel.Name" class="cold-input py-2" placeholder="Nguyễn Văn A" style="background-color: rgba(0,0,0,0.3);" />
-                    <ValidationMessage For="@(() => _bookingModel.Name)" class="text-xs mt-1 block text-left" style="color: var(--danger);" />
-                </div>
+                <div style="max-height: 50vh; overflow-y: auto; padding-right: 8px;" class="space-y-5">
+                    <!-- SECTION 1: THÔNG TIN NGƯỜI ĐÃ KHUẤT -->
+                    <div class="border-b border-white/10 pb-4">
+                        <h4 class="text-xs uppercase tracking-wider font-semibold text-[var(--ice)] mb-3">📍 Thông tin người đã khuất</h4>
+                        
+                        <div class="relative mb-3">
+                            <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Họ tên người đã khuất *</label>
+                            <InputText @bind-Value="_bookingModel.DeceasedName" class="cold-input py-2" placeholder="Họ tên người đã mất" style="background-color: rgba(0,0,0,0.3);" />
+                            <ValidationMessage For="@(() => _bookingModel.DeceasedName)" class="text-xs mt-1 block text-left" style="color: var(--danger);" />
+                        </div>
 
-                <div class="relative">
-                    <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Số điện thoại</label>
-                    <InputText @bind-Value="_bookingModel.Phone" class="cold-input py-2" placeholder="0912345678" style="background-color: rgba(0,0,0,0.3);" />
-                    <ValidationMessage For="@(() => _bookingModel.Phone)" class="text-xs mt-1 block text-left" style="color: var(--danger);" />
-                </div>
+                        <div class="grid grid-cols-2 gap-4 mb-3">
+                            <div>
+                                <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Giới tính</label>
+                                <select @bind="_bookingModel.DeceasedGender" class="cold-input py-2 w-full font-ui text-sm" style="background-color: rgba(0,0,0,0.3); border: 1px solid var(--border-primary); color: var(--text-primary); outline: none;">
+                                    <option value="Nam">Nam</option>
+                                    <option value="Nữ">Nữ</option>
+                                    <option value="Khác">Khác</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Tuổi</label>
+                                <InputNumber @bind-Value="_bookingModel.DeceasedAge" class="cold-input py-2 w-full" placeholder="Tuổi" style="background-color: rgba(0,0,0,0.3);" />
+                            </div>
+                        </div>
 
-                <div class="relative">
-                    <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Email *</label>
-                    <InputText @bind-Value="_bookingModel.Email" class="cold-input py-2" placeholder="customer@example.com" style="background-color: rgba(0,0,0,0.3);" />
-                    <ValidationMessage For="@(() => _bookingModel.Email)" class="text-xs mt-1 block text-left" style="color: var(--danger);" />
-                </div>
+                        <div class="relative mb-3">
+                            <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Số CCCD / Hộ chiếu</label>
+                            <InputText @bind-Value="_bookingModel.DeceasedCccd" class="cold-input py-2" placeholder="Nhập số CCCD" style="background-color: rgba(0,0,0,0.3);" />
+                        </div>
 
-                <div class="relative">
-                    <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Chọn ngăn tủ mong muốn *</label>
-                    <select @bind="_bookingModel.StorageSlot" class="cold-input py-2 w-full font-ui text-sm" style="background-color: rgba(0,0,0,0.3); border: 1px solid var(--border-primary); color: var(--text-primary); outline: none;">
-                        @foreach (var slot in GetAvailableSlots())
-                        {
-                            <option value="@slot" style="background-color: var(--bg-card); color: var(--text-primary);">Ngăn @slot (Trống)</option>
-                        }
-                        @if (GetAvailableSlots().Count == 0)
-                        {
-                            <option value="" disabled style="background-color: var(--bg-card); color: var(--text-muted);">Không còn ngăn trống trong khu vực này</option>
-                        }
-                    </select>
-                </div>
+                        <div class="relative mb-3">
+                            <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Nguyên nhân tử vong</label>
+                            <InputText @bind-Value="_bookingModel.CauseOfDeath" class="cold-input py-2" placeholder="Ví dụ: Tai nạn, tuổi già, bệnh lý..." style="background-color: rgba(0,0,0,0.3);" />
+                        </div>
 
-                <div class="relative">
-                    <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Ghi chú thêm</label>
-                    <InputTextArea @bind-Value="_bookingModel.Message" rows="3" class="cold-input py-2 resize-none" placeholder="Nhập yêu cầu đặc biệt của gia đình..." style="background-color: rgba(0,0,0,0.3);" />
-                    <ValidationMessage For="@(() => _bookingModel.Message)" class="text-xs mt-1 block text-left" style="color: var(--danger);" />
+                        <div class="relative mb-3">
+                            <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Ngày giờ tử vong</label>
+                            <InputText @bind-Value="_bookingModel.DateOfDeath" type="datetime-local" class="cold-input py-2" style="background-color: rgba(0,0,0,0.3);" />
+                        </div>
+
+                        <label class="flex items-center gap-3 text-sm text-[var(--text-secondary)] cursor-pointer mt-2">
+                            <input type="checkbox" @bind="_bookingModel.IsInfectious" class="w-4 h-4 rounded accent-[var(--ice)]" />
+                            <span>Có nguy cơ lây nhiễm (Bệnh truyền nhiễm)</span>
+                        </label>
+                    </div>
+
+                    <!-- SECTION 2: THÔNG TIN THÂN NHÂN -->
+                    <div class="border-b border-white/10 pb-4">
+                        <h4 class="text-xs uppercase tracking-wider font-semibold text-[var(--ice)] mb-3">👤 Thông tin thân nhân liên hệ</h4>
+
+                        <div class="grid grid-cols-2 gap-4 mb-3">
+                            <div>
+                                <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Họ tên thân nhân *</label>
+                                <InputText @bind-Value="_bookingModel.Name" class="cold-input py-2" placeholder="Nguyễn Văn A" style="background-color: rgba(0,0,0,0.3);" />
+                                <ValidationMessage For="@(() => _bookingModel.Name)" class="text-xs mt-1 block text-left" style="color: var(--danger);" />
+                            </div>
+                            <div>
+                                <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Mối quan hệ *</label>
+                                <InputText @bind-Value="_bookingModel.NextOfKinRelationship" class="cold-input py-2" placeholder="Con trai, Vợ, Chồng..." style="background-color: rgba(0,0,0,0.3);" />
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 mb-3">
+                            <div>
+                                <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Số điện thoại *</label>
+                                <InputText @bind-Value="_bookingModel.Phone" class="cold-input py-2" placeholder="0912345678" style="background-color: rgba(0,0,0,0.3);" />
+                                <ValidationMessage For="@(() => _bookingModel.Phone)" class="text-xs mt-1 block text-left" style="color: var(--danger);" />
+                            </div>
+                            <div>
+                                <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Email *</label>
+                                <InputText @bind-Value="_bookingModel.Email" class="cold-input py-2" placeholder="customer@example.com" style="background-color: rgba(0,0,0,0.3);" />
+                                <ValidationMessage For="@(() => _bookingModel.Email)" class="text-xs mt-1 block text-left" style="color: var(--danger);" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 3: CẤU HÌNH DỊCH VỤ -->
+                    <div>
+                        <h4 class="text-xs uppercase tracking-wider font-semibold text-[var(--ice)] mb-3">⚙️ Cấu hình ngăn lưu trữ</h4>
+                        
+                        <div class="relative mb-3">
+                            <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Chọn ngăn tủ mong muốn *</label>
+                            <select @bind="_bookingModel.StorageSlot" class="cold-input py-2 w-full font-ui text-sm" style="background-color: rgba(0,0,0,0.3); border: 1px solid var(--border-primary); color: var(--text-primary); outline: none;">
+                                @foreach (var slot in GetAvailableSlots())
+                                {
+                                    <option value="@slot" style="background-color: var(--bg-card); color: var(--text-primary);">Ngăn @slot (Trống)</option>
+                                }
+                                @if (GetAvailableSlots().Count == 0)
+                                {
+                                    <option value="" disabled style="background-color: var(--bg-card); color: var(--text-muted);">Không còn ngăn trống trong khu vực này</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="relative">
+                            <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Ghi chú thêm</label>
+                            <InputTextArea @bind-Value="_bookingModel.Message" rows="2" class="cold-input py-2 resize-none" placeholder="Nhập yêu cầu đặc biệt của gia đình..." style="background-color: rgba(0,0,0,0.3);" />
+                            <ValidationMessage For="@(() => _bookingModel.Message)" class="text-xs mt-1 block text-left" style="color: var(--danger);" />
+                        </div>
+                    </div>
                 </div>
 
                 <button type="submit" disabled="@_isBookingSubmitting" class="btn-warm w-full font-ui text-sm font-semibold py-3 rounded-lg flex items-center justify-center gap-2 mt-4 disabled:opacity-60 disabled:cursor-not-allowed">
@@ -670,6 +735,10 @@
     private void OpenBookingModal()
     {
         _bookingModel = new ContactModel();
+        _bookingModel.DeceasedGender = "Nam";
+        _bookingModel.DateOfDeath = DateTime.Now.ToString("yyyy-MM-ddTHH:mm");
+        _bookingModel.IsInfectious = false;
+
         var zoneText = _calcZone == "deep" ? "Khu C (Cấp đông lạnh sâu)" : "Khu A/B (Lưu mát thông thường)";
         var embalmText = _calcEmbalm ? "- Dịch vụ khâm liệm & trang điểm thi hài\n" : "";
         var preserveText = _calcPreserve ? "- Dịch vụ ướp bảo quản lâu ngày\n" : "";

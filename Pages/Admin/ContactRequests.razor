@@ -175,6 +175,61 @@
                     }
                 }
 
+                @if (!string.IsNullOrEmpty(_selectedRequest.DeceasedName))
+                {
+                    <div style="grid-column: span 2; margin-top: 12px; margin-bottom: 4px; padding-bottom: 4px; border-bottom: 1px dashed var(--border-primary); font-weight: 600; color: var(--ice); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">
+                        💀 Thông tin thi thể đăng ký
+                    </div>
+
+                    <div style="color: var(--text-muted);">Họ tên thi thể:</div>
+                    <div style="font-weight: 600; color: var(--text-primary);">@_selectedRequest.DeceasedName</div>
+
+                    <div style="color: var(--text-muted);">Giới tính:</div>
+                    <div style="color: var(--text-secondary);">@_selectedRequest.DeceasedGender</div>
+
+                    @if (_selectedRequest.DeceasedAge.HasValue)
+                    {
+                        <div style="color: var(--text-muted);">Tuổi:</div>
+                        <div style="color: var(--text-secondary);">@_selectedRequest.DeceasedAge.Value</div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(_selectedRequest.DeceasedCccd))
+                    {
+                        <div style="color: var(--text-muted);">Số CCCD:</div>
+                        <div style="font-family: monospace; color: var(--text-secondary);">@_selectedRequest.DeceasedCccd</div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(_selectedRequest.NextOfKinRelationship))
+                    {
+                        <div style="color: var(--text-muted);">Mối quan hệ:</div>
+                        <div style="color: var(--text-secondary);">@_selectedRequest.NextOfKinRelationship (với @_selectedRequest.Name)</div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(_selectedRequest.CauseOfDeath))
+                    {
+                        <div style="color: var(--text-muted);">Nguyên nhân tử vong:</div>
+                        <div style="color: var(--danger); font-weight: 500;">@_selectedRequest.CauseOfDeath</div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(_selectedRequest.DateOfDeath))
+                    {
+                        <div style="color: var(--text-muted);">Thời gian tử vong:</div>
+                        <div style="color: var(--text-secondary);">@_selectedRequest.DateOfDeath.Replace("T", " ")</div>
+                    }
+
+                    <div style="color: var(--text-muted);">Nguy cơ lây nhiễm:</div>
+                    <div>
+                        @if (_selectedRequest.IsInfectious)
+                        {
+                            <span class="badge-pill" style="background-color: rgba(239, 68, 68, 0.15); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.2); font-size: 11px;">⚠️ Có nguy cơ lây nhiễm</span>
+                        }
+                        else
+                        {
+                            <span class="badge-pill" style="background-color: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.2); font-size: 11px;">An toàn</span>
+                        }
+                    </div>
+                }
+
                 <div style="color: var(--text-muted);">Trạng thái:</div>
                 <div>
                     @if (_selectedRequest.Status == "Chưa xử lý")
@@ -546,12 +601,12 @@
                     var newCorpse = new Corpse
                     {
                         CaseId = $"MC-{DateTime.Now:yyyyMMdd}-{new Random().Next(1000, 9999)}",
-                        Name = r.Name,
-                        Gender = "Nam",
-                        Age = 40,
-                        Cccd = "",
-                        CauseOfDeath = "Chờ xác định",
-                        DateOfDeath = DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd HH:mm"),
+                        Name = !string.IsNullOrEmpty(r.DeceasedName) ? r.DeceasedName : r.Name,
+                        Gender = !string.IsNullOrEmpty(r.DeceasedGender) ? r.DeceasedGender : "Nam",
+                        Age = r.DeceasedAge ?? 40,
+                        Cccd = r.DeceasedCccd ?? "",
+                        CauseOfDeath = !string.IsNullOrEmpty(r.CauseOfDeath) ? r.CauseOfDeath : "Chờ xác định",
+                        DateOfDeath = !string.IsNullOrEmpty(r.DateOfDeath) ? r.DateOfDeath.Replace("T", " ") : DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd HH:mm"),
                         DateAdmitted = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
                         Status = "Lưu kho",
                         StorageUnit = unitName,
@@ -559,7 +614,15 @@
                         Temp = zone == "C" ? -5.0 : 4.0,
                         DaysStored = 0,
                         Priority = "NORMAL",
+                        IsInfectious = r.IsInfectious,
+                        InfectiousGroup = r.IsInfectious ? "Nhóm B" : "",
                         PackageName = r.PackageName,
+                        NextOfKin = new NextOfKinInfo
+                        {
+                            Name = r.Name,
+                            Phone = r.Phone ?? "",
+                            Relationship = r.NextOfKinRelationship ?? "Thân nhân"
+                        },
                         Notes = $"Tự động tạo từ yêu cầu liên hệ dịch vụ ({r.PackageName}).\nNội dung yêu cầu:\n{r.Message}"
                     };
 
