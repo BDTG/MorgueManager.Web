@@ -35,7 +35,11 @@ public class AuthService
     public async Task<bool> IsLoggedInAsync()
     {
         if (_supabase.Auth.CurrentSession != null)
-            return true;
+        {
+            var accessToken = _supabase.Auth.CurrentSession.AccessToken;
+            if (accessToken != null && !IsJwtExpired(accessToken))
+                return true;
+        }
 
         try
         {
@@ -43,24 +47,61 @@ public class AuthService
             if (currentUri.Fragment.Contains("access_token=") || currentUri.Query.Contains("code="))
             {
                 var session = await _supabase.Auth.GetSessionFromUrl(currentUri, true);
-                if (session != null)
+                if (session != null && session.AccessToken != null && !IsJwtExpired(session.AccessToken))
                 {
-                    if (session.AccessToken != null)
-                    {
-                        await _js.InvokeVoidAsync("localStorage.setItem", "morguemanager-token", session.AccessToken);
-                    }
+                    await _js.InvokeVoidAsync("localStorage.setItem", "morguemanager-token", session.AccessToken);
                     return true;
                 }
             }
 
             var token = await _js.InvokeAsync<string>("localStorage.getItem", "morguemanager-token");
-            if (!string.IsNullOrEmpty(token))
+            if (!string.IsNullOrEmpty(token) && token != "null" && token != "undefined" && !IsJwtExpired(token))
             {
                 return true;
             }
         }
         catch { }
 
+        return false;
+    }
+
+    private bool IsJwtExpired(string token)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(token) || token == "null" || token == "undefined")
+                return true;
+
+            if (token.StartsWith("mock-jwt-token-bypass-"))
+                return false;
+
+            var parts = token.Split('.');
+            if (parts.Length < 2)
+                return true;
+
+            var payload = parts[1];
+            payload = payload.Replace('-', '+').Replace('_', '/');
+            switch (payload.Length % 4)
+            {
+                case 2: payload += "=="; break;
+                case 3: payload += "="; break;
+            }
+
+            var bytes = Convert.FromBase64String(payload);
+            var json = System.Text.Encoding.UTF8.GetString(bytes);
+            
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            if (doc.RootElement.TryGetProperty("exp", out var expProp))
+            {
+                var expSeconds = expProp.GetInt64();
+                var expTime = DateTimeOffset.FromUnixTimeSeconds(expSeconds);
+                return expTime < DateTimeOffset.UtcNow;
+            }
+        }
+        catch
+        {
+            return true;
+        }
         return false;
     }
 

@@ -88,6 +88,9 @@ public class Corpse : BaseModel
 
     [Column("documents")]
     public List<Document> Documents { get; set; } = new();
+
+    [Column("package_name")]
+    public string? PackageName { get; set; }
 }
 
 public class NextOfKinInfo

@@ -1,7 +1,9 @@
 @page "/contact"
+@using System.Linq
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
 @inject IContactService ContactService
+@inject Supabase.Client Supabase
 
 <main>
     <!-- HERO -->
@@ -22,7 +24,7 @@
         <div class="max-w-[1200px] mx-auto">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
                 <!-- LEFT: Form -->
-                <div class="lg:col-span-7 contact-form-block">
+                <div class="lg:col-span-7 contact-form-block" id="contact-form-section">
                     <h2 class="font-display text-2xl md:text-3xl font-semibold mb-2" style="color: var(--text-primary);">
                         Gửi tin nhắn
                     </h2>
@@ -200,13 +202,193 @@
             </div>
         </div>
     </section>
+
+    <!-- PRICING SECTION -->
+    <section class="py-16 px-6 lg:px-10" style="background-color: var(--bg-secondary); border-top: 1px solid var(--border-primary);">
+        <div class="max-w-[1200px] mx-auto">
+            <div class="text-center mb-16">
+                <span class="font-ui text-[11px] uppercase tracking-[0.25em] mb-4 block" style="color: var(--ice);">BẢNG GIÁ & DỰ TOÁN</span>
+                <h2 class="font-display text-3xl md:text-4xl font-semibold" style="color: var(--text-primary);">
+                    Bảng giá Dịch vụ & Công cụ Tính phí
+                </h2>
+                <p class="font-ui text-sm mt-3" style="color: var(--text-muted); max-w-2xl mx-auto;">
+                    Tra cứu bảng giá dịch vụ tiêu chuẩn hoặc sử dụng công cụ tính toán tự động dưới đây để ước tính chi phí trước khi gửi yêu cầu liên hệ.
+                </p>
+            </div>
+
+            <!-- Pricing Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+                <!-- Standard Package Card -->
+                <div class="group rounded-2xl p-8 transition-all duration-500 hover:-translate-y-2 flex flex-col justify-between cursor-pointer"
+                     @onclick='() => SelectPackage("standard")'
+                     style="background-color: var(--bg-card); border: 1px solid @(_calcZone == "standard" && !_calcForensic ? "var(--success)" : "var(--border-primary)"); position: relative; overflow: hidden; height: 100%; box-shadow: @(_calcZone == "standard" && !_calcForensic ? "0 4px 20px rgba(16,185,129,0.15)" : "none");">
+                    <div>
+                        <div class="font-ui text-xs font-semibold tracking-wider text-[var(--success)] uppercase mb-4">Gói Tiêu Chuẩn</div>
+                        <div class="flex items-baseline mb-6">
+                            <span class="text-3xl font-bold text-[var(--text-primary)]">200.000đ</span>
+                            <span class="text-xs text-[var(--text-muted)] ml-2">/ ngày bảo quản</span>
+                        </div>
+                        <ul class="space-y-4 mb-8">
+                            <li class="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+                                <span class="text-[var(--success)]">✓</span> Ngăn lạnh mát Khu A/B (2°C - 4°C)
+                            </li>
+                            <li class="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+                                <span class="text-[var(--success)]">✓</span> Vệ sinh khay kệ hàng ngày
+                            </li>
+                            <li class="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+                                <span class="text-[var(--success)]">✓</span> Báo cáo nhiệt độ tự động 24/7
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Premium Package Card (Highlight) -->
+                <div class="group rounded-2xl p-8 transition-all duration-500 hover:-translate-y-2 flex flex-col justify-between cursor-pointer"
+                     @onclick='() => SelectPackage("deep")'
+                     style="background-color: var(--bg-card); border: 1px solid @(_calcZone == "deep" && !_calcForensic ? "var(--ice)" : "var(--border-primary)"); position: relative; overflow: hidden; height: 100%; box-shadow: @(_calcZone == "deep" && !_calcForensic ? "0 4px 20px rgba(72,219,251,0.2)" : "0 4px 20px rgba(72,219,251,0.05)");">
+                    <div class="absolute top-0 right-0 bg-[var(--ice)] text-[var(--bg-primary)] text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-bl-lg">Phổ biến</div>
+                    <div>
+                        <div class="font-ui text-xs font-semibold tracking-wider text-[var(--ice)] uppercase mb-4">Gói Lạnh Sâu Đặc Biệt</div>
+                        <div class="flex items-baseline mb-6">
+                            <span class="text-3xl font-bold text-[var(--text-primary)]">450.000đ</span>
+                            <span class="text-xs text-[var(--text-muted)] ml-2">/ ngày bảo quản</span>
+                        </div>
+                        <ul class="space-y-4 mb-8">
+                            <li class="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+                                <span class="text-[var(--ice)]">✓</span> Ngăn lạnh âm sâu Khu C (-5°C)
+                            </li>
+                            <li class="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+                                <span class="text-[var(--ice)]">✓</span> Phục vụ cho các ca đặc biệt/phức tạp
+                            </li>
+                            <li class="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+                                <span class="text-[var(--ice)]">✓</span> Vệ sinh, khử trùng dịch tễ nghiêm ngặt
+                            </li>
+                            <li class="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+                                <span class="text-[var(--ice)]">✓</span> Giám sát nhiệt độ sâu báo động tức thời
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Forensic Package Card -->
+                <div class="group rounded-2xl p-8 transition-all duration-500 hover:-translate-y-2 flex flex-col justify-between cursor-pointer"
+                     @onclick='() => SelectPackage("forensic")'
+                     style="background-color: var(--bg-card); border: 1px solid @(_calcForensic ? "var(--candle)" : "var(--border-primary)"); position: relative; overflow: hidden; height: 100%; box-shadow: @(_calcForensic ? "0 4px 20px rgba(246,185,59,0.15)" : "none");">
+                    <div>
+                        <div class="font-ui text-xs font-semibold tracking-wider text-[var(--candle)] uppercase mb-4">Gói Y Khoa Pháp Y</div>
+                        <div class="flex items-baseline mb-6">
+                            <span class="text-3xl font-bold text-[var(--text-primary)]">1.200.000đ</span>
+                            <span class="text-xs text-[var(--text-muted)] ml-2">/ ca làm việc</span>
+                        </div>
+                        <ul class="space-y-4 mb-8">
+                            <li class="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+                                <span class="text-[var(--candle)]">✓</span> Thuê phòng khám nghiệm pháp y khép kín
+                            </li>
+                            <li class="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+                                <span class="text-[var(--candle)]">✓</span> Thiết bị y tế chuyên dụng, chiếu sáng cao cấp
+                            </li>
+                            <li class="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+                                <span class="text-[var(--candle)]">✓</span> Hỗ trợ công cụ lưu trữ & trích xuất bệnh án pháp lý
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Estimator Panel -->
+            <div class="rounded-2xl p-8 lg:p-12 transition-all duration-500"
+                 style="background-color: var(--bg-card); border: 1px solid var(--border-primary);">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                    
+                    <!-- Left: Control sliders/options (lg:col-span-7) -->
+                    <div class="lg:col-span-7 space-y-6">
+                        <h3 class="font-display text-xl font-semibold mb-4" style="color: var(--text-primary);">
+                            Công cụ Dự toán Chi phí Trực quan
+                        </h3>
+                        
+                        <!-- Slider: Days -->
+                        <div>
+                            <div class="flex justify-between text-sm mb-2">
+                                <span class="font-ui" style="color: var(--text-secondary);">Thời gian lưu trữ thi hài:</span>
+                                <span class="font-ui font-semibold text-[var(--ice)]">@_calcDays ngày</span>
+                            </div>
+                            <input type="range" min="1" max="30" @bind="_calcDays" @bind:event="oninput" class="w-full h-1 rounded-lg cursor-pointer accent-[var(--ice)]" style="background-color: var(--bg-primary);" />
+                        </div>
+
+                        <!-- Dropdown: Zone -->
+                        <div>
+                            <label class="font-ui text-xs block mb-2" style="color: var(--text-secondary);">Chọn loại ngăn bảo quản (Gói lưu kho):</label>
+                            <select @bind="_calcZone" class="w-full p-3 rounded-lg font-ui text-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-primary); color: var(--text-primary); outline: none;">
+                                <option value="standard">Khu A/B (Lưu mát thông thường - 200.000đ/ngày)</option>
+                                <option value="deep">Khu C (Cấp đông âm sâu - 450.000đ/ngày)</option>
+                            </select>
+                        </div>
+
+                        <!-- Distance KM input -->
+                        <div>
+                            <div class="flex justify-between text-sm mb-2">
+                                <span class="font-ui" style="color: var(--text-secondary);">Khoảng cách vận chuyển (khứ hồi):</span>
+                                <span class="font-ui font-semibold text-[var(--ice)]">@_calcDistance km</span>
+                            </div>
+                            <input type="range" min="0" max="100" @bind="_calcDistance" @bind:event="oninput" class="w-full h-1 rounded-lg cursor-pointer accent-[var(--ice)]" style="background-color: var(--bg-primary);" />
+                        </div>
+
+                        <!-- Checkboxes: Additional services -->
+                        <div>
+                            <label class="font-ui text-xs block mb-3" style="color: var(--text-secondary);">Dịch vụ đi kèm bổ sung:</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <label class="flex items-center gap-3 text-sm text-[var(--text-secondary)] cursor-pointer">
+                                    <input type="checkbox" @bind="_calcEmbalm" class="w-4 h-4 rounded accent-[var(--ice)]" />
+                                    <span>Khâm liệm & Trang điểm (+1.5M)</span>
+                                </label>
+                                <label class="flex items-center gap-3 text-sm text-[var(--text-secondary)] cursor-pointer">
+                                    <input type="checkbox" @bind="_calcPreserve" class="w-4 h-4 rounded accent-[var(--ice)]" />
+                                    <span>Ướp bảo quản lâu ngày (+3.0M)</span>
+                                </label>
+                                <label class="flex items-center gap-3 text-sm text-[var(--text-secondary)] cursor-pointer">
+                                    <input type="checkbox" @bind="_calcForensic" class="w-4 h-4 rounded accent-[var(--ice)]" />
+                                    <span>Hỗ trợ phòng y khoa (+1.2M)</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Results card (lg:col-span-5) -->
+                    <div class="lg:col-span-5 p-8 rounded-xl border border-[var(--border-primary)] text-center flex flex-col justify-between"
+                         style="background-color: rgba(10, 16, 24, 0.4); min-height: 280px;">
+                        <div>
+                            <h4 class="font-ui text-xs uppercase tracking-wider mb-2" style="color: var(--text-muted);">Ước tính chi phí tạm tính</h4>
+                            <div class="text-4xl font-bold my-4" style="color: var(--candle);">
+                                @_totalEstimate.ToString("N0") <span class="text-lg">đ</span>
+                            </div>
+                            <p class="font-ui text-xs mt-2" style="color: var(--text-secondary);">
+                                * Giá trên mang tính chất tham khảo dựa trên tùy chọn dịch vụ của bạn.
+                            </p>
+                        </div>
+
+                        <button @onclick="OpenBookingModal" class="btn-warm w-full font-ui text-sm font-semibold py-3.5 rounded-lg flex items-center justify-center gap-2 mt-6 cursor-pointer" style="border: none; outline: none;">
+                            <span>⚡ Đăng ký dịch vụ ngay</span>
+                            <LucideIcon Name="send" Class="w-4 h-4" />
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    @if (_showToast)
+    {
+        <Toast Message="@_toastMessage" Type="success" />
+    }
 </main>
 
-@if (_showAccessKeyModal)
+@if (_showSuccessModal)
 {
     <div class="fixed inset-0 z-[2000] flex items-center justify-center p-4">
         <!-- Backdrop -->
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @onclick="CloseModal"></div>
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @onclick="CloseSuccessModal"></div>
         
         <!-- Content -->
         <div class="relative z-10 w-full max-w-md p-8 rounded-2xl border border-[var(--border-primary)] shadow-2xl overflow-hidden text-center"
@@ -220,52 +402,323 @@
             </div>
             
             <h3 class="font-display text-2xl font-bold mb-2" style="color: var(--text-primary);">
-                Đăng ký truy cập thành công!
+                Gửi yêu cầu thành công!
             </h3>
-            <p class="font-ui text-sm mb-6" style="color: var(--text-secondary);">
-                Yêu cầu của bạn đã được duyệt. Dưới đây là khóa truy cập (Access Key) của bạn:
+            <p class="font-ui text-sm mb-8" style="color: var(--text-secondary);">
+                Yêu cầu của bạn đã được ghi nhận vào hệ thống. Ban quản lý nhà xác sẽ liên hệ với bạn trong thời gian sớm nhất qua thông tin liên hệ đã cung cấp.
             </p>
             
-            <!-- Access Key Display Box -->
-            <div class="flex items-center justify-between p-4 rounded-xl mb-6 font-mono text-base font-bold tracking-wider"
-                 style="background-color: var(--bg-elevated); border: 1px solid var(--border-primary); color: var(--ice);">
-                <span>MM-ACTIVE-2026</span>
-                <button @onclick="CopyAccessKey" class="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-white cursor-pointer transition-all flex items-center justify-center" style="border: none; background: rgba(255,255,255,0.05); padding: 6px;">
-                    @if (_copied)
+            <button @onclick="CloseSuccessModal" class="btn-warm font-ui text-sm font-semibold py-3.5 rounded-lg w-full flex items-center justify-center gap-2 cursor-pointer" style="border: none; outline: none;">
+                <span>Đóng cửa sổ</span>
+            </button>
+        </div>
+    </div>
+}
+
+@if (_showBookingModal)
+{
+    <div class="fixed inset-0 z-[2000] flex items-center justify-center p-4">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @onclick="CloseBookingModal"></div>
+        
+        <!-- Content -->
+        <div class="relative z-10 w-full max-w-lg p-8 rounded-2xl border border-[var(--border-primary)] shadow-2xl overflow-hidden"
+             style="background-color: rgba(10, 16, 24, 0.9); backdrop-filter: blur(16px);">
+            <!-- Decorative blur background -->
+            <div class="absolute -top-12 -left-12 w-24 h-24 rounded-full bg-[var(--ice)]/20 filter blur-xl pointer-events-none"></div>
+            
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-display text-xl font-bold" style="color: var(--text-primary);">
+                    Đăng ký dịch vụ & Nhận báo giá
+                </h3>
+                <button @onclick="CloseBookingModal" style="background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer;">✕</button>
+            </div>
+
+            <!-- Service Summary -->
+            <div class="p-4 rounded-xl mb-6 font-ui text-sm border border-white/5" style="background-color: rgba(255,255,255,0.02); text-align: left;">
+                <div class="text-[var(--ice)] font-bold mb-2">Tóm tắt dịch vụ đã chọn:</div>
+                <div class="space-y-1 text-[var(--text-secondary)] text-xs">
+                    <div>- Thời gian lưu trữ: <strong>@_calcDays ngày</strong> (@(_calcZone == "deep" ? "Khu C - Cấp đông lạnh sâu" : "Khu A/B - Lưu mát thông thường"))</div>
+                    <div>- Khoảng cách vận chuyển: <strong>@_calcDistance km</strong></div>
+                    @if (_calcEmbalm) { <div>- Dịch vụ khâm liệm & trang điểm thi hài (+1.5M)</div> }
+                    @if (_calcPreserve) { <div>- Dịch vụ ướp bảo quản lâu ngày (+3.0M)</div> }
+                    @if (_calcForensic) { <div>- Dịch vụ thuê phòng y khoa khám nghiệm (+1.2M)</div> }
+                </div>
+                <div class="mt-3 pt-3 border-t border-white/5 flex justify-between items-center">
+                    <span class="text-xs text-[var(--text-muted)]">Tổng chi phí tạm tính:</span>
+                    <span class="text-lg font-bold text-[var(--candle)]">@_totalEstimate.ToString("N0") đ</span>
+                </div>
+            </div>
+
+            <!-- Booking Form -->
+            <EditForm Model="@_bookingModel" OnValidSubmit="HandleBookingSubmit" class="space-y-4 text-left">
+                <DataAnnotationsValidator />
+
+                <div class="relative">
+                    <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Họ tên khách hàng *</label>
+                    <InputText @bind-Value="_bookingModel.Name" class="cold-input py-2" placeholder="Nguyễn Văn A" style="background-color: rgba(0,0,0,0.3);" />
+                    <ValidationMessage For="@(() => _bookingModel.Name)" class="text-xs mt-1 block text-left" style="color: var(--danger);" />
+                </div>
+
+                <div class="relative">
+                    <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Số điện thoại</label>
+                    <InputText @bind-Value="_bookingModel.Phone" class="cold-input py-2" placeholder="0912345678" style="background-color: rgba(0,0,0,0.3);" />
+                    <ValidationMessage For="@(() => _bookingModel.Phone)" class="text-xs mt-1 block text-left" style="color: var(--danger);" />
+                </div>
+
+                <div class="relative">
+                    <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Email *</label>
+                    <InputText @bind-Value="_bookingModel.Email" class="cold-input py-2" placeholder="customer@example.com" style="background-color: rgba(0,0,0,0.3);" />
+                    <ValidationMessage For="@(() => _bookingModel.Email)" class="text-xs mt-1 block text-left" style="color: var(--danger);" />
+                </div>
+
+                <div class="relative">
+                    <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Chọn ngăn tủ mong muốn *</label>
+                    <select @bind="_bookingModel.StorageSlot" class="cold-input py-2 w-full font-ui text-sm" style="background-color: rgba(0,0,0,0.3); border: 1px solid var(--border-primary); color: var(--text-primary); outline: none;">
+                        @foreach (var slot in GetAvailableSlots())
+                        {
+                            <option value="@slot" style="background-color: var(--bg-card); color: var(--text-primary);">Ngăn @slot (Trống)</option>
+                        }
+                        @if (GetAvailableSlots().Count == 0)
+                        {
+                            <option value="" disabled style="background-color: var(--bg-card); color: var(--text-muted);">Không còn ngăn trống trong khu vực này</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="relative">
+                    <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Ghi chú thêm</label>
+                    <InputTextArea @bind-Value="_bookingModel.Message" rows="3" class="cold-input py-2 resize-none" placeholder="Nhập yêu cầu đặc biệt của gia đình..." style="background-color: rgba(0,0,0,0.3);" />
+                    <ValidationMessage For="@(() => _bookingModel.Message)" class="text-xs mt-1 block text-left" style="color: var(--danger);" />
+                </div>
+
+                <button type="submit" disabled="@_isBookingSubmitting" class="btn-warm w-full font-ui text-sm font-semibold py-3 rounded-lg flex items-center justify-center gap-2 mt-4 disabled:opacity-60 disabled:cursor-not-allowed">
+                    @if (_isBookingSubmitting)
                     {
-                        <LucideIcon Name="check" Class="w-4 h-4 text-[#10B981]" />
+                        <LucideIcon Name="loader" Class="w-4 h-4 animate-spin" />
+                        <span>Đang xử lý đăng ký...</span>
                     }
                     else
                     {
-                        <LucideIcon Name="copy" Class="w-4 h-4 text-[var(--text-secondary)]" />
+                        <span>Xác nhận đăng ký</span>
+                        <LucideIcon Name="check" Class="w-4 h-4" />
                     }
                 </button>
-            </div>
-            
-            <p class="font-ui text-xs mb-8" style="color: var(--text-muted);">
-                * Vui lòng sao chép mã này và sử dụng tại trang Đăng nhập để mở khóa cổng thông tin nhà xác.
-            </p>
-            
-            <div class="flex flex-col gap-3">
-                <button @onclick="GoToLogin" class="btn-warm font-ui text-sm font-semibold py-3.5 rounded-lg w-full flex items-center justify-center gap-2 cursor-pointer" style="border: none; outline: none;">
-                    <span>Đi đến Đăng nhập</span>
-                    <LucideIcon Name="arrow-right" Class="w-4 h-4" />
-                </button>
-                <button @onclick="CloseModal" class="font-ui text-xs py-2 rounded-lg w-full hover:underline" style="color: var(--text-secondary); background: none; border: none; cursor: pointer;">
-                    Đóng cửa sổ
-                </button>
-            </div>
+            </EditForm>
         </div>
     </div>
 }
 
 @code {
     private ContactModel _contactModel = new();
+    private ContactModel _bookingModel = new();
+    private List<string> _occupiedSlots = new();
     private string? _focusedField = null;
     private bool _isSubmitting = false;
     private bool _submitted = false;
-    private bool _showAccessKeyModal = false;
-    private bool _copied = false;
+    private bool _showSuccessModal = false;
+    private bool _showBookingModal = false;
+    private bool _isBookingSubmitting = false;
+
+    private int _calcDaysValue = 5;
+    private int _calcDays
+    {
+        get => _calcDaysValue;
+        set { _calcDaysValue = value; Recalculate(); }
+    }
+
+    private string _calcZoneValue = "standard";
+    private string _calcZone
+    {
+        get => _calcZoneValue;
+        set { _calcZoneValue = value; Recalculate(); }
+    }
+
+    private int _calcDistanceValue = 0;
+    private int _calcDistance
+    {
+        get => _calcDistanceValue;
+        set { _calcDistanceValue = value; Recalculate(); }
+    }
+
+    private bool _calcEmbalmValue = false;
+    private bool _calcEmbalm
+    {
+        get => _calcEmbalmValue;
+        set { _calcEmbalmValue = value; Recalculate(); }
+    }
+
+    private bool _calcPreserveValue = false;
+    private bool _calcPreserve
+    {
+        get => _calcPreserveValue;
+        set { _calcPreserveValue = value; Recalculate(); }
+    }
+
+    private bool _calcForensicValue = false;
+    private bool _calcForensic
+    {
+        get => _calcForensicValue;
+        set { _calcForensicValue = value; Recalculate(); }
+    }
+
+    private long _totalEstimate = 0;
+    private bool _showToast = false;
+    private string _toastMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Recalculate();
+        await LoadOccupiedSlotsAsync();
+    }
+
+    private async Task LoadOccupiedSlotsAsync()
+    {
+        try
+        {
+            var response = await Supabase.From<Corpse>().Get();
+            var corpses = response.Models ?? new List<Corpse>();
+            _occupiedSlots = corpses
+                .Where(c => c.Status == "Lưu kho" && !string.IsNullOrEmpty(c.StorageSlot))
+                .Select(c => c.StorageSlot!)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error loading occupied slots: " + ex.Message);
+        }
+    }
+
+    private List<string> GetAvailableSlots()
+    {
+        var allSlots = new List<string>();
+        if (_calcZone == "deep")
+        {
+            for (int i = 1; i <= 5; i++) allSlots.Add($"C-{i:D2}");
+        }
+        else
+        {
+            for (int i = 1; i <= 10; i++) allSlots.Add($"A-{i:D2}");
+            for (int i = 1; i <= 10; i++) allSlots.Add($"B-{i:D2}");
+        }
+        return allSlots.Where(s => !_occupiedSlots.Contains(s)).ToList();
+    }
+
+    private void Recalculate()
+    {
+        long storageRate = _calcZone == "deep" ? 450000 : 200000;
+        long storageCost = _calcDays * storageRate;
+
+        long transportCost = _calcDistance * 15000;
+
+        long addCost = 0;
+        if (_calcEmbalm) addCost += 1500000;
+        if (_calcPreserve) addCost += 3000000;
+        if (_calcForensic) addCost += 1200000;
+
+        _totalEstimate = storageCost + transportCost + addCost;
+    }
+
+    private void ApplyEstimateToForm()
+    {
+        var zoneText = _calcZone == "deep" ? "Khu C (Cấp đông lạnh sâu)" : "Khu A/B (Lưu mát thông thường)";
+        var embalmText = _calcEmbalm ? "- Dịch vụ khâm liệm & trang điểm thi hài\n" : "";
+        var preserveText = _calcPreserve ? "- Dịch vụ ướp bảo quản lâu ngày\n" : "";
+        var forensicText = _calcForensic ? "- Dịch vụ thuê phòng y khoa khám nghiệm\n" : "";
+        
+        _contactModel.Subject = "Đăng ký dịch vụ & báo giá chi tiết";
+        _contactModel.Message = $"Tôi cần đăng ký gói dịch vụ y tế sau:\n" +
+                                $"- Thời gian lưu trữ: {_calcDays} ngày\n" +
+                                $"- Loại ngăn tủ: {zoneText}\n" +
+                                $"- Khoảng cách vận chuyển: {_calcDistance} km\n" +
+                                $"{embalmText}{preserveText}{forensicText}" +
+                                $"---------------------------------------\n" +
+                                $"Tổng chi phí dự kiến tạm tính: {_totalEstimate.ToString("N0")} VNĐ.\n" +
+                                $"Vui lòng phản hồi sớm để xác nhận.";
+        
+        _toastMessage = "Đã điền thông tin dự toán vào Form liên hệ!";
+        _showToast = true;
+
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(3000);
+            _showToast = false;
+            await InvokeAsync(StateHasChanged);
+        });
+
+        JS.InvokeVoidAsync("eval", "document.getElementById('contact-form-section')?.scrollIntoView({ behavior: 'smooth' })");
+    }
+
+    private void SelectPackage(string pkg)
+    {
+        if (pkg == "standard")
+        {
+            _calcZone = "standard";
+            _calcForensic = false;
+        }
+        else if (pkg == "deep")
+        {
+            _calcZone = "deep";
+            _calcForensic = false;
+        }
+        else if (pkg == "forensic")
+        {
+            _calcForensic = true;
+        }
+    }
+
+    private void OpenBookingModal()
+    {
+        _bookingModel = new ContactModel();
+        var zoneText = _calcZone == "deep" ? "Khu C (Cấp đông lạnh sâu)" : "Khu A/B (Lưu mát thông thường)";
+        var embalmText = _calcEmbalm ? "- Dịch vụ khâm liệm & trang điểm thi hài\n" : "";
+        var preserveText = _calcPreserve ? "- Dịch vụ ướp bảo quản lâu ngày\n" : "";
+        var forensicText = _calcForensic ? "- Dịch vụ thuê phòng y khoa khám nghiệm\n" : "";
+
+        _bookingModel.Subject = "Đăng ký dịch vụ trực tuyến từ bộ tính phí";
+        _bookingModel.Message = $"Tôi cần đăng ký gói dịch vụ y tế sau:\n" +
+                                $"- Thời gian lưu trữ: {_calcDays} ngày\n" +
+                                $"- Loại ngăn tủ: {zoneText}\n" +
+                                $"- Khoảng cách vận chuyển: {_calcDistance} km\n" +
+                                $"{embalmText}{preserveText}{forensicText}" +
+                                $"---------------------------------------\n" +
+                                $"Tổng chi phí dự kiến tạm tính: {_totalEstimate.ToString("N0")} VNĐ.\n";
+        
+        var available = GetAvailableSlots();
+        if (available.Count > 0)
+        {
+            _bookingModel.StorageSlot = available[0];
+        }
+
+        _showBookingModal = true;
+    }
+
+    private void CloseBookingModal()
+    {
+        _showBookingModal = false;
+    }
+
+    private async Task HandleBookingSubmit()
+    {
+        _isBookingSubmitting = true;
+        StateHasChanged();
+
+        _bookingModel.PackageName = _calcForensic ? "Forensic" : _calcZone;
+        _bookingModel.Price = _totalEstimate;
+
+        var success = await ContactService.SubmitContactAsync(_bookingModel);
+
+        _isBookingSubmitting = false;
+        if (success)
+        {
+            _showBookingModal = false;
+            _submitted = true;
+            _bookingModel = new ContactModel(); // Reset booking form
+            _showSuccessModal = true;
+            await LoadOccupiedSlotsAsync();
+        }
+        StateHasChanged();
+    }
 
     private void HandleFocus(string fieldName) => _focusedField = fieldName;
     private void HandleBlur() => _focusedField = null;
@@ -293,6 +746,9 @@
         _isSubmitting = true;
         StateHasChanged();
 
+        _contactModel.PackageName = "Liên hệ thường";
+        _contactModel.Price = 0;
+
         var success = await ContactService.SubmitContactAsync(_contactModel);
 
         _isSubmitting = false;
@@ -300,35 +756,14 @@
         {
             _submitted = true;
             _contactModel = new ContactModel(); // Reset form
-            _copied = false;
-            _showAccessKeyModal = true;
+            _showSuccessModal = true;
         }
         StateHasChanged();
     }
 
-    private async Task CopyAccessKey()
+    private void CloseSuccessModal()
     {
-        try
-        {
-            await JS.InvokeVoidAsync("navigator.clipboard.writeText", "MM-ACTIVE-2026");
-        }
-        catch
-        {
-            // Ignored
-        }
-        _copied = true;
-        StateHasChanged();
-    }
-
-    private void GoToLogin()
-    {
-        _showAccessKeyModal = false;
-        Navigation.NavigateTo("/login");
-    }
-
-    private void CloseModal()
-    {
-        _showAccessKeyModal = false;
+        _showSuccessModal = false;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
