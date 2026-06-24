@@ -217,8 +217,9 @@
             <!-- Pricing Grid -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
                 <!-- Standard Package Card -->
-                <div class="group rounded-2xl p-8 transition-all duration-500 hover:-translate-y-2 flex flex-col justify-between"
-                     style="background-color: var(--bg-card); border: 1px solid var(--border-primary); position: relative; overflow: hidden; height: 100%;">
+                <div class="group rounded-2xl p-8 transition-all duration-500 hover:-translate-y-2 flex flex-col justify-between cursor-pointer"
+                     @onclick='() => SelectPackage("standard")'
+                     style="background-color: var(--bg-card); border: 1px solid @(_calcZone == "standard" && !_calcForensic ? "var(--success)" : "var(--border-primary)"); position: relative; overflow: hidden; height: 100%; box-shadow: @(_calcZone == "standard" && !_calcForensic ? "0 4px 20px rgba(16,185,129,0.15)" : "none");">
                     <div>
                         <div class="font-ui text-xs font-semibold tracking-wider text-[var(--success)] uppercase mb-4">Gói Tiêu Chuẩn</div>
                         <div class="flex items-baseline mb-6">
@@ -240,8 +241,9 @@
                 </div>
 
                 <!-- Premium Package Card (Highlight) -->
-                <div class="group rounded-2xl p-8 transition-all duration-500 hover:-translate-y-2 flex flex-col justify-between"
-                     style="background-color: var(--bg-card); border: 1px solid var(--ice); position: relative; overflow: hidden; height: 100%; box-shadow: 0 4px 20px rgba(72,219,251,0.05);">
+                <div class="group rounded-2xl p-8 transition-all duration-500 hover:-translate-y-2 flex flex-col justify-between cursor-pointer"
+                     @onclick='() => SelectPackage("deep")'
+                     style="background-color: var(--bg-card); border: 1px solid @(_calcZone == "deep" && !_calcForensic ? "var(--ice)" : "var(--border-primary)"); position: relative; overflow: hidden; height: 100%; box-shadow: @(_calcZone == "deep" && !_calcForensic ? "0 4px 20px rgba(72,219,251,0.2)" : "0 4px 20px rgba(72,219,251,0.05)");">
                     <div class="absolute top-0 right-0 bg-[var(--ice)] text-[var(--bg-primary)] text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-bl-lg">Phổ biến</div>
                     <div>
                         <div class="font-ui text-xs font-semibold tracking-wider text-[var(--ice)] uppercase mb-4">Gói Lạnh Sâu Đặc Biệt</div>
@@ -267,8 +269,9 @@
                 </div>
 
                 <!-- Forensic Package Card -->
-                <div class="group rounded-2xl p-8 transition-all duration-500 hover:-translate-y-2 flex flex-col justify-between"
-                     style="background-color: var(--bg-card); border: 1px solid var(--border-primary); position: relative; overflow: hidden; height: 100%;">
+                <div class="group rounded-2xl p-8 transition-all duration-500 hover:-translate-y-2 flex flex-col justify-between cursor-pointer"
+                     @onclick='() => SelectPackage("forensic")'
+                     style="background-color: var(--bg-card); border: 1px solid @(_calcForensic ? "var(--candle)" : "var(--border-primary)"); position: relative; overflow: hidden; height: 100%; box-shadow: @(_calcForensic ? "0 4px 20px rgba(246,185,59,0.15)" : "none");">
                     <div>
                         <div class="font-ui text-xs font-semibold tracking-wider text-[var(--candle)] uppercase mb-4">Gói Y Khoa Pháp Y</div>
                         <div class="flex items-baseline mb-6">
@@ -538,6 +541,24 @@
         });
 
         JS.InvokeVoidAsync("eval", "document.getElementById('contact-form-section')?.scrollIntoView({ behavior: 'smooth' })");
+    }
+
+    private void SelectPackage(string pkg)
+    {
+        if (pkg == "standard")
+        {
+            _calcZone = "standard";
+            _calcForensic = false;
+        }
+        else if (pkg == "deep")
+        {
+            _calcZone = "deep";
+            _calcForensic = false;
+        }
+        else if (pkg == "forensic")
+        {
+            _calcForensic = true;
+        }
     }
 
     private void HandleFocus(string fieldName) => _focusedField = fieldName;
