@@ -2,6 +2,7 @@
 @layout Components.Layout.AdminLayout
 @inject NavigationManager Navigation
 @inject Supabase.Client Supabase
+@inject IJSRuntime JS
 
 <div>
     <!-- Top Bar -->
@@ -294,6 +295,30 @@
                 SeedRequests();
             }
         }
+
+        try
+        {
+            var localDataJson = await JS.InvokeAsync<string>("localStorage.getItem", "local_contact_requests");
+            if (!string.IsNullOrEmpty(localDataJson))
+            {
+                var localRequests = System.Text.Json.JsonSerializer.Deserialize<List<ContactModel>>(localDataJson);
+                if (localRequests != null && localRequests.Count > 0)
+                {
+                    foreach (var lr in localRequests)
+                    {
+                        if (!_allRequests.Any(r => r.Id == lr.Id || (r.Name == lr.Name && r.Email == lr.Email && r.Message == lr.Message)))
+                        {
+                            _allRequests.Add(lr);
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error loading fallback requests from LocalStorage: " + ex.Message);
+        }
+
         ApplyFilters();
     }
 
@@ -362,6 +387,58 @@
         _showStatusModal = true;
     }
 
+    private async Task UpdateLocalRequestInLocalStorage(ContactModel updatedRequest)
+    {
+        try
+        {
+            var localDataJson = await JS.InvokeAsync<string>("localStorage.getItem", "local_contact_requests");
+            if (!string.IsNullOrEmpty(localDataJson))
+            {
+                var localRequests = System.Text.Json.JsonSerializer.Deserialize<List<ContactModel>>(localDataJson);
+                if (localRequests != null)
+                {
+                    var index = localRequests.FindIndex(r => r.Id == updatedRequest.Id || (r.Name == updatedRequest.Name && r.Email == updatedRequest.Email && r.Message == updatedRequest.Message));
+                    if (index >= 0)
+                    {
+                        localRequests[index].Status = updatedRequest.Status;
+                        await JS.InvokeVoidAsync("localStorage.setItem", "local_contact_requests", System.Text.Json.JsonSerializer.Serialize(localRequests));
+                        Console.WriteLine("Updated status of request in local storage cache.");
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error updating local request in LocalStorage: " + ex.Message);
+        }
+    }
+
+    private async Task DeleteLocalRequestInLocalStorage(ContactModel requestToDelete)
+    {
+        try
+        {
+            var localDataJson = await JS.InvokeAsync<string>("localStorage.getItem", "local_contact_requests");
+            if (!string.IsNullOrEmpty(localDataJson))
+            {
+                var localRequests = System.Text.Json.JsonSerializer.Deserialize<List<ContactModel>>(localDataJson);
+                if (localRequests != null)
+                {
+                    var index = localRequests.FindIndex(r => r.Id == requestToDelete.Id || (r.Name == requestToDelete.Name && r.Email == requestToDelete.Email && r.Message == requestToDelete.Message));
+                    if (index >= 0)
+                    {
+                        localRequests.RemoveAt(index);
+                        await JS.InvokeVoidAsync("localStorage.setItem", "local_contact_requests", System.Text.Json.JsonSerializer.Serialize(localRequests));
+                        Console.WriteLine("Deleted request from local storage cache.");
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error deleting local request in LocalStorage: " + ex.Message);
+        }
+    }
+
     private async Task SaveStatus()
     {
         if (_selectedRequest != null)
@@ -370,7 +447,15 @@
             _selectedRequest.Status = _newStatus;
             try
             {
-                await Supabase.From<ContactModel>().Update(_selectedRequest);
+                if (_selectedRequest.Id >= 1000)
+                {
+                    await UpdateLocalRequestInLocalStorage(_selectedRequest);
+                }
+                else
+                {
+                    await Supabase.From<ContactModel>().Update(_selectedRequest);
+                }
+
                 if (_newStatus == "Đã hoàn thành" && oldStatus != "Đã hoàn thành")
                 {
                     await HandleApproval(_selectedRequest);
@@ -379,6 +464,8 @@
             catch (Exception ex)
             {
                 Console.WriteLine("Error updating status on Supabase: " + ex.Message);
+                // Try local storage update as a fallback
+                await UpdateLocalRequestInLocalStorage(_selectedRequest);
             }
             _showStatusModal = false;
             ApplyFilters();
@@ -391,7 +478,15 @@
         r.Status = status;
         try
         {
-            await Supabase.From<ContactModel>().Update(r);
+            if (r.Id >= 1000)
+            {
+                await UpdateLocalRequestInLocalStorage(r);
+            }
+            else
+            {
+                await Supabase.From<ContactModel>().Update(r);
+            }
+
             if (status == "Đã hoàn thành" && oldStatus != "Đã hoàn thành")
             {
                 await HandleApproval(r);
@@ -400,6 +495,8 @@
         catch (Exception ex)
         {
             Console.WriteLine("Error updating status: " + ex.Message);
+            // Try local storage update as a fallback
+            await UpdateLocalRequestInLocalStorage(r);
         }
         _showDetailsModal = false;
         ApplyFilters();
@@ -468,13 +565,22 @@
         {
             try
             {
-                await Supabase.From<ContactModel>().Delete(_requestToDelete);
+                if (_requestToDelete.Id >= 1000)
+                {
+                    await DeleteLocalRequestInLocalStorage(_requestToDelete);
+                }
+                else
+                {
+                    await Supabase.From<ContactModel>().Delete(_requestToDelete);
+                }
                 _allRequests.Remove(_requestToDelete);
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error deleting request on Supabase: " + ex.Message);
-                _allRequests.Remove(_requestToDelete); // local fallback
+                Console.WriteLine("Error deleting request: " + ex.Message);
+                // Also remove locally
+                await DeleteLocalRequestInLocalStorage(_requestToDelete);
+                _allRequests.Remove(_requestToDelete);
             }
             _showDeleteConfirm = false;
             ApplyFilters();
