@@ -18,7 +18,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "";
-    if (connectionString.Contains("localdb") || connectionString.Contains("Server=") || connectionString.Contains("Database="))
+    if (connectionString.Contains("localdb") || connectionString.Contains("Trusted_Connection="))
     {
         options.UseSqlServer(connectionString,
             sqlOptions => sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
