@@ -317,11 +317,21 @@
             var localDataJson = await JS.InvokeAsync<string>("localStorage.getItem", "local_contact_requests");
             if (!string.IsNullOrEmpty(localDataJson))
             {
-                var localRequests = System.Text.Json.JsonSerializer.Deserialize<List<ContactModel>>(localDataJson);
+                List<ContactModelDto>? localRequests = null;
+                try
+                {
+                    localRequests = System.Text.Json.JsonSerializer.Deserialize<List<ContactModelDto>>(localDataJson);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Failed to deserialize local storage contact requests: " + ex.Message);
+                }
+
                 if (localRequests != null && localRequests.Count > 0)
                 {
-                    foreach (var lr in localRequests)
+                    foreach (var lrdto in localRequests)
                     {
+                        var lr = lrdto.ToModel();
                         if (!_allRequests.Any(r => r.Id == lr.Id || (r.Name == lr.Name && r.Email == lr.Email && r.Message == lr.Message)))
                         {
                             _allRequests.Add(lr);
@@ -409,7 +419,7 @@
             var localDataJson = await JS.InvokeAsync<string>("localStorage.getItem", "local_contact_requests");
             if (!string.IsNullOrEmpty(localDataJson))
             {
-                var localRequests = System.Text.Json.JsonSerializer.Deserialize<List<ContactModel>>(localDataJson);
+                var localRequests = System.Text.Json.JsonSerializer.Deserialize<List<ContactModelDto>>(localDataJson);
                 if (localRequests != null)
                 {
                     var index = localRequests.FindIndex(r => r.Id == updatedRequest.Id || (r.Name == updatedRequest.Name && r.Email == updatedRequest.Email && r.Message == updatedRequest.Message));
@@ -435,7 +445,7 @@
             var localDataJson = await JS.InvokeAsync<string>("localStorage.getItem", "local_contact_requests");
             if (!string.IsNullOrEmpty(localDataJson))
             {
-                var localRequests = System.Text.Json.JsonSerializer.Deserialize<List<ContactModel>>(localDataJson);
+                var localRequests = System.Text.Json.JsonSerializer.Deserialize<List<ContactModelDto>>(localDataJson);
                 if (localRequests != null)
                 {
                     var index = localRequests.FindIndex(r => r.Id == requestToDelete.Id || (r.Name == requestToDelete.Name && r.Email == requestToDelete.Email && r.Message == requestToDelete.Message));
