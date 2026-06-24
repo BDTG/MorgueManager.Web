@@ -1,0 +1,388 @@
+@page "/admin/requests"
+@layout Components.Layout.AdminLayout
+@inject NavigationManager Navigation
+@inject Supabase.Client Supabase
+
+<div>
+    <!-- Top Bar -->
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px;">
+        <div>
+            <div class="font-ui" style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Dashboard / Yêu cầu Liên hệ</div>
+            <h1 class="font-ui" style="font-size: 22px; font-weight: 700; margin: 0; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                <span style="color: var(--ice);">📬</span> Yêu cầu Liên hệ & Đăng ký
+            </h1>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar" style="margin-bottom: 20px;">
+        <div style="position: relative; flex: 1; min-width: 200px;">
+            <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 14px; color: var(--text-muted);">🔍</span>
+            <input class="filter-input" style="width: 100%; padding-left: 36px;" placeholder="Tìm theo tên, email, SĐT..."
+                   @bind="_search" @bind:after="ApplyFilters" />
+        </div>
+        <select class="filter-select" @bind="_statusFilter" @bind:after="ApplyFilters">
+            <option value="">Tất cả trạng thái</option>
+            <option value="Chưa xử lý">Chưa xử lý</option>
+            <option value="Đang xử lý">Đang xử lý</option>
+            <option value="Đã hoàn thành">Đã hoàn thành</option>
+        </select>
+    </div>
+
+    <!-- Table -->
+    <div style="border-radius: 12px; border: 1px solid var(--border-primary); overflow: hidden; background-color: var(--bg-card);">
+        <div style="overflow-x: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">ID</th>
+                        <th>HỌ TÊN KHÁCH HÀNG</th>
+                        <th>THÔNG TIN LIÊN HỆ</th>
+                        <th>CHỦ ĐỀ</th>
+                        <th>NGÀY GỬI</th>
+                        <th>TRẠNG THÁI</th>
+                        <th style="width: 150px; text-align: center;">HÀNH ĐỘNG</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (_paginatedRequests.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 30px; color: var(--text-muted);" class="font-ui">
+                                Không tìm thấy yêu cầu nào.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var r in _paginatedRequests)
+                        {
+                            <tr>
+                                <td style="font-family: monospace; font-size: 12px; color: var(--text-muted);">#@r.Id</td>
+                                <td>
+                                    <div class="font-ui" style="font-weight: 600; color: var(--text-primary); font-size: 14px;">@r.Name</div>
+                                </td>
+                                <td>
+                                    <div class="font-ui" style="font-size: 13px; color: var(--text-primary);">@r.Phone</div>
+                                    <div class="font-ui" style="font-size: 11px; color: var(--text-muted);">@r.Email</div>
+                                </td>
+                                <td>
+                                    <div class="font-ui" style="font-size: 13px; font-weight: 500; color: var(--text-secondary);">@r.Subject</div>
+                                </td>
+                                <td style="font-size: 12px; color: var(--text-secondary);">
+                                    @r.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                </td>
+                                <td>
+                                    @if (r.Status == "Chưa xử lý")
+                                    {
+                                        <span class="badge-pill" style="background-color: rgba(239, 68, 68, 0.15); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.2);">Chưa xử lý</span>
+                                    }
+                                    else if (r.Status == "Đang xử lý")
+                                    {
+                                        <span class="badge-pill" style="background-color: rgba(245, 158, 11, 0.15); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.2);">Đang xử lý</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge-pill" style="background-color: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.2);">Đã hoàn thành</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                        <button @onclick="() => ViewDetails(r)" class="action-btn" style="color: var(--ice);" title="Xem chi tiết">👁️</button>
+                                        <button @onclick="() => StartChangeStatus(r)" class="action-btn" style="color: var(--candle);" title="Đổi trạng thái">⚙️</button>
+                                        <button @onclick="() => StartDelete(r)" class="action-btn" style="color: var(--danger);" title="Xóa">🗑️</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--border-primary);">
+            <span class="font-ui" style="font-size: 12px; color: var(--text-muted);">
+                Hiển thị @(_filteredRequests.Count > 0 ? (_page - 1) * _pageSize + 1 : 0)-@Math.Min(_page * _pageSize, _filteredRequests.Count) / @_filteredRequests.Count kết quả
+            </span>
+            <div style="display: flex; align-items: center; gap: 4px;">
+                <button @onclick="() => SetPage(_page - 1)" disabled="@(_page == 1)" class="page-btn" style="padding: 4px 8px;">◀</button>
+                <button class="page-btn" style="padding: 4px 12px; font-weight: 600;">@_page</button>
+                <button @onclick="() => SetPage(_page + 1)" disabled="@(_page >= _totalPages)" class="page-btn" style="padding: 4px 8px;">▶</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Details Modal -->
+@if (_showDetailsModal && _selectedRequest != null)
+{
+    <Modal OnClose="() => _showDetailsModal = false">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-primary); padding-bottom: 12px;">
+            <h2 class="font-ui" style="font-size: 18px; font-weight: 700; margin: 0; color: var(--text-primary);">📬 Chi tiết Yêu cầu #@_selectedRequest.Id</h2>
+            <button @onclick="() => _showDetailsModal = false" style="background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer;">✕</button>
+        </div>
+
+        <div class="space-y-4 font-ui">
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 8px; font-size: 13px;">
+                <div style="color: var(--text-muted);">Khách hàng:</div>
+                <div style="font-weight: 600; color: var(--text-primary);">@_selectedRequest.Name</div>
+
+                <div style="color: var(--text-muted);">Số điện thoại:</div>
+                <div><a href="tel:@_selectedRequest.Phone" style="color: var(--ice); text-decoration: none;">@_selectedRequest.Phone</a></div>
+
+                <div style="color: var(--text-muted);">Email:</div>
+                <div><a href="mailto:@_selectedRequest.Email" style="color: var(--ice); text-decoration: none;">@_selectedRequest.Email</a></div>
+
+                <div style="color: var(--text-muted);">Chủ đề:</div>
+                <div style="color: var(--text-secondary); font-weight: 500;">@_selectedRequest.Subject</div>
+
+                <div style="color: var(--text-muted);">Ngày gửi:</div>
+                <div style="color: var(--text-secondary);">@_selectedRequest.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</div>
+
+                <div style="color: var(--text-muted);">Trạng thái:</div>
+                <div>
+                    @if (_selectedRequest.Status == "Chưa xử lý")
+                    {
+                        <span class="badge-pill" style="background-color: rgba(239, 68, 68, 0.15); color: #EF4444;">Chưa xử lý</span>
+                    }
+                    else if (_selectedRequest.Status == "Đang xử lý")
+                    {
+                        <span class="badge-pill" style="background-color: rgba(245, 158, 11, 0.15); color: #F59E0B;">Đang xử lý</span>
+                    }
+                    else
+                    {
+                        <span class="badge-pill" style="background-color: rgba(16, 185, 129, 0.15); color: #10B981;">Đã hoàn thành</span>
+                    }
+                </div>
+            </div>
+
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-primary);">
+                <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Nội dung tin nhắn & Dịch vụ tính phí:</div>
+                <div style="background-color: rgba(0,0,0,0.2); border: 1px solid var(--border-primary); border-radius: 8px; padding: 12px; font-family: monospace; font-size: 12px; line-height: 1.6; color: var(--text-secondary); white-space: pre-wrap; max-height: 250px; overflow-y: auto;">
+                    @_selectedRequest.Message
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; border-top: 1px solid var(--border-primary); padding-top: 16px;">
+            <button @onclick="() => _showDetailsModal = false" class="font-ui" style="padding: 8px 16px; border: 1px solid var(--border-primary); border-radius: 6px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 13px;">Đóng</button>
+            @if (_selectedRequest.Status != "Đã hoàn thành")
+            {
+                <button @onclick='() => UpdateStatusDirect(_selectedRequest, "Đã hoàn thành")' class="font-ui" style="padding: 8px 16px; border: none; border-radius: 6px; background: var(--success); color: white; cursor: pointer; font-size: 13px; font-weight: 600;">✓ Hoàn thành xử lý</button>
+            }
+        </div>
+    </Modal>
+}
+
+<!-- Change Status Modal -->
+@if (_showStatusModal && _selectedRequest != null)
+{
+    <Modal OnClose="() => _showStatusModal = false">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 class="font-ui" style="font-size: 18px; font-weight: 700; margin: 0; color: var(--text-primary);">⚙️ Cập nhật trạng thái</h2>
+            <button @onclick="() => _showStatusModal = false" style="background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer;">✕</button>
+        </div>
+
+        <div class="font-ui" style="font-size: 14px; margin-bottom: 20px;">
+            Chọn trạng thái mới cho yêu cầu của <strong>@_selectedRequest.Name</strong>:
+        </div>
+
+        <div class="space-y-3">
+            <select class="filter-select" style="width: 100%; padding: 10px;" @bind="_newStatus">
+                <option value="Chưa xử lý">Chưa xử lý</option>
+                <option value="Đang xử lý">Đang xử lý</option>
+                <option value="Đã hoàn thành">Đã hoàn thành</option>
+            </select>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+            <button @onclick="() => _showStatusModal = false" class="font-ui" style="padding: 8px 16px; border: 1px solid var(--border-primary); border-radius: 6px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 13px;">Hủy</button>
+            <button @onclick="SaveStatus" class="font-ui" style="padding: 8px 16px; border: none; border-radius: 6px; background: var(--ice); color: white; cursor: pointer; font-size: 13px; font-weight: 600;">Lưu thay đổi</button>
+        </div>
+    </Modal>
+}
+
+<!-- Delete Confirmation Dialog -->
+<ConfirmDialog IsVisible="@_showDeleteConfirm"
+               Title="Xác nhận xóa yêu cầu"
+               Message="@($"Bạn có chắc chắn muốn xóa vĩnh viễn yêu cầu của {_requestToDelete?.Name} khỏi hệ thống?")"
+               ConfirmText="Xóa vĩnh viễn"
+               CancelText="Hủy"
+               Type="danger"
+               OnConfirm="ConfirmDelete"
+               OnCancel="() => _showDeleteConfirm = false" />
+
+@code {
+    private string _search = "";
+    private string _statusFilter = "";
+    private int _page = 1;
+    private int _pageSize = 10;
+    private int _totalPages = 1;
+
+    private List<ContactModel> _allRequests = new();
+    private List<ContactModel> _filteredRequests = new();
+    private List<ContactModel> _paginatedRequests = new();
+
+    private bool _showDetailsModal = false;
+    private bool _showStatusModal = false;
+    private bool _showDeleteConfirm = false;
+
+    private ContactModel? _selectedRequest;
+    private ContactModel? _requestToDelete;
+    private string _newStatus = "Chưa xử lý";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRequestsAsync();
+    }
+
+    private async Task LoadRequestsAsync()
+    {
+        try
+        {
+            var response = await Supabase.From<ContactModel>().Get();
+            _allRequests = response.Models ?? new List<ContactModel>();
+
+            if (_allRequests.Count == 0)
+            {
+                SeedRequests();
+                await Supabase.From<ContactModel>().Insert(_allRequests);
+                var seedResponse = await Supabase.From<ContactModel>().Get();
+                _allRequests = seedResponse.Models ?? new List<ContactModel>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error loading contact requests: " + ex.Message);
+            if (_allRequests.Count == 0)
+            {
+                SeedRequests();
+            }
+        }
+        ApplyFilters();
+    }
+
+    private void SeedRequests()
+    {
+        var now = DateTime.UtcNow;
+        _allRequests = new List<ContactModel>
+        {
+            new() { Id = 1, CreatedAt = now.AddHours(-2), Name = "Nguyễn Văn Hải", Email = "hai.nguyen@gmail.com", Phone = "0912345678", Subject = "Đăng ký dịch vụ trực tuyến từ bộ tính phí", Message = "Tôi cần đăng ký gói dịch vụ y tế sau:\n- Thời gian lưu trữ: 5 ngày\n- Loại ngăn tủ: Khu C (Cấp đông lạnh sâu)\n- Khoảng cách vận chuyển: 15 km\n- Dịch vụ khâm liệm & trang điểm thi hài\n---------------------------------------\nTổng chi phí dự kiến tạm tính: 5,975,000 VNĐ.\nVui lòng phản hồi sớm để xác nhận.", Status = "Chưa xử lý" },
+            new() { Id = 2, CreatedAt = now.AddHours(-12), Name = "Phạm Minh Tuấn", Email = "tuanpm@yahoo.com", Phone = "0987654321", Subject = "Đăng ký gói y khoa pháp y trực tiếp", Message = "Tôi cần đăng ký gói dịch vụ y tế sau:\n- Thời gian lưu trữ: 1 ngày\n- Loại ngăn tủ: Khu A/B (Lưu mát thông thường)\n- Khoảng cách vận chuyển: 0 km\n- Dịch vụ thuê phòng y khoa khám nghiệm\n---------------------------------------\nTổng chi phí dự kiến tạm tính: 1,400,000 VNĐ.", Status = "Đang xử lý" },
+            new() { Id = 3, CreatedAt = now.AddDays(-2), Name = "Trần Thị Hồng", Email = "hongtran@outlook.com", Phone = "0903334455", Subject = "Tư vấn chế độ bảo quản thi hài", Message = "Gia đình cần được tư vấn cụ thể về chi phí ướp bảo quản lâu ngày và lưu kho mát Khu A trong thời gian chờ thủ tục xuất ngoại.", Status = "Đã hoàn thành" }
+        };
+    }
+
+    private void ApplyFilters()
+    {
+        _filteredRequests = _allRequests;
+
+        if (!string.IsNullOrEmpty(_search))
+        {
+            var s = _search.ToLower();
+            _filteredRequests = _filteredRequests.Where(r => 
+                r.Name.ToLower().Contains(s) || 
+                r.Email.ToLower().Contains(s) || 
+                (r.Phone != null && r.Phone.Contains(s)) ||
+                r.Subject.ToLower().Contains(s)
+            ).ToList();
+        }
+
+        if (!string.IsNullOrEmpty(_statusFilter))
+        {
+            _filteredRequests = _filteredRequests.Where(r => r.Status == _statusFilter).ToList();
+        }
+
+        _filteredRequests = _filteredRequests.OrderByDescending(r => r.CreatedAt).ToList();
+        _totalPages = (int)Math.Ceiling((double)_filteredRequests.Count / _pageSize);
+        if (_page > _totalPages) _page = Math.Max(1, _totalPages);
+
+        Paginate();
+    }
+
+    private void Paginate()
+    {
+        _paginatedRequests = _filteredRequests
+            .Skip((_page - 1) * _pageSize)
+            .Take(_pageSize)
+            .ToList();
+    }
+
+    private void SetPage(int p)
+    {
+        _page = p;
+        Paginate();
+    }
+
+    private void ViewDetails(ContactModel r)
+    {
+        _selectedRequest = r;
+        _showDetailsModal = true;
+    }
+
+    private void StartChangeStatus(ContactModel r)
+    {
+        _selectedRequest = r;
+        _newStatus = r.Status;
+        _showStatusModal = true;
+    }
+
+    private async Task SaveStatus()
+    {
+        if (_selectedRequest != null)
+        {
+            _selectedRequest.Status = _newStatus;
+            try
+            {
+                await Supabase.From<ContactModel>().Update(_selectedRequest);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error updating status on Supabase: " + ex.Message);
+            }
+            _showStatusModal = false;
+            ApplyFilters();
+        }
+    }
+
+    private async Task UpdateStatusDirect(ContactModel r, string status)
+    {
+        r.Status = status;
+        try
+        {
+            await Supabase.From<ContactModel>().Update(r);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error updating status: " + ex.Message);
+        }
+        _showDetailsModal = false;
+        ApplyFilters();
+    }
+
+    private void StartDelete(ContactModel r)
+    {
+        _requestToDelete = r;
+        _showDeleteConfirm = true;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (_requestToDelete != null)
+        {
+            try
+            {
+                await Supabase.From<ContactModel>().Delete(_requestToDelete);
+                _allRequests.Remove(_requestToDelete);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error deleting request on Supabase: " + ex.Message);
+                _allRequests.Remove(_requestToDelete); // local fallback
+            }
+            _showDeleteConfirm = false;
+            ApplyFilters();
+        }
+    }
+}
