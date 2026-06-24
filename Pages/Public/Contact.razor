@@ -22,7 +22,7 @@
         <div class="max-w-[1200px] mx-auto">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
                 <!-- LEFT: Form -->
-                <div class="lg:col-span-7 contact-form-block">
+                <div class="lg:col-span-7 contact-form-block" id="contact-form-section">
                     <h2 class="font-display text-2xl md:text-3xl font-semibold mb-2" style="color: var(--text-primary);">
                         Gửi tin nhắn
                     </h2>
@@ -200,6 +200,183 @@
             </div>
         </div>
     </section>
+
+    <!-- PRICING SECTION -->
+    <section class="py-16 px-6 lg:px-10" style="background-color: var(--bg-secondary); border-top: 1px solid var(--border-primary);">
+        <div class="max-w-[1200px] mx-auto">
+            <div class="text-center mb-16">
+                <span class="font-ui text-[11px] uppercase tracking-[0.25em] mb-4 block" style="color: var(--ice);">BẢNG GIÁ & DỰ TOÁN</span>
+                <h2 class="font-display text-3xl md:text-4xl font-semibold" style="color: var(--text-primary);">
+                    Bảng giá Dịch vụ & Công cụ Tính phí
+                </h2>
+                <p class="font-ui text-sm mt-3" style="color: var(--text-muted); max-w-2xl mx-auto;">
+                    Tra cứu bảng giá dịch vụ tiêu chuẩn hoặc sử dụng công cụ tính toán tự động dưới đây để ước tính chi phí trước khi gửi yêu cầu liên hệ.
+                </p>
+            </div>
+
+            <!-- Pricing Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+                <!-- Standard Package Card -->
+                <div class="group rounded-2xl p-8 transition-all duration-500 hover:-translate-y-2 flex flex-col justify-between"
+                     style="background-color: var(--bg-card); border: 1px solid var(--border-primary); position: relative; overflow: hidden; height: 100%;">
+                    <div>
+                        <div class="font-ui text-xs font-semibold tracking-wider text-[var(--success)] uppercase mb-4">Gói Tiêu Chuẩn</div>
+                        <div class="flex items-baseline mb-6">
+                            <span class="text-3xl font-bold text-[var(--text-primary)]">200.000đ</span>
+                            <span class="text-xs text-[var(--text-muted)] ml-2">/ ngày bảo quản</span>
+                        </div>
+                        <ul class="space-y-4 mb-8">
+                            <li class="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+                                <span class="text-[var(--success)]">✓</span> Ngăn lạnh mát Khu A/B (2°C - 4°C)
+                            </li>
+                            <li class="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+                                <span class="text-[var(--success)]">✓</span> Vệ sinh khay kệ hàng ngày
+                            </li>
+                            <li class="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+                                <span class="text-[var(--success)]">✓</span> Báo cáo nhiệt độ tự động 24/7
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Premium Package Card (Highlight) -->
+                <div class="group rounded-2xl p-8 transition-all duration-500 hover:-translate-y-2 flex flex-col justify-between"
+                     style="background-color: var(--bg-card); border: 1px solid var(--ice); position: relative; overflow: hidden; height: 100%; box-shadow: 0 4px 20px rgba(72,219,251,0.05);">
+                    <div class="absolute top-0 right-0 bg-[var(--ice)] text-[var(--bg-primary)] text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-bl-lg">Phổ biến</div>
+                    <div>
+                        <div class="font-ui text-xs font-semibold tracking-wider text-[var(--ice)] uppercase mb-4">Gói Lạnh Sâu Đặc Biệt</div>
+                        <div class="flex items-baseline mb-6">
+                            <span class="text-3xl font-bold text-[var(--text-primary)]">450.000đ</span>
+                            <span class="text-xs text-[var(--text-muted)] ml-2">/ ngày bảo quản</span>
+                        </div>
+                        <ul class="space-y-4 mb-8">
+                            <li class="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+                                <span class="text-[var(--ice)]">✓</span> Ngăn lạnh âm sâu Khu C (-5°C)
+                            </li>
+                            <li class="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+                                <span class="text-[var(--ice)]">✓</span> Phục vụ cho các ca đặc biệt/phức tạp
+                            </li>
+                            <li class="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+                                <span class="text-[var(--ice)]">✓</span> Vệ sinh, khử trùng dịch tễ nghiêm ngặt
+                            </li>
+                            <li class="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+                                <span class="text-[var(--ice)]">✓</span> Giám sát nhiệt độ sâu báo động tức thời
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Forensic Package Card -->
+                <div class="group rounded-2xl p-8 transition-all duration-500 hover:-translate-y-2 flex flex-col justify-between"
+                     style="background-color: var(--bg-card); border: 1px solid var(--border-primary); position: relative; overflow: hidden; height: 100%;">
+                    <div>
+                        <div class="font-ui text-xs font-semibold tracking-wider text-[var(--candle)] uppercase mb-4">Gói Y Khoa Pháp Y</div>
+                        <div class="flex items-baseline mb-6">
+                            <span class="text-3xl font-bold text-[var(--text-primary)]">1.200.000đ</span>
+                            <span class="text-xs text-[var(--text-muted)] ml-2">/ ca làm việc</span>
+                        </div>
+                        <ul class="space-y-4 mb-8">
+                            <li class="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+                                <span class="text-[var(--candle)]">✓</span> Thuê phòng khám nghiệm pháp y khép kín
+                            </li>
+                            <li class="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+                                <span class="text-[var(--candle)]">✓</span> Thiết bị y tế chuyên dụng, chiếu sáng cao cấp
+                            </li>
+                            <li class="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+                                <span class="text-[var(--candle)]">✓</span> Hỗ trợ công cụ lưu trữ & trích xuất bệnh án pháp lý
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Estimator Panel -->
+            <div class="rounded-2xl p-8 lg:p-12 transition-all duration-500"
+                 style="background-color: var(--bg-card); border: 1px solid var(--border-primary);">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                    
+                    <!-- Left: Control sliders/options (lg:col-span-7) -->
+                    <div class="lg:col-span-7 space-y-6">
+                        <h3 class="font-display text-xl font-semibold mb-4" style="color: var(--text-primary);">
+                            Công cụ Dự toán Chi phí Trực quan
+                        </h3>
+                        
+                        <!-- Slider: Days -->
+                        <div>
+                            <div class="flex justify-between text-sm mb-2">
+                                <span class="font-ui" style="color: var(--text-secondary);">Thời gian lưu trữ thi hài:</span>
+                                <span class="font-ui font-semibold text-[var(--ice)]">@_calcDays ngày</span>
+                            </div>
+                            <input type="range" min="1" max="30" @bind="_calcDays" @bind:event="oninput" class="w-full h-1 rounded-lg cursor-pointer accent-[var(--ice)]" style="background-color: var(--bg-primary);" />
+                        </div>
+
+                        <!-- Dropdown: Zone -->
+                        <div>
+                            <label class="font-ui text-xs block mb-2" style="color: var(--text-secondary);">Chọn loại ngăn bảo quản (Gói lưu kho):</label>
+                            <select @bind="_calcZone" class="w-full p-3 rounded-lg font-ui text-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-primary); color: var(--text-primary); outline: none;">
+                                <option value="standard">Khu A/B (Lưu mát thông thường - 200.000đ/ngày)</option>
+                                <option value="deep">Khu C (Cấp đông âm sâu - 450.000đ/ngày)</option>
+                            </select>
+                        </div>
+
+                        <!-- Distance KM input -->
+                        <div>
+                            <div class="flex justify-between text-sm mb-2">
+                                <span class="font-ui" style="color: var(--text-secondary);">Khoảng cách vận chuyển (khứ hồi):</span>
+                                <span class="font-ui font-semibold text-[var(--ice)]">@_calcDistance km</span>
+                            </div>
+                            <input type="range" min="0" max="100" @bind="_calcDistance" @bind:event="oninput" class="w-full h-1 rounded-lg cursor-pointer accent-[var(--ice)]" style="background-color: var(--bg-primary);" />
+                        </div>
+
+                        <!-- Checkboxes: Additional services -->
+                        <div>
+                            <label class="font-ui text-xs block mb-3" style="color: var(--text-secondary);">Dịch vụ đi kèm bổ sung:</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <label class="flex items-center gap-3 text-sm text-[var(--text-secondary)] cursor-pointer">
+                                    <input type="checkbox" @bind="_calcEmbalm" class="w-4 h-4 rounded accent-[var(--ice)]" />
+                                    <span>Khâm liệm & Trang điểm (+1.5M)</span>
+                                </label>
+                                <label class="flex items-center gap-3 text-sm text-[var(--text-secondary)] cursor-pointer">
+                                    <input type="checkbox" @bind="_calcPreserve" class="w-4 h-4 rounded accent-[var(--ice)]" />
+                                    <span>Ướp bảo quản lâu ngày (+3.0M)</span>
+                                </label>
+                                <label class="flex items-center gap-3 text-sm text-[var(--text-secondary)] cursor-pointer">
+                                    <input type="checkbox" @bind="_calcForensic" class="w-4 h-4 rounded accent-[var(--ice)]" />
+                                    <span>Hỗ trợ phòng y khoa (+1.2M)</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Results card (lg:col-span-5) -->
+                    <div class="lg:col-span-5 p-8 rounded-xl border border-[var(--border-primary)] text-center flex flex-col justify-between"
+                         style="background-color: rgba(10, 16, 24, 0.4); min-height: 280px;">
+                        <div>
+                            <h4 class="font-ui text-xs uppercase tracking-wider mb-2" style="color: var(--text-muted);">Ước tính chi phí tạm tính</h4>
+                            <div class="text-4xl font-bold my-4" style="color: var(--candle);">
+                                @_totalEstimate.ToString("N0") <span class="text-lg">đ</span>
+                            </div>
+                            <p class="font-ui text-xs mt-2" style="color: var(--text-secondary);">
+                                * Giá trên mang tính chất tham khảo dựa trên tùy chọn dịch vụ của bạn.
+                            </p>
+                        </div>
+
+                        <button @onclick="ApplyEstimateToForm" class="btn-warm w-full font-ui text-sm font-semibold py-3.5 rounded-lg flex items-center justify-center gap-2 mt-6 cursor-pointer" style="border: none; outline: none;">
+                            <span>📥 Điền thông tin này vào Form liên hệ</span>
+                            <LucideIcon Name="file-text" Class="w-4 h-4" />
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    @if (_showToast)
+    {
+        <Toast Message="@_toastMessage" Type="success" />
+    }
 </main>
 
 @if (_showAccessKeyModal)
@@ -266,6 +443,102 @@
     private bool _submitted = false;
     private bool _showAccessKeyModal = false;
     private bool _copied = false;
+
+    private int _calcDaysValue = 5;
+    private int _calcDays
+    {
+        get => _calcDaysValue;
+        set { _calcDaysValue = value; Recalculate(); }
+    }
+
+    private string _calcZoneValue = "standard";
+    private string _calcZone
+    {
+        get => _calcZoneValue;
+        set { _calcZoneValue = value; Recalculate(); }
+    }
+
+    private int _calcDistanceValue = 0;
+    private int _calcDistance
+    {
+        get => _calcDistanceValue;
+        set { _calcDistanceValue = value; Recalculate(); }
+    }
+
+    private bool _calcEmbalmValue = false;
+    private bool _calcEmbalm
+    {
+        get => _calcEmbalmValue;
+        set { _calcEmbalmValue = value; Recalculate(); }
+    }
+
+    private bool _calcPreserveValue = false;
+    private bool _calcPreserve
+    {
+        get => _calcPreserveValue;
+        set { _calcPreserveValue = value; Recalculate(); }
+    }
+
+    private bool _calcForensicValue = false;
+    private bool _calcForensic
+    {
+        get => _calcForensicValue;
+        set { _calcForensicValue = value; Recalculate(); }
+    }
+
+    private long _totalEstimate = 0;
+    private bool _showToast = false;
+    private string _toastMessage = "";
+
+    protected override void OnInitialized()
+    {
+        Recalculate();
+    }
+
+    private void Recalculate()
+    {
+        long storageRate = _calcZone == "deep" ? 450000 : 200000;
+        long storageCost = _calcDays * storageRate;
+
+        long transportCost = _calcDistance * 15000;
+
+        long addCost = 0;
+        if (_calcEmbalm) addCost += 1500000;
+        if (_calcPreserve) addCost += 3000000;
+        if (_calcForensic) addCost += 1200000;
+
+        _totalEstimate = storageCost + transportCost + addCost;
+    }
+
+    private void ApplyEstimateToForm()
+    {
+        var zoneText = _calcZone == "deep" ? "Khu C (Cấp đông lạnh sâu)" : "Khu A/B (Lưu mát thông thường)";
+        var embalmText = _calcEmbalm ? "- Dịch vụ khâm liệm & trang điểm thi hài\n" : "";
+        var preserveText = _calcPreserve ? "- Dịch vụ ướp bảo quản lâu ngày\n" : "";
+        var forensicText = _calcForensic ? "- Dịch vụ thuê phòng y khoa khám nghiệm\n" : "";
+        
+        _contactModel.Subject = "Đăng ký dịch vụ & báo giá chi tiết";
+        _contactModel.Message = $"Tôi cần đăng ký gói dịch vụ y tế sau:\n" +
+                                $"- Thời gian lưu trữ: {_calcDays} ngày\n" +
+                                $"- Loại ngăn tủ: {zoneText}\n" +
+                                $"- Khoảng cách vận chuyển: {_calcDistance} km\n" +
+                                $"{embalmText}{preserveText}{forensicText}" +
+                                $"---------------------------------------\n" +
+                                $"Tổng chi phí dự kiến tạm tính: {_totalEstimate.ToString("N0")} VNĐ.\n" +
+                                $"Vui lòng phản hồi sớm để xác nhận.";
+        
+        _toastMessage = "Đã điền thông tin dự toán vào Form liên hệ!";
+        _showToast = true;
+
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(3000);
+            _showToast = false;
+            await InvokeAsync(StateHasChanged);
+        });
+
+        JS.InvokeVoidAsync("eval", "document.getElementById('contact-form-section')?.scrollIntoView({ behavior: 'smooth' })");
+    }
 
     private void HandleFocus(string fieldName) => _focusedField = fieldName;
     private void HandleBlur() => _focusedField = null;
