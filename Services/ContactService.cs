@@ -31,11 +31,23 @@ public class ContactService : IContactService
                 model.Status = "Chưa xử lý";
             }
 
-            var response = await _supabase.From<ContactModel>().Insert(model);
-            // If Supabase returns the inserted record with generated ID, use it
-            if (response?.Models?.Count > 0)
+            // Run Supabase Insert with 2-second timeout
+            var insertTask = _supabase.From<ContactModel>().Insert(model);
+            var delayTask = Task.Delay(2000);
+            var completedTask = await Task.WhenAny(insertTask, delayTask);
+
+            if (completedTask == insertTask)
             {
-                Console.WriteLine($"Inserted to Supabase with Id={response.Models[0].Id}");
+                var response = await insertTask;
+                // If Supabase returns the inserted record with generated ID, use it
+                if (response?.Models?.Count > 0)
+                {
+                    Console.WriteLine($"Inserted to Supabase with Id={response.Models[0].Id}");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Supabase insert timed out after 2 seconds. Falling back to LocalStorage.");
             }
         }
         catch (Exception ex)
