@@ -2,6 +2,7 @@
 @layout Components.Layout.AdminLayout
 @inject NavigationManager Navigation
 @inject MorgueManager.Web.Services.TourService TourService
+@inject Supabase.Client Supabase
 
 <div>
     <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px;">
@@ -96,7 +97,77 @@
     private List<Models.StorageSlot> _zoneBSlots = new();
     private List<Models.StorageSlot> _zoneCSlots = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSlotsFromSupabaseAsync();
+    }
+
+    private async Task LoadSlotsFromSupabaseAsync()
+    {
+        try
+        {
+            var response = await Supabase.From<Corpse>().Get();
+            var corpses = response.Models ?? new List<Corpse>();
+
+            _zoneASlots = Enumerable.Range(1, 10).Select(i =>
+            {
+                var slotId = $"A-{i:D2}";
+                var corpse = corpses.FirstOrDefault(c => c.StorageSlot == slotId && c.Status == "Lưu kho");
+                return new Models.StorageSlot
+                {
+                    Id = slotId,
+                    Zone = "A",
+                    Status = corpse != null ? Models.SlotStatus.Occupied : Models.SlotStatus.Empty,
+                    Temp = 2.0 + (i * 0.1),
+                    CorpseName = corpse?.Name,
+                    DaysStored = corpse != null && DateTime.TryParse(corpse.DateAdmitted, out var dt) ? (DateTime.Now - dt).Days : 0,
+                    PackageName = corpse?.PackageName,
+                    LastUpdate = $"{DateTime.Now:HH:mm}"
+                };
+            }).ToList();
+
+            _zoneBSlots = Enumerable.Range(1, 10).Select(i =>
+            {
+                var slotId = $"B-{i:D2}";
+                var corpse = corpses.FirstOrDefault(c => c.StorageSlot == slotId && c.Status == "Lưu kho");
+                return new Models.StorageSlot
+                {
+                    Id = slotId,
+                    Zone = "B",
+                    Status = corpse != null ? Models.SlotStatus.Occupied : Models.SlotStatus.Empty,
+                    Temp = 2.5 + (i * 0.1),
+                    CorpseName = corpse?.Name,
+                    DaysStored = corpse != null && DateTime.TryParse(corpse.DateAdmitted, out var dt) ? (DateTime.Now - dt).Days : 0,
+                    PackageName = corpse?.PackageName,
+                    LastUpdate = $"{DateTime.Now:HH:mm}"
+                };
+            }).ToList();
+
+            _zoneCSlots = Enumerable.Range(1, 5).Select(i =>
+            {
+                var slotId = $"C-{i:D2}";
+                var corpse = corpses.FirstOrDefault(c => c.StorageSlot == slotId && c.Status == "Lưu kho");
+                return new Models.StorageSlot
+                {
+                    Id = slotId,
+                    Zone = "C",
+                    Status = corpse != null ? Models.SlotStatus.Occupied : Models.SlotStatus.Empty,
+                    Temp = -5.0 + (i * 0.1),
+                    CorpseName = corpse?.Name,
+                    DaysStored = corpse != null && DateTime.TryParse(corpse.DateAdmitted, out var dt) ? (DateTime.Now - dt).Days : 0,
+                    PackageName = corpse?.PackageName,
+                    LastUpdate = $"{DateTime.Now:HH:mm}"
+                };
+            }).ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error loading slots from Supabase: " + ex.Message);
+            InitializeDummySlots();
+        }
+    }
+
+    private void InitializeDummySlots()
     {
         _zoneASlots = Enumerable.Range(1, 10).Select(i => new Models.StorageSlot
         {
@@ -111,21 +182,19 @@
         _zoneBSlots = Enumerable.Range(1, 10).Select(i => new Models.StorageSlot
         {
             Id = $"B-{i:D2}", Zone = "B",
-            Status = i <= 3 ? Models.SlotStatus.Occupied : i == 4 ? Models.SlotStatus.Cleaning : i == 5 ? Models.SlotStatus.Maintenance : Models.SlotStatus.Empty,
+            Status = i <= 3 ? Models.SlotStatus.Occupied : Models.SlotStatus.Empty,
             Temp = 3.0 + (i * 0.4),
             CorpseName = i <= 3 ? $"Trần Thị {i}" : null,
             DaysStored = i * 2,
             LastUpdate = $"{DateTime.Now:HH:mm}",
         }).ToList();
 
-        // TODO(khanhphamvn222): Thay thế dữ liệu giả bên dưới bằng lệnh gọi IStorageService.GetSlotsAsync("C")
-        // khi Backend API đã sẵn sàng. Xem Issue #30.
         _zoneCSlots = Enumerable.Range(1, 5).Select(i => new Models.StorageSlot
         {
             Id = $"C-{i:D2}", Zone = "C",
-            Status = i <= 2 ? Models.SlotStatus.Occupied : i == 3 ? Models.SlotStatus.Cleaning : Models.SlotStatus.Empty,
+            Status = i <= 2 ? Models.SlotStatus.Occupied : Models.SlotStatus.Empty,
             Temp = -5.4 + (i * 0.2),
-            CorpseName = i == 1 ? "Thi thể MC-2026-0128 (Tai nạn nghiêm trọng - Không nguyên vẹn)" : i == 2 ? "Bộ phận thi thể MC-2026-0129" : null,
+            CorpseName = i == 1 ? "Thi thể MC-2026-0128" : i == 2 ? "Bộ phận thi thể MC-2026-0129" : null,
             DaysStored = i * 4,
             LastUpdate = $"{DateTime.Now:HH:mm}",
         }).ToList();

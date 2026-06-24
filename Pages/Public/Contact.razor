@@ -1,7 +1,9 @@
 @page "/contact"
+@using System.Linq
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
 @inject IContactService ContactService
+@inject Supabase.Client Supabase
 
 <main>
     <!-- HERO -->
@@ -471,6 +473,20 @@
                 </div>
 
                 <div class="relative">
+                    <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Chọn ngăn tủ mong muốn *</label>
+                    <select @bind="_bookingModel.StorageSlot" class="cold-input py-2 w-full font-ui text-sm" style="background-color: rgba(0,0,0,0.3); border: 1px solid var(--border-primary); color: var(--text-primary); outline: none;">
+                        @foreach (var slot in GetAvailableSlots())
+                        {
+                            <option value="@slot" style="background-color: var(--bg-card); color: var(--text-primary);">Ngăn @slot (Trống)</option>
+                        }
+                        @if (GetAvailableSlots().Count == 0)
+                        {
+                            <option value="" disabled style="background-color: var(--bg-card); color: var(--text-muted);">Không còn ngăn trống trong khu vực này</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="relative">
                     <label class="font-ui text-[11px] uppercase tracking-[0.2em] block mb-1 text-[var(--text-muted)]">Ghi chú thêm</label>
                     <InputTextArea @bind-Value="_bookingModel.Message" rows="3" class="cold-input py-2 resize-none" placeholder="Nhập yêu cầu đặc biệt của gia đình..." style="background-color: rgba(0,0,0,0.3);" />
                     <ValidationMessage For="@(() => _bookingModel.Message)" class="text-xs mt-1 block text-left" style="color: var(--danger);" />
@@ -496,6 +512,7 @@
 @code {
     private ContactModel _contactModel = new();
     private ContactModel _bookingModel = new();
+    private List<string> _occupiedSlots = new();
     private string? _focusedField = null;
     private bool _isSubmitting = false;
     private bool _submitted = false;
@@ -549,9 +566,42 @@
     private bool _showToast = false;
     private string _toastMessage = "";
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         Recalculate();
+        await LoadOccupiedSlotsAsync();
+    }
+
+    private async Task LoadOccupiedSlotsAsync()
+    {
+        try
+        {
+            var response = await Supabase.From<Corpse>().Get();
+            var corpses = response.Models ?? new List<Corpse>();
+            _occupiedSlots = corpses
+                .Where(c => c.Status == "Lưu kho" && !string.IsNullOrEmpty(c.StorageSlot))
+                .Select(c => c.StorageSlot!)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error loading occupied slots: " + ex.Message);
+        }
+    }
+
+    private List<string> GetAvailableSlots()
+    {
+        var allSlots = new List<string>();
+        if (_calcZone == "deep")
+        {
+            for (int i = 1; i <= 5; i++) allSlots.Add($"C-{i:D2}");
+        }
+        else
+        {
+            for (int i = 1; i <= 10; i++) allSlots.Add($"A-{i:D2}");
+            for (int i = 1; i <= 10; i++) allSlots.Add($"B-{i:D2}");
+        }
+        return allSlots.Where(s => !_occupiedSlots.Contains(s)).ToList();
     }
 
     private void Recalculate()
@@ -633,6 +683,13 @@
                                 $"{embalmText}{preserveText}{forensicText}" +
                                 $"---------------------------------------\n" +
                                 $"Tổng chi phí dự kiến tạm tính: {_totalEstimate.ToString("N0")} VNĐ.\n";
+        
+        var available = GetAvailableSlots();
+        if (available.Count > 0)
+        {
+            _bookingModel.StorageSlot = available[0];
+        }
+
         _showBookingModal = true;
     }
 
@@ -646,6 +703,9 @@
         _isBookingSubmitting = true;
         StateHasChanged();
 
+        _bookingModel.PackageName = _calcForensic ? "Forensic" : _calcZone;
+        _bookingModel.Price = _totalEstimate;
+
         var success = await ContactService.SubmitContactAsync(_bookingModel);
 
         _isBookingSubmitting = false;
@@ -655,6 +715,7 @@
             _submitted = true;
             _bookingModel = new ContactModel(); // Reset booking form
             _showSuccessModal = true;
+            await LoadOccupiedSlotsAsync();
         }
         StateHasChanged();
     }
@@ -684,6 +745,9 @@
     {
         _isSubmitting = true;
         StateHasChanged();
+
+        _contactModel.PackageName = "Liên hệ thường";
+        _contactModel.Price = 0;
 
         var success = await ContactService.SubmitContactAsync(_contactModel);
 

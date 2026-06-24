@@ -42,4 +42,13 @@ public class ContactModel : BaseModel
 
     [Column("status")]
     public string Status { get; set; } = "Chưa xử lý"; // Trạng thái: Chưa xử lý, Đang liên hệ, Đã hoàn thành
+
+    [Column("storage_slot")]
+    public string? StorageSlot { get; set; }
+
+    [Column("package_name")]
+    public string? PackageName { get; set; }
+
+    [Column("price")]
+    public long? Price { get; set; }
 }

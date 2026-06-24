@@ -11,4 +11,5 @@ public class StorageSlot
     public string? CorpseName { get; set; }
     public int DaysStored { get; set; }
     public string LastUpdate { get; set; } = "";
+    public string? PackageName { get; set; }
 }

@@ -39,6 +39,7 @@
                         <th>HỌ TÊN KHÁCH HÀNG</th>
                         <th>THÔNG TIN LIÊN HỆ</th>
                         <th>CHỦ ĐỀ</th>
+                        <th>GÓI & NGĂN TỦ</th>
                         <th>NGÀY GỬI</th>
                         <th>TRẠNG THÁI</th>
                         <th style="width: 150px; text-align: center;">HÀNH ĐỘNG</th>
@@ -68,6 +69,22 @@
                                 </td>
                                 <td>
                                     <div class="font-ui" style="font-size: 13px; font-weight: 500; color: var(--text-secondary);">@r.Subject</div>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(r.PackageName))
+                                    {
+                                        var badgeColor = r.PackageName == "deep" ? "#48DBFB" : r.PackageName == "Forensic" ? "#F59E0B" : "#10B981";
+                                        var pkgText = r.PackageName == "deep" ? "Lạnh Sâu" : r.PackageName == "Forensic" ? "Pháp Y" : r.PackageName == "standard" ? "Tiêu Chuẩn" : r.PackageName;
+                                        <div class="font-ui" style="font-size: 12px; font-weight: 600; color: @badgeColor;">📦 @pkgText</div>
+                                        @if (!string.IsNullOrEmpty(r.StorageSlot))
+                                        {
+                                            <div class="font-ui" style="font-size: 11px; color: var(--text-muted); font-family: monospace; margin-top: 2px;">📥 Ngăn: @r.StorageSlot</div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span style="color: var(--text-muted); font-size: 12px;">Liên hệ thường</span>
+                                    }
                                 </td>
                                 <td style="font-size: 12px; color: var(--text-secondary);">
                                     @r.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
@@ -139,6 +156,23 @@
 
                 <div style="color: var(--text-muted);">Ngày gửi:</div>
                 <div style="color: var(--text-secondary);">@_selectedRequest.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</div>
+
+                @if (!string.IsNullOrEmpty(_selectedRequest.PackageName))
+                {
+                    <div style="color: var(--text-muted);">Gói đăng ký:</div>
+                    <div style="font-weight: 600; color: @(_selectedRequest.PackageName == "deep" ? "#48DBFB" : _selectedRequest.PackageName == "Forensic" ? "#F59E0B" : "#10B981");">
+                        @(_selectedRequest.PackageName == "deep" ? "Lạnh Sâu (Deep Freeze)" : _selectedRequest.PackageName == "Forensic" ? "Y Khoa Pháp Y" : _selectedRequest.PackageName == "standard" ? "Tiêu Chuẩn" : _selectedRequest.PackageName)
+                    </div>
+
+                    <div style="color: var(--text-muted);">Ngăn tủ chọn:</div>
+                    <div style="font-weight: 600; color: var(--text-primary); font-family: monospace;">@_selectedRequest.StorageSlot</div>
+
+                    @if (_selectedRequest.Price.HasValue && _selectedRequest.Price.Value > 0)
+                    {
+                        <div style="color: var(--text-muted);">Tổng chi phí:</div>
+                        <div style="font-weight: 600; color: var(--candle);">@_selectedRequest.Price.Value.ToString("N0") VNĐ</div>
+                    }
+                }
 
                 <div style="color: var(--text-muted);">Trạng thái:</div>
                 <div>
@@ -332,10 +366,15 @@
     {
         if (_selectedRequest != null)
         {
+            var oldStatus = _selectedRequest.Status;
             _selectedRequest.Status = _newStatus;
             try
             {
                 await Supabase.From<ContactModel>().Update(_selectedRequest);
+                if (_newStatus == "Đã hoàn thành" && oldStatus != "Đã hoàn thành")
+                {
+                    await HandleApproval(_selectedRequest);
+                }
             }
             catch (Exception ex)
             {
@@ -348,10 +387,15 @@
 
     private async Task UpdateStatusDirect(ContactModel r, string status)
     {
+        var oldStatus = r.Status;
         r.Status = status;
         try
         {
             await Supabase.From<ContactModel>().Update(r);
+            if (status == "Đã hoàn thành" && oldStatus != "Đã hoàn thành")
+            {
+                await HandleApproval(r);
+            }
         }
         catch (Exception ex)
         {
@@ -359,6 +403,57 @@
         }
         _showDetailsModal = false;
         ApplyFilters();
+    }
+
+    private async Task HandleApproval(ContactModel r)
+    {
+        if (!string.IsNullOrEmpty(r.StorageSlot))
+        {
+            try
+            {
+                var existingCorpseResponse = await Supabase.From<Corpse>()
+                    .Where(c => c.StorageSlot == r.StorageSlot && c.Status == "Lưu kho")
+                    .Get();
+                var existingCorpses = existingCorpseResponse.Models ?? new List<Corpse>();
+                
+                if (existingCorpses.Count == 0)
+                {
+                    var zone = r.StorageSlot.Split('-')[0];
+                    var unitName = zone == "C" ? "Khu C" : zone == "B" ? "Khu B" : "Khu A";
+
+                    var newCorpse = new Corpse
+                    {
+                        CaseId = $"MC-{DateTime.Now:yyyyMMdd}-{new Random().Next(1000, 9999)}",
+                        Name = r.Name,
+                        Gender = "Nam",
+                        Age = 40,
+                        Cccd = "",
+                        CauseOfDeath = "Chờ xác định",
+                        DateOfDeath = DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd HH:mm"),
+                        DateAdmitted = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
+                        Status = "Lưu kho",
+                        StorageUnit = unitName,
+                        StorageSlot = r.StorageSlot,
+                        Temp = zone == "C" ? -5.0 : 4.0,
+                        DaysStored = 0,
+                        Priority = "NORMAL",
+                        PackageName = r.PackageName,
+                        Notes = $"Tự động tạo từ yêu cầu liên hệ dịch vụ ({r.PackageName}).\nNội dung yêu cầu:\n{r.Message}"
+                    };
+
+                    await Supabase.From<Corpse>().Insert(newCorpse);
+                    Console.WriteLine($"Successfully auto-created Corpse for request #{r.Id} in slot {r.StorageSlot}");
+                }
+                else
+                {
+                    Console.WriteLine($"Slot {r.StorageSlot} is already occupied! Corpse auto-creation skipped.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error during corpse auto-creation on approval: " + ex.Message);
+            }
+        }
     }
 
     private void StartDelete(ContactModel r)
