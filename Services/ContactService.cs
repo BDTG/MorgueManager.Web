@@ -145,11 +145,6 @@ public class ContactService : IContactService
             Console.WriteLine("LocalStorage load count failed: " + ex.Message);
         }
 
-        if (allRequests.Count == 0)
-        {
-            return 1;
-        }
-
         return allRequests.Count(r => r.Status == "Chưa xử lý");
     }
 }
