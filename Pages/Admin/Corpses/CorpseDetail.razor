@@ -2,6 +2,7 @@
 @layout Components.Layout.AdminLayout
 @inject NavigationManager Navigation
 @inject Supabase.Client Supabase
+@inject IJSRuntime JS
 
 <div>
     <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px;">
@@ -60,9 +61,18 @@
                     <div class="font-ui" style="font-size: 12px; color: var(--text-muted);">Nhiệt độ ngăn</div>
                     <div class="font-ui" style="font-size: 20px; font-weight: 600; color: var(--success);">@(_corpse.Temp?.ToString("0.0") ?? "—")°C ✅</div>
                 </div>
-                <div style="margin: 24px auto; width: 120px; height: 120px; background-color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #333;">[QR Code]</div>
-                <button class="font-ui" style="width: 100%; padding: 8px; border: 1px solid var(--border-primary); border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 12px; margin-bottom: 8px;">📥 Tải QR Code</button>
-                <button class="font-ui" style="width: 100%; padding: 8px; border: 1px solid var(--border-primary); border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 12px;">🔗 Sao chép link</button>
+                <div style="margin: 24px auto; width: 130px; height: 130px; background-color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 8px; border: 1px solid var(--border-primary);">
+                    @if (_corpse != null)
+                    {
+                        <img src="@QrCodeUrl" alt="QR Code" style="width: 100%; height: 100%; object-fit: contain;" />
+                    }
+                    else
+                    {
+                        <span style="font-size: 11px; color: #666;">Đang tạo...</span>
+                    }
+                </div>
+                <button @onclick="DownloadQrCode" class="font-ui" style="width: 100%; padding: 8px; border: 1px solid var(--border-primary); border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 12px; margin-bottom: 8px;">📥 Tải QR Code</button>
+                <button @onclick="CopyPublicLink" class="font-ui" style="width: 100%; padding: 8px; border: 1px solid var(--border-primary); border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 12px;">🔗 Sao chép link</button>
             </div>
 
             <!-- Tabs -->
@@ -341,4 +351,56 @@
             }
         }
     }
+
+    private string PublicUrl => $"{Navigation.BaseUri}public/corpses/{_corpse?.CaseId}";
+    private string QrCodeUrl => $"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={Uri.EscapeDataString(PublicUrl)}";
+
+    private async Task CopyPublicLink()
+    {
+        if (_corpse == null) return;
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", PublicUrl);
+            _toastMessage = "Đã sao chép liên kết công khai vào clipboard!";
+            _showToast = true;
+            StateHasChanged();
+            await Task.Delay(2500);
+            _showToast = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error copying link: " + ex.Message);
+        }
+    }
+
+    private async Task DownloadQrCode()
+    {
+        if (_corpse == null) return;
+        try
+        {
+            var filename = $"QRCode_{_corpse.CaseId}.png";
+            await JS.InvokeVoidAsync("eval", @"
+                (async function(url, filename) {
+                    try {
+                        const res = await fetch(url);
+                        const blob = await res.blob();
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = filename;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    } catch (e) {
+                        console.error('Failed to download QR code via fetch, fallback to window.open', e);
+                        window.open(url, '_blank');
+                    }
+                })('" + QrCodeUrl + "', '" + filename + "')");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error downloading QR Code: " + ex.Message);
+        }
+    }
 }
+
