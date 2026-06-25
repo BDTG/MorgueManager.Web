@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
+    <DefaultItemExcludes>$(DefaultItemExcludes);MorgueManager.API\**;publish\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,7 +22,12 @@
     <Content Remove="MorgueManager.API\**" />
     <EmbeddedResource Remove="MorgueManager.API\**" />
     <None Remove="MorgueManager.API\**" />
+    <Compile Remove="publish\**" />
+    <Content Remove="publish\**" />
+    <EmbeddedResource Remove="publish\**" />
+    <None Remove="publish\**" />
   </ItemGroup>
+
 
   <Target Name="CompileTailwind" BeforeTargets="BeforeBuild">
     <Message Importance="high" Text="⚡ Đang biên dịch Tailwind CSS v4..." />

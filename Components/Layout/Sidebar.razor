@@ -2,6 +2,7 @@
 @inject NavigationManager Navigation
 @inject AuthService AuthService
 @inject MorgueManager.Web.Services.TourService TourService
+@inject MorgueManager.Web.Services.IContactService ContactService
 
 <div class="admin-sidebar @(IsCollapsed ? "collapsed" : "") flex flex-col h-screen">
     <div class="p-5 border-b border-[var(--border-primary)]">
@@ -29,7 +30,13 @@
                 <a href="@item.Route" class="sidebar-nav-item @(isActive ? "active" : "")" 
                    style="@(item.IsDanger ? "color: var(--danger) !important;" : "")">
                     <LucideIcon Name="@item.Icon" Class="w-[18px] h-[18px] flex-shrink-0" />
-                    <span>@item.Label</span>
+                    <span class="flex-grow">@item.Label</span>
+                    @if (item.Route == "/admin/requests" && _unprocessedCount > 0)
+                    {
+                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-500 text-white flex-shrink-0" style="margin-left: auto;">
+                            @_unprocessedCount
+                        </span>
+                    }
                 </a>
             }
         }
@@ -50,6 +57,8 @@
 @code {
     [Parameter] public bool IsCollapsed { get; set; }
 
+    private int _unprocessedCount;
+
     private readonly List<NavItem> _navItems = new()
     {
         new() { Icon = "layout-dashboard", Label = "Dashboard", Route = "/admin/dashboard" },
@@ -65,9 +74,25 @@
         new() { Icon = "globe", Label = "Về trang chủ", Route = "/" },
     };
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         Navigation.LocationChanged += OnLocationChanged;
+        ContactService.OnContactRequestsChanged += HandleContactRequestsChanged;
+        await UpdateUnprocessedCount();
+    }
+
+    private async Task UpdateUnprocessedCount()
+    {
+        _unprocessedCount = await ContactService.GetUnprocessedCountAsync();
+    }
+
+    private async void HandleContactRequestsChanged()
+    {
+        await InvokeAsync(async () =>
+        {
+            await UpdateUnprocessedCount();
+            StateHasChanged();
+        });
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
@@ -78,6 +103,7 @@
     public void Dispose()
     {
         Navigation.LocationChanged -= OnLocationChanged;
+        ContactService.OnContactRequestsChanged -= HandleContactRequestsChanged;
     }
 
     private async Task Logout()

@@ -3,6 +3,7 @@
 @inject NavigationManager Navigation
 @inject Supabase.Client Supabase
 @inject IJSRuntime JS
+@inject MorgueManager.Web.Services.IContactService ContactService
 
 <div>
     <!-- Top Bar -->
@@ -547,6 +548,7 @@
                 // Try local storage update as a fallback
                 await UpdateLocalRequestInLocalStorage(_selectedRequest);
             }
+            ContactService.NotifyRequestsChanged();
             _showStatusModal = false;
             ApplyFilters();
         }
@@ -578,6 +580,7 @@
             // Try local storage update as a fallback
             await UpdateLocalRequestInLocalStorage(r);
         }
+        ContactService.NotifyRequestsChanged();
         _showDetailsModal = false;
         ApplyFilters();
     }
@@ -670,6 +673,7 @@
                 await DeleteLocalRequestInLocalStorage(_requestToDelete);
                 _allRequests.Remove(_requestToDelete);
             }
+            ContactService.NotifyRequestsChanged();
             _showDeleteConfirm = false;
             ApplyFilters();
         }

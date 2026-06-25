@@ -88,6 +88,64 @@ public class ContactService : IContactService
             Console.WriteLine("Failed to save fallback to LocalStorage: " + jsex.Message);
         }
 
+        NotifyRequestsChanged();
         return true;
     }
+
+    public event Action? OnContactRequestsChanged;
+
+    public void NotifyRequestsChanged()
+    {
+        OnContactRequestsChanged?.Invoke();
+    }
+
+    public async Task<int> GetUnprocessedCountAsync()
+    {
+        List<ContactModel> allRequests = new List<ContactModel>();
+        try
+        {
+            var getTask = _supabase.From<ContactModel>().Get();
+            var delayTask = Task.Delay(2000);
+            var completedTask = await Task.WhenAny(getTask, delayTask);
+            if (completedTask == getTask)
+            {
+                var response = await getTask;
+                if (response?.Models != null)
+                {
+                    allRequests = response.Models;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Supabase load count failed: " + ex.Message);
+        }
+
+        try
+        {
+            var localDataJson = await _js.InvokeAsync<string>("localStorage.getItem", "local_contact_requests");
+            if (!string.IsNullOrEmpty(localDataJson))
+            {
+                var localRequests = JsonSerializer.Deserialize<List<ContactModelDto>>(localDataJson);
+                if (localRequests != null)
+                {
+                    foreach (var lrdto in localRequests)
+                    {
+                        var lr = lrdto.ToModel();
+                        if (!allRequests.Any(r => r.Id == lr.Id || (r.Name == lr.Name && r.Email == lr.Email && r.Message == lr.Message)))
+                        {
+                            allRequests.Add(lr);
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("LocalStorage load count failed: " + ex.Message);
+        }
+
+        return allRequests.Count(r => r.Status == "Chưa xử lý");
+    }
 }
+
